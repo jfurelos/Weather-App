@@ -119,6 +119,7 @@ interface ComarcasForumState {
   };
 
   loadPersistedState: () => Promise<void>;
+  syncCurrentUser: (user: { id?: string; name: string; province: string }) => void;
   setSelectedProvince: (provinceName: string) => void;
   setSearchQuery: (query: string) => void;
   toggleFavoriteComarca: (comarca: Comarca) => Promise<void>;
@@ -175,6 +176,16 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
     } catch {
       // Ignorar fallo de lectura local
     }
+  },
+
+  syncCurrentUser: (user: { id?: string; name: string; province: string }) => {
+    set((state) => ({
+      currentUser: {
+        id: user.id ?? state.currentUser.id,
+        name: user.name.trim() || 'Tú',
+        province: user.province,
+      },
+    }));
   },
 
   setSelectedProvince: (provinceName: string) => {

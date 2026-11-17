@@ -1,5 +1,13 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, Switch, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  Switch,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import {
   MapPin,
   CloudRain,
@@ -8,6 +16,8 @@ import {
   ChevronRight,
   Bell,
   Volume2,
+  LogIn,
+  LogOut,
 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
@@ -15,20 +25,60 @@ import { Button } from '@/shared/components/Button';
 import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
+import { AlertCategory, useProfileStore } from '../store/useProfileStore';
+import { getRainThresholdLabel, getToneLabel } from '../data/locationsData';
+import { EditProfileModal } from '../components/EditProfileModal';
+import { EditLocationModal } from '../components/EditLocationModal';
+import { AlertSettingsModal } from '../components/AlertSettingsModal';
+import { AuthModal } from '../components/AuthModal';
 
 export const ProfileScreen: React.FC = () => {
   const { colors, mode, toggleTheme } = useThemeStore();
+  const {
+    profile,
+    fixedLocation,
+    alerts,
+    hasHydrated,
+    isLoadingAuth,
+    authError,
+    loadProfileState,
+    updateProfile,
+    updateFixedLocation,
+    toggleAlert,
+    setRainThreshold,
+    setWindThreshold,
+    setHeatThreshold,
+    setAlertTone,
+    signIn,
+    signUp,
+    signOut,
+    clearAuthError,
+  } = useProfileStore();
 
-  // Estado interactivo de alertas personalizadas
-  const [notifyRain, setNotifyRain] = useState(true);
-  const [notifyWind, setNotifyWind] = useState(true);
-  const [notifyHeat, setNotifyHeat] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showEditLocation, setShowEditLocation] = useState(false);
+  const [showAlertSettings, setShowAlertSettings] = useState(false);
+  const [alertModalTab, setAlertModalTab] = useState<AlertCategory>('rain');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
 
-  // Ubicación fija única
-  const [fixedLocation, setFixedLocation] = useState({
-    name: 'Madrid',
-    province: 'Madrid',
-  });
+  useEffect(() => {
+    if (!hasHydrated) {
+      loadProfileState();
+    }
+  }, [hasHydrated, loadProfileState]);
+
+  useEffect(() => {
+    setAvatarLoadError(false);
+  }, [profile.avatarUrl]);
+
+  const openAlertSettingsOn = (tab: AlertCategory) => {
+    setAlertModalTab(tab);
+    setShowAlertSettings(true);
+  };
+
+  const initials = (profile.fullName.trim() || 'U').charAt(0).toUpperCase();
+  const hasAvatarImage = Boolean(profile.avatarUrl && !avatarLoadError);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -45,24 +95,78 @@ export const ProfileScreen: React.FC = () => {
         {/* 1. Tarjeta de Usuario */}
         <Card style={styles.userCard}>
           <View style={styles.avatarRow}>
-            <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
-              <Typography variant="h2" color="brand">
-                U
-              </Typography>
+            <View
+              style={[
+                styles.avatarPlaceholder,
+                { backgroundColor: profile.avatarColor || colors.primary },
+              ]}
+            >
+              {hasAvatarImage ? (
+                <Image
+                  source={{ uri: profile.avatarUrl! }}
+                  style={styles.avatarImage}
+                  onError={() => setAvatarLoadError(true)}
+                />
+              ) : (
+                <Typography variant="h2" style={{ color: '#FFFFFF' }}>
+                  {initials}
+                </Typography>
+              )}
             </View>
             <View style={{ flex: 1 }}>
-              <Typography variant="h2">Usuario Invitado</Typography>
+              <View style={styles.nameRow}>
+                <Typography variant="h2" numberOfLines={1} style={{ flexShrink: 1 }}>
+                  {profile.fullName}
+                </Typography>
+                {profile.isAuthenticated && (
+                  <Badge label={`@${profile.username}`} tone="neutral" />
+                )}
+              </View>
               <Typography variant="caption" color="secondary">
-                Provincia: {fixedLocation.province} • Visible en foro
+                Provincia: {profile.province} • Visible en foro
               </Typography>
             </View>
           </View>
-          <Button
-            title="Editar Datos"
-            variant="outline"
-            style={{ marginTop: spacing.sm }}
-            onPress={() => console.log('Editar perfil')}
-          />
+
+          <View style={styles.userActionsRow}>
+            <Button
+              title="Editar Datos"
+              variant="outline"
+              style={{ flex: 1 }}
+              onPress={() => setShowEditProfile(true)}
+            />
+            {profile.isAuthenticated ? (
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={signOut}
+                style={[
+                  styles.authIconBtn,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                ]}
+                accessibilityLabel="Cerrar sesión"
+              >
+                <LogOut size={18} color={colors.textSecondary} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.75}
+                onPress={() => {
+                  clearAuthError();
+                  setShowAuthModal(true);
+                }}
+                style={[
+                  styles.authPillBtn,
+                  { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+                ]}
+                accessibilityLabel="Iniciar sesión o crear cuenta"
+              >
+                <LogIn size={15} color={colors.primary} />
+                <Typography variant="captionMedium" color="brand" style={{ fontWeight: '600' }}>
+                  Acceder
+                </Typography>
+              </TouchableOpacity>
+            )}
+          </View>
         </Card>
 
         {/* 2. Ajuste de Tema: Claro / Oscuro */}
@@ -97,8 +201,15 @@ export const ProfileScreen: React.FC = () => {
             Recibes alertas meteorológicas en tu zona asignada.
           </Typography>
 
-          <View style={[styles.locationBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View>
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={() => setShowEditLocation(true)}
+            style={[
+              styles.locationBox,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <View style={{ flex: 1 }}>
               <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
                 {fixedLocation.name}
               </Typography>
@@ -107,17 +218,13 @@ export const ProfileScreen: React.FC = () => {
               </Typography>
             </View>
 
-            <TouchableOpacity
-              style={styles.changeLocationButton}
-              activeOpacity={0.7}
-              onPress={() => console.log('Modificar ubicación')}
-            >
+            <View style={styles.changeLocationButton}>
               <Typography variant="captionMedium" color="brand">
                 Modificar
               </Typography>
               <ChevronRight size={14} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
+            </View>
+          </TouchableOpacity>
         </Card>
 
         {/* 4. Configuración de Alertas y Sonidos */}
@@ -128,24 +235,32 @@ export const ProfileScreen: React.FC = () => {
               <Typography variant="h3">Alertas y Notificaciones</Typography>
             </View>
           </View>
-          <Typography variant="caption" color="secondary" style={{ marginTop: spacing.xs, marginBottom: spacing.sm }}>
-            Configura qué tipos de temporal deseas recibir y sus tonos asociados.
+          <Typography
+            variant="caption"
+            color="secondary"
+            style={{ marginTop: spacing.xs, marginBottom: spacing.sm }}
+          >
+            Configura qué tipos de temporal deseas recibir, sus umbrales y tonos asociados.
           </Typography>
 
           {/* Toggle Lluvia */}
           <View style={styles.alertOptionRow}>
-            <View style={styles.alertInfo}>
+            <TouchableOpacity
+              style={styles.alertInfo}
+              activeOpacity={0.7}
+              onPress={() => openAlertSettingsOn('rain')}
+            >
               <CloudRain size={18} color={colors.rain} />
-              <View>
+              <View style={{ flex: 1 }}>
                 <Typography variant="bodyMedium">Lluvia torrencial</Typography>
                 <Typography variant="caption" color="secondary">
-                  Aviso amarillo o superior
+                  {getRainThresholdLabel(alerts.rain.threshold)} • {getToneLabel(alerts.rain.toneId)}
                 </Typography>
               </View>
-            </View>
+            </TouchableOpacity>
             <Switch
-              value={notifyRain}
-              onValueChange={setNotifyRain}
+              value={alerts.rain.enabled}
+              onValueChange={(val) => toggleAlert('rain', val)}
               trackColor={{ false: colors.borderStrong, true: colors.primary }}
               thumbColor="#FFFFFF"
             />
@@ -155,18 +270,22 @@ export const ProfileScreen: React.FC = () => {
 
           {/* Toggle Viento */}
           <View style={styles.alertOptionRow}>
-            <View style={styles.alertInfo}>
+            <TouchableOpacity
+              style={styles.alertInfo}
+              activeOpacity={0.7}
+              onPress={() => openAlertSettingsOn('wind')}
+            >
               <Wind size={18} color={colors.wind} />
-              <View>
+              <View style={{ flex: 1 }}>
                 <Typography variant="bodyMedium">Viento y temporales</Typography>
                 <Typography variant="caption" color="secondary">
-                  Rachas superiores a 50 km/h
+                  Rachas &gt; {alerts.wind.thresholdKmh} km/h • {getToneLabel(alerts.wind.toneId)}
                 </Typography>
               </View>
-            </View>
+            </TouchableOpacity>
             <Switch
-              value={notifyWind}
-              onValueChange={setNotifyWind}
+              value={alerts.wind.enabled}
+              onValueChange={(val) => toggleAlert('wind', val)}
               trackColor={{ false: colors.borderStrong, true: colors.primary }}
               thumbColor="#FFFFFF"
             />
@@ -176,18 +295,22 @@ export const ProfileScreen: React.FC = () => {
 
           {/* Toggle Calor */}
           <View style={styles.alertOptionRow}>
-            <View style={styles.alertInfo}>
+            <TouchableOpacity
+              style={styles.alertInfo}
+              activeOpacity={0.7}
+              onPress={() => openAlertSettingsOn('heat')}
+            >
               <Sun size={18} color={colors.heat} />
-              <View>
+              <View style={{ flex: 1 }}>
                 <Typography variant="bodyMedium">Calor extremo</Typography>
                 <Typography variant="caption" color="secondary">
-                  Temperaturas sobre 36°C
+                  Temperaturas &gt; {alerts.heat.thresholdC}°C • {getToneLabel(alerts.heat.toneId)}
                 </Typography>
               </View>
-            </View>
+            </TouchableOpacity>
             <Switch
-              value={notifyHeat}
-              onValueChange={setNotifyHeat}
+              value={alerts.heat.enabled}
+              onValueChange={(val) => toggleAlert('heat', val)}
               trackColor={{ false: colors.borderStrong, true: colors.primary }}
               thumbColor="#FFFFFF"
             />
@@ -195,18 +318,18 @@ export const ProfileScreen: React.FC = () => {
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-          {/* Tonos de Sonido */}
+          {/* Umbrales y Tonos de Sonido */}
           <TouchableOpacity
             style={styles.soundRow}
             activeOpacity={0.7}
-            onPress={() => console.log('Sonidos')}
+            onPress={() => openAlertSettingsOn('rain')}
           >
             <View style={styles.alertInfo}>
               <Volume2 size={18} color={colors.textSecondary} />
-              <View>
-                <Typography variant="bodyMedium">Tonos de Alerta</Typography>
+              <View style={{ flex: 1 }}>
+                <Typography variant="bodyMedium">Umbrales y Tonos de Alerta</Typography>
                 <Typography variant="caption" color="secondary">
-                  Tonos diferenciados por tipo de aviso
+                  Personaliza y prueba el sonido de cada aviso
                 </Typography>
               </View>
             </View>
@@ -214,6 +337,44 @@ export const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </Card>
       </ScrollView>
+
+      {/* Modales interactivos */}
+      <EditProfileModal
+        visible={showEditProfile}
+        profile={profile}
+        onSave={updateProfile}
+        onClose={() => setShowEditProfile(false)}
+      />
+
+      <EditLocationModal
+        visible={showEditLocation}
+        currentLocation={fixedLocation}
+        onSelectLocation={updateFixedLocation}
+        onClose={() => setShowEditLocation(false)}
+      />
+
+      <AlertSettingsModal
+        key={alertModalTab}
+        visible={showAlertSettings}
+        alerts={alerts}
+        initialTab={alertModalTab}
+        onChangeRainThreshold={setRainThreshold}
+        onChangeWindThreshold={setWindThreshold}
+        onChangeHeatThreshold={setHeatThreshold}
+        onChangeTone={setAlertTone}
+        onClose={() => setShowAlertSettings(false)}
+      />
+
+      <AuthModal
+        visible={showAuthModal}
+        defaultProvince={profile.province}
+        isLoading={isLoadingAuth}
+        errorMessage={authError}
+        onSignIn={signIn}
+        onSignUp={signUp}
+        onClearError={clearAuthError}
+        onClose={() => setShowAuthModal(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -234,7 +395,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   userCard: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   avatarRow: {
     flexDirection: 'row',
@@ -245,6 +406,40 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: spacing.borderRadiusFull,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 56,
+    height: 56,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
+  userActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  authPillBtn: {
+    height: 48,
+    paddingHorizontal: spacing.md,
+    borderRadius: spacing.borderRadiusFull,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  authIconBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: spacing.borderRadiusFull,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -269,6 +464,7 @@ const styles = StyleSheet.create({
     borderRadius: spacing.borderRadiusMd,
     borderWidth: 1,
     marginTop: spacing.sm,
+    gap: spacing.sm,
   },
   changeLocationButton: {
     flexDirection: 'row',
@@ -280,8 +476,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.xs,
+    gap: spacing.sm,
   },
   alertInfo: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
@@ -291,6 +489,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: spacing.xs,
+    gap: spacing.sm,
   },
   divider: {
     height: 1,
