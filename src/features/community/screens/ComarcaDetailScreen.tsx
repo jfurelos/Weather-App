@@ -180,13 +180,6 @@ export const ComarcaDetailScreen: React.FC = () => {
                 <Typography variant="body" color="secondary" style={styles.chatDesc}>
                   {chat.getDefaultWelcomeMessage(comarcaName)}
                 </Typography>
-
-                <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
-                  <Typography variant="captionMedium" style={{ color: colors.primary, fontWeight: '700' }}>
-                    Abrir conversación en directo
-                  </Typography>
-                  <ChevronRight size={14} color={colors.primary} />
-                </View>
               </Card>
             </TouchableOpacity>
           ))}
@@ -263,14 +256,6 @@ const styles = StyleSheet.create({
   },
   chatDesc: {
     lineHeight: 20,
-    marginTop: 2,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
     marginTop: 2,
   },
 });
