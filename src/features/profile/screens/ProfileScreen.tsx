@@ -1,5 +1,14 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, Switch } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, SafeAreaView, Switch, TouchableOpacity } from 'react-native';
+import {
+  MapPin,
+  CloudRain,
+  Wind,
+  Sun,
+  ChevronRight,
+  Bell,
+  Volume2,
+} from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
@@ -10,19 +19,30 @@ import { spacing } from '@/shared/theme/spacing';
 export const ProfileScreen: React.FC = () => {
   const { colors, mode, toggleTheme } = useThemeStore();
 
+  // Estado interactivo de alertas personalizadas
+  const [notifyRain, setNotifyRain] = useState(true);
+  const [notifyWind, setNotifyWind] = useState(true);
+  const [notifyHeat, setNotifyHeat] = useState(false);
+
+  // Ubicación fija única
+  const [fixedLocation, setFixedLocation] = useState({
+    name: 'Madrid',
+    province: 'Madrid',
+  });
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Typography variant="caption" color="secondary">
-            AJUSTES Y PRIVACIDAD
+            AJUSTES Y PREFERENCIAS
           </Typography>
           <Typography variant="hero" style={styles.title}>
             Perfil
           </Typography>
         </View>
 
-        {/* Tarjeta de Usuario estilo Airbnb */}
+        {/* 1. Tarjeta de Usuario */}
         <Card style={styles.userCard}>
           <View style={styles.avatarRow}>
             <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
@@ -33,25 +53,19 @@ export const ProfileScreen: React.FC = () => {
             <View style={{ flex: 1 }}>
               <Typography variant="h2">Usuario Invitado</Typography>
               <Typography variant="caption" color="secondary">
-                Provincia: Madrid • Visible en foro
+                Provincia: {fixedLocation.province} • Visible en foro
               </Typography>
             </View>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.privacyRow}>
-            <Typography variant="caption" color="secondary">
-              Email y contraseña protegidos (100% privados).
-            </Typography>
           </View>
           <Button
             title="Editar Datos"
             variant="outline"
-            style={{ marginTop: spacing.xs }}
+            style={{ marginTop: spacing.sm }}
             onPress={() => console.log('Editar perfil')}
           />
         </Card>
 
-        {/* Ajustes de Tema: Claro / Oscuro */}
+        {/* 2. Ajuste de Tema: Claro / Oscuro */}
         <Card style={styles.settingCard}>
           <View style={styles.rowBetween}>
             <View>
@@ -69,23 +83,135 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </Card>
 
-        {/* Ubicaciones fijas para alertas */}
+        {/* 3. Ubicación Fija Única para Alertas */}
         <Card style={styles.settingCard}>
           <View style={styles.rowBetween}>
-            <Typography variant="h3">Ubicaciones fijas</Typography>
-            <Badge label="2 registradas" tone="neutral" />
+            <View style={styles.tagWrapper}>
+              <MapPin size={16} color={colors.primary} />
+              <Typography variant="h3">Ubicación Fija</Typography>
+            </View>
+            <Badge label="Activa" tone="brand" />
           </View>
-          <Typography variant="caption" color="secondary" style={{ marginTop: spacing.xs }}>
-            Recibe notificaciones automáticas ante temporales de lluvia, viento o calor extremo.
+
+          <Typography variant="body" color="secondary" style={{ marginTop: spacing.xs }}>
+            Recibes alertas meteorológicas en tu zona asignada.
           </Typography>
+
+          <View style={[styles.locationBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View>
+              <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+                {fixedLocation.name}
+              </Typography>
+              <Typography variant="caption" color="secondary">
+                Provincia de {fixedLocation.province}
+              </Typography>
+            </View>
+
+            <TouchableOpacity
+              style={styles.changeLocationButton}
+              activeOpacity={0.7}
+              onPress={() => console.log('Modificar ubicación')}
+            >
+              <Typography variant="captionMedium" color="brand">
+                Modificar
+              </Typography>
+              <ChevronRight size={14} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
         </Card>
 
-        {/* Sonidos de alertas */}
+        {/* 4. Configuración de Alertas y Sonidos */}
         <Card style={styles.settingCard}>
-          <Typography variant="h3">Sonidos de Alertas (ES-Alert)</Typography>
-          <Typography variant="caption" color="secondary" style={{ marginTop: spacing.xs }}>
-            Tonos diferenciados para lluvia torrencial, vendaval y olas de calor.
+          <View style={styles.rowBetween}>
+            <View style={styles.tagWrapper}>
+              <Bell size={16} color={colors.warning} />
+              <Typography variant="h3">Alertas y Notificaciones</Typography>
+            </View>
+          </View>
+          <Typography variant="caption" color="secondary" style={{ marginTop: spacing.xs, marginBottom: spacing.sm }}>
+            Configura qué tipos de temporal deseas recibir y sus tonos asociados.
           </Typography>
+
+          {/* Toggle Lluvia */}
+          <View style={styles.alertOptionRow}>
+            <View style={styles.alertInfo}>
+              <CloudRain size={18} color={colors.rain} />
+              <View>
+                <Typography variant="bodyMedium">Lluvia torrencial</Typography>
+                <Typography variant="caption" color="secondary">
+                  Aviso amarillo o superior
+                </Typography>
+              </View>
+            </View>
+            <Switch
+              value={notifyRain}
+              onValueChange={setNotifyRain}
+              trackColor={{ false: colors.borderStrong, true: colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          {/* Toggle Viento */}
+          <View style={styles.alertOptionRow}>
+            <View style={styles.alertInfo}>
+              <Wind size={18} color={colors.wind} />
+              <View>
+                <Typography variant="bodyMedium">Viento y temporales</Typography>
+                <Typography variant="caption" color="secondary">
+                  Rachas superiores a 50 km/h
+                </Typography>
+              </View>
+            </View>
+            <Switch
+              value={notifyWind}
+              onValueChange={setNotifyWind}
+              trackColor={{ false: colors.borderStrong, true: colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          {/* Toggle Calor */}
+          <View style={styles.alertOptionRow}>
+            <View style={styles.alertInfo}>
+              <Sun size={18} color={colors.heat} />
+              <View>
+                <Typography variant="bodyMedium">Calor extremo</Typography>
+                <Typography variant="caption" color="secondary">
+                  Temperaturas sobre 36°C
+                </Typography>
+              </View>
+            </View>
+            <Switch
+              value={notifyHeat}
+              onValueChange={setNotifyHeat}
+              trackColor={{ false: colors.borderStrong, true: colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+          {/* Tonos de Sonido */}
+          <TouchableOpacity
+            style={styles.soundRow}
+            activeOpacity={0.7}
+            onPress={() => console.log('Sonidos')}
+          >
+            <View style={styles.alertInfo}>
+              <Volume2 size={18} color={colors.textSecondary} />
+              <View>
+                <Typography variant="bodyMedium">Tonos de Alerta</Typography>
+                <Typography variant="caption" color="secondary">
+                  Tonos diferenciados por tipo de aviso
+                </Typography>
+              </View>
+            </View>
+            <ChevronRight size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -99,6 +225,7 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.xl,
     gap: spacing.base,
+    paddingBottom: spacing.xxxl,
   },
   header: {
     marginBottom: spacing.xs,
@@ -115,16 +242,18 @@ const styles = StyleSheet.create({
     gap: spacing.base,
   },
   avatarPlaceholder: {
-    width: 60,
-    height: 60,
+    width: 56,
+    height: 56,
     borderRadius: spacing.borderRadiusFull,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  privacyRow: {
-    paddingVertical: spacing.xs,
-  },
   settingCard: {
+    gap: spacing.xs,
+  },
+  tagWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.xs,
   },
   rowBetween: {
@@ -132,9 +261,39 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  locationBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+    marginTop: spacing.sm,
+  },
+  changeLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  alertOptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  alertInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  soundRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
   divider: {
     height: 1,
-    backgroundColor: '#EBEBEB',
     marginVertical: spacing.xs,
   },
 });

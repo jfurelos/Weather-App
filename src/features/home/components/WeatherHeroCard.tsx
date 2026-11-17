@@ -70,7 +70,7 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
       </TouchableOpacity>
 
       <Typography variant="caption" color="secondary">
-        {city.province} • Península y Baleares
+        {city.province}
       </Typography>
 
       {/* Bloque Principal: Temperatura y Condición */}

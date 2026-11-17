@@ -1,5 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, CloudRain, MessageSquare, User } from 'lucide-react-native';
 import { MainTabParamList } from './types';
 import { HomeScreen } from '@/features/home/screens/HomeScreen';
@@ -12,6 +13,10 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const BottomTabNavigator: React.FC = () => {
   const { colors } = useThemeStore();
+  const insets = useSafeAreaInsets();
+
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 10;
+  const tabHeight = 56 + bottomPadding;
 
   return (
     <Tab.Navigator
@@ -19,17 +24,27 @@ export const BottomTabNavigator: React.FC = () => {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarLabelPosition: 'below-icon',
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
+          height: 80,
+          paddingTop: 8,
+          paddingBottom: 16,
+        },
+        tabBarItemStyle: {
+          height: 52,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        tabBarIconStyle: {
+          marginBottom: 3,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '500',
+          lineHeight: 14,
         },
       }}
     >
@@ -38,15 +53,15 @@ export const BottomTabNavigator: React.FC = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Inicio',
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size ?? 22} />,
+          tabBarIcon: ({ color, size }) => <Home color={color} size={22} />,
         }}
       />
       <Tab.Screen
         name="WeatherMap"
         component={WeatherMapScreen}
         options={{
-          tabBarLabel: 'Noticias & Radar',
-          tabBarIcon: ({ color, size }) => <CloudRain color={color} size={size ?? 22} />,
+          tabBarLabel: 'Noticias',
+          tabBarIcon: ({ color, size }) => <CloudRain color={color} size={22} />,
         }}
       />
       <Tab.Screen
@@ -54,7 +69,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={ForumListScreen}
         options={{
           tabBarLabel: 'Comunidad',
-          tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size ?? 22} />,
+          tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={22} />,
         }}
       />
       <Tab.Screen
@@ -62,7 +77,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color, size }) => <User color={color} size={size ?? 22} />,
+          tabBarIcon: ({ color, size }) => <User color={color} size={22} />,
         }}
       />
     </Tab.Navigator>

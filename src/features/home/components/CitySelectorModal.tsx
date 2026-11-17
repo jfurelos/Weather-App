@@ -44,12 +44,7 @@ export const CitySelectorModal: React.FC<Props> = ({
 
               {/* Cabecera */}
               <View style={styles.header}>
-                <View>
-                  <Typography variant="h2">Seleccionar Ciudad</Typography>
-                  <Typography variant="caption" color="secondary">
-                    Península y Baleares
-                  </Typography>
-                </View>
+                <Typography variant="h2">Seleccionar Ciudad</Typography>
                 <TouchableOpacity
                   style={[styles.closeButton, { backgroundColor: colors.surface }]}
                   onPress={onClose}

@@ -48,12 +48,12 @@ Aplicación móvil en **React Native (Expo SDK)** dirigida a usuarios en España
 - **Gestión de Identidad:** Nombre, Foto de perfil, Provincia asignada, Email y Contraseña.
 - **Privacidad Estricta:** Solo el Nombre, Foto y Provincia son públicos dentro del foro y mensajes. El Email y la contraseña son completamente privados.
 - **Edición de Perfil:** Se permite editar Foto y Provincia; el Email y el Nombre de usuario permanecen inmutables tras el registro para mantener la integridad comunitaria.
-- **Ubicaciones Fijas para Alertas:**
-  - El usuario puede guardar hasta un máximo de ubicaciones fijas (ej. *Mi Casa - Madrid*, *Pueblo - Ávila*).
+- **Ubicación Fija para Alertas:**
+  - El usuario dispone de **una única ubicación fija** configurada para recibir alertas (ej. *Madrid* o su municipio habitual). Si desea cambiarla, modifica la existente.
   - Almacenamiento en Supabase con soporte PostGIS (`geography(Point, 4326)`).
 - **Configuración de Alertas Personalizadas:**
-  - Toggles y umbrales por tipo de evento: Viento (> 50 km/h, > 70 km/h), Lluvia (Avisos amarillos/naranjas), Calor Extremo (> 35°C, > 40°C).
-  - Reproducción de sonidos específicos por tipología de alerta usando `expo-av`.
+  - Toggles y umbrales por tipo de evento: Viento (> 50 km/h), Lluvia (Avisos amarillos/naranjas), Calor Extremo (> 36°C).
+  - Canales de sonido diferenciados por tipología de alerta usando `expo-av`.
 
 ---
 
