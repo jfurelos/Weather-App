@@ -71,9 +71,6 @@ export const ForumListScreen: React.FC = () => {
       >
         {/* Header principal */}
         <View style={styles.header}>
-          <Typography variant="caption" color="secondary">
-            FOROS PROVINCIALES Y COMARCAS
-          </Typography>
           <Typography variant="hero" style={styles.title}>
             Foro Comunitario
           </Typography>

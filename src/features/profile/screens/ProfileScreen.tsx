@@ -84,9 +84,6 @@ export const ProfileScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Typography variant="caption" color="secondary">
-            AJUSTES Y PREFERENCIAS
-          </Typography>
           <Typography variant="hero" style={styles.title}>
             Perfil
           </Typography>
@@ -123,7 +120,9 @@ export const ProfileScreen: React.FC = () => {
                 )}
               </View>
               <Typography variant="caption" color="secondary">
-                Provincia: {profile.province} • Visible en foro
+                {profile.isAuthenticated
+                  ? `Provincia: ${profile.province} • Visible en foro`
+                  : `Provincia: ${profile.province} • Modo invitado (sin acceso a foros)`}
               </Typography>
             </View>
           </View>

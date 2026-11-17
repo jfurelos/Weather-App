@@ -58,9 +58,6 @@ export const HomeScreen: React.FC = () => {
       >
         {/* Encabezado Principal Airbnb */}
         <View style={styles.header}>
-          <Typography variant="caption" color="secondary">
-            PRONÓSTICO Y CONSEJOS
-          </Typography>
           <Typography variant="hero" style={styles.title}>
             El Tiempo Hoy
           </Typography>

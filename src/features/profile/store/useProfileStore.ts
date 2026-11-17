@@ -54,11 +54,14 @@ interface ProfileState {
   profile: UserProfileData;
   fixedLocation: FixedLocation;
   alerts: AlertsPreferences;
+  hasEnteredApp: boolean;
   isLoadingAuth: boolean;
   authError: string | null;
   hasHydrated: boolean;
 
   loadProfileState: () => Promise<void>;
+  continueAsGuest: () => void;
+  returnToAuthGate: () => void;
   updateProfile: (updates: {
     fullName?: string;
     province: string;
@@ -164,9 +167,24 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: DEFAULT_PROFILE,
   fixedLocation: DEFAULT_LOCATION,
   alerts: DEFAULT_ALERTS,
+  hasEnteredApp: false,
   isLoadingAuth: false,
   authError: null,
   hasHydrated: false,
+
+  continueAsGuest: () => {
+    const { profile } = get();
+    const guestProfile: UserProfileData = {
+      ...profile,
+      isAuthenticated: false,
+    };
+    set({ profile: guestProfile, hasEnteredApp: true, authError: null });
+    syncProfileToForum(guestProfile);
+  },
+
+  returnToAuthGate: () => {
+    set({ hasEnteredApp: false, authError: null });
+  },
 
   loadProfileState: async () => {
     try {
@@ -209,15 +227,24 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             province: dbProfile?.province || user.user_metadata?.province || nextProfile.province,
             isAuthenticated: true,
           };
+        } else {
+          nextProfile = {
+            ...nextProfile,
+            isAuthenticated: false,
+          };
         }
       } catch {
-        // Continuar con perfil local si Supabase no responde
+        nextProfile = {
+          ...nextProfile,
+          isAuthenticated: false,
+        };
       }
 
       set({
         profile: nextProfile,
         fixedLocation: nextLocation,
         alerts: nextAlerts,
+        hasEnteredApp: nextProfile.isAuthenticated,
         hasHydrated: true,
       });
 
@@ -361,7 +388,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         isAuthenticated: true,
       };
 
-      set({ profile: nextProfile, isLoadingAuth: false, authError: null });
+      set({ profile: nextProfile, hasEnteredApp: true, isLoadingAuth: false, authError: null });
       syncProfileToForum(nextProfile);
       await persistLocalState({ profile: nextProfile, fixedLocation, alerts });
       return true;
@@ -428,7 +455,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         isAuthenticated: true,
       };
 
-      set({ profile: nextProfile, isLoadingAuth: false, authError: null });
+      set({ profile: nextProfile, hasEnteredApp: true, isLoadingAuth: false, authError: null });
       syncProfileToForum(nextProfile);
       await persistLocalState({ profile: nextProfile, fixedLocation, alerts });
       await syncSingleLocationToSupabase(nextProfile, fixedLocation, alerts);
@@ -455,7 +482,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       province: fixedLocation.province,
     };
 
-    set({ profile: guestProfile, authError: null });
+    set({ profile: guestProfile, hasEnteredApp: false, authError: null });
     syncProfileToForum(guestProfile);
     await persistLocalState({ profile: guestProfile, fixedLocation, alerts });
   },

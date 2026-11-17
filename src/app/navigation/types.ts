@@ -9,6 +9,7 @@ export type MainTabParamList = {
 };
 
 export type RootStackParamList = {
+  WelcomeAuth: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   ComarcaDetail: {
     comarcaId: string;

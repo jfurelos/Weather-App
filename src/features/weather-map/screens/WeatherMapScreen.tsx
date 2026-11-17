@@ -44,9 +44,6 @@ export const WeatherMapScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Typography variant="caption" color="secondary">
-            PARTES Y RADAR
-          </Typography>
           <Typography variant="hero" style={styles.title}>
             Noticias & Mapa
           </Typography>

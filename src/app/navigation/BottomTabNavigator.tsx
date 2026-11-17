@@ -1,6 +1,5 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, CloudRain, MessageSquare, User } from 'lucide-react-native';
 import { MainTabParamList } from './types';
 import { HomeScreen } from '@/features/home/screens/HomeScreen';
@@ -8,15 +7,13 @@ import { WeatherMapScreen } from '@/features/weather-map/screens/WeatherMapScree
 import { ForumListScreen } from '@/features/community/screens/ForumListScreen';
 import { ProfileScreen } from '@/features/profile/screens/ProfileScreen';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { useProfileStore } from '@/features/profile/store/useProfileStore';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const BottomTabNavigator: React.FC = () => {
   const { colors } = useThemeStore();
-  const insets = useSafeAreaInsets();
-
-  const bottomPadding = insets.bottom > 0 ? insets.bottom : 10;
-  const tabHeight = 56 + bottomPadding;
+  const isAuthenticated = useProfileStore((state) => state.profile.isAuthenticated);
 
   return (
     <Tab.Navigator
@@ -53,7 +50,7 @@ export const BottomTabNavigator: React.FC = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Inicio',
-          tabBarIcon: ({ color, size }) => <Home color={color} size={22} />,
+          tabBarIcon: ({ color }) => <Home color={color} size={22} />,
         }}
       />
       <Tab.Screen
@@ -61,23 +58,25 @@ export const BottomTabNavigator: React.FC = () => {
         component={WeatherMapScreen}
         options={{
           tabBarLabel: 'Noticias',
-          tabBarIcon: ({ color, size }) => <CloudRain color={color} size={22} />,
+          tabBarIcon: ({ color }) => <CloudRain color={color} size={22} />,
         }}
       />
-      <Tab.Screen
-        name="Community"
-        component={ForumListScreen}
-        options={{
-          tabBarLabel: 'Comunidad',
-          tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={22} />,
-        }}
-      />
+      {isAuthenticated && (
+        <Tab.Screen
+          name="Community"
+          component={ForumListScreen}
+          options={{
+            tabBarLabel: 'Comunidad',
+            tabBarIcon: ({ color }) => <MessageSquare color={color} size={22} />,
+          }}
+        />
+      )}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Perfil',
-          tabBarIcon: ({ color, size }) => <User color={color} size={22} />,
+          tabBarIcon: ({ color }) => <User color={color} size={22} />,
         }}
       />
     </Tab.Navigator>
