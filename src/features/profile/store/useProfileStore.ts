@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/shared/api/supabaseClient';
 import { useComarcasForumStore } from '@/features/community/store/useComarcasForumStore';
+import { useHomeStore } from '@/features/home/store/useHomeStore';
 import {
   AlertToneId,
   AVATAR_COLORS,
@@ -130,12 +131,31 @@ async function persistLocalState(payload: PersistedProfilePayload): Promise<void
   }
 }
 
-function syncProfileToForum(profile: UserProfileData): void {
-  useComarcasForumStore.getState().syncCurrentUser({
+function syncProfileToForum(profile: UserProfileData, syncActiveProvince = false): void {
+  const forumStore = useComarcasForumStore.getState();
+  forumStore.syncCurrentUser({
     id: profile.id,
     name: profile.isAuthenticated ? profile.fullName : profile.fullName === 'Usuario Invitado' ? 'Tú' : profile.fullName,
     province: profile.province,
   });
+  if (syncActiveProvince && profile.province) {
+    forumStore.setSelectedProvince(profile.province);
+  }
+}
+
+function syncLocationToHome(location: FixedLocation): void {
+  const homeStore = useHomeStore.getState();
+  if (
+    homeStore.selectedCity.name !== location.name ||
+    homeStore.selectedCity.province !== location.province
+  ) {
+    homeStore.setSelectedCity({
+      name: location.name,
+      province: location.province,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    });
+  }
 }
 
 async function syncSingleLocationToSupabase(
@@ -248,7 +268,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         hasHydrated: true,
       });
 
-      syncProfileToForum(nextProfile);
+      syncProfileToForum(nextProfile, true);
+      syncLocationToHome(nextLocation);
     } catch {
       set({ hasHydrated: true });
     }
@@ -271,7 +292,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     };
 
     set({ profile: updatedProfile });
-    syncProfileToForum(updatedProfile);
+    syncProfileToForum(updatedProfile, true);
     await persistLocalState({ profile: updatedProfile, fixedLocation, alerts });
 
     if (updatedProfile.isAuthenticated) {
@@ -293,6 +314,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   updateFixedLocation: async (location: FixedLocation) => {
     const { profile, alerts } = get();
     set({ fixedLocation: location });
+    syncLocationToHome(location);
     await persistLocalState({ profile, fixedLocation: location, alerts });
     await syncSingleLocationToSupabase(profile, location, alerts);
   },
@@ -389,7 +411,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       };
 
       set({ profile: nextProfile, hasEnteredApp: true, isLoadingAuth: false, authError: null });
-      syncProfileToForum(nextProfile);
+      syncProfileToForum(nextProfile, true);
       await persistLocalState({ profile: nextProfile, fixedLocation, alerts });
       return true;
     } catch {
@@ -456,7 +478,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       };
 
       set({ profile: nextProfile, hasEnteredApp: true, isLoadingAuth: false, authError: null });
-      syncProfileToForum(nextProfile);
+      syncProfileToForum(nextProfile, true);
       await persistLocalState({ profile: nextProfile, fixedLocation, alerts });
       await syncSingleLocationToSupabase(nextProfile, fixedLocation, alerts);
       return true;

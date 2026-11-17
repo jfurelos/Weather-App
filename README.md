@@ -1,110 +1,98 @@
-# Clima & Comunidad España (MVP Móvil)
+# Clima & Comunidad España (MVP)
 
-Aplicación móvil desarrollada en **React Native con Expo SDK (TypeScript)**, inspirada en la línea de diseño minimalista de **Airbnb**, que combina pronóstico meteorológico avanzado, mapas interactivos sin costes de tarjeta y una comunidad local en tiempo real con alertas de proximidad.
-
----
-
-## 🚀 Requisitos Previos
-
-- **Node.js**: Versión LTS (v18.x o superior).
-- **Gestor de Paquetes**: `npm`, `pnpm` o `yarn`.
-- **Dispositivo de Pruebas**: Aplicación móvil **Expo Go** instalada en tu teléfono (Android / iOS) o emulador de Android Studio / simulador de Xcode.
-- **Cuenta de Supabase**: Cuenta gratuita en [supabase.com](https://supabase.com) (no requiere tarjeta de crédito).
+Aplicación móvil multiplataforma desarrollada en **React Native con Expo SDK 52 (TypeScript)**, con estética minimalista inspirada en **Airbnb** (modo claro y oscuro), que combina pronóstico meteorológico en tiempo real, radar interactivo gratuito y foros comunitarios organizados por provincia y comarca en España.
 
 ---
 
-## 🛠️ Instalación y Puesta en Marcha
+## Funcionalidades Principales
 
-### 1. Clonar o acceder al proyecto
-```bash
-cd c:\Users\jfure\Documents\Idearium\App
-```
+- **Acceso Inicial Flexible:** Pantalla de bienvenida con **Iniciar sesión**, **Registrarse** (Supabase Auth) o **Continuar como invitado** (acceso a pronóstico, radar y perfil, sin acceso a los foros).
+- **Inicio (Pronóstico y Consejos):** Clima actual en tiempo real con **Open-Meteo**, timeline horario de 24h, motor de consejos diarios de vestimenta y planes, selector de ciudades españolas y avisos destacados.
+- **Noticias & Radar:** Selector de 7 días, boletines meteorológicos oficiales y mapa interactivo con **Leaflet.js + OpenStreetMap + RainViewer** (con modal a pantalla completa y soporte opcional de CARTO).
+- **Comunidad (Foros Provinciales y Comarcales):**
+  - Foro independiente para cada una de las **50 provincias de España**.
+  - Buscador de subforos por **comarca** y acceso rápido a hasta **3 comarcas favoritas**.
+  - **3 chats fijos** por comarca (*General*, *Accidentes y problemas* y *Cielo y Paisajes*), cada uno con mensaje explicativo de 1 línea al entrar y sistema de reporte/moderación.
+- **Perfil y Alertas Personalizadas:**
+  - Edición de foto/avatar y provincia (sincronizada con la comunidad).
+  - **Ubicación fija única** editable mediante buscador de municipios/capitales de España (sincronizada con Inicio y Supabase).
+  - Toggles, umbrales configurables y **tonos diferenciados** con prueba de sonido en vivo para **Lluvia torrencial**, **Viento y temporales** y **Calor extremo**.
+  - Selector persistente de **Modo Claro / Modo Oscuro**.
 
-### 2. Instalar dependencias
+---
+
+## Requisitos Previos
+
+- **Node.js** v18 o superior.
+- **npm** (incluido con Node.js).
+- **Expo Go** en Android/iOS o navegador web moderno para vista previa.
+- Proyecto gratuito en [Supabase](https://supabase.com) (sin tarjeta de crédito).
+
+---
+
+## Instalación y Puesta en Marcha
+
+### 1. Instalar dependencias
 ```bash
 npm install
 ```
 
-### 3. Configurar variables de entorno
-Copia el archivo de ejemplo para crear tu entorno local:
-```bash
-cp .env.example .env
-```
-Rellena las credenciales obtenidas de tu proyecto en Supabase (ver sección siguiente).
-
-### 4. Iniciar el servidor de desarrollo Expo
-```bash
-npx expo start
-```
-- Presiona **`a`** para abrir en emulador de Android.
-- Presiona **`i`** para abrir en simulador de iOS.
-- Escanea el código QR desde la app **Expo Go** en tu dispositivo físico.
-
----
-
-## 🔐 Configuración de Variables de Entorno (`.env`)
-
-El archivo `.env` en la raíz del proyecto debe contener:
+### 2. Configurar variables de entorno
+Copia `.env.example` a `.env` y completa tus credenciales:
 
 ```env
-# URL base de tu proyecto Supabase (Project Settings > API)
 EXPO_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-
-# Llave anónima pública de Supabase (Project Settings > API > anon public)
 EXPO_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-aqui
-
-# Entorno de ejecución
 EXPO_PUBLIC_APP_ENV=development
+
+# Opcional (gratuita en https://carto.com/basemaps/apikey).
+# Si se deja vacía, el mapa usa OpenStreetMap automáticamente.
+EXPO_PUBLIC_CARTO_API_KEY=
 ```
 
-> **Nota de Seguridad:** Las variables con el prefijo `EXPO_PUBLIC_` son accesibles en el bundle del cliente móvil. Nunca expongas la clave `service_role` de Supabase en este archivo.
+> **Seguridad:** Nunca incluyas claves `service_role` en `.env`.
+
+### 3. Verificación y Ejecución
+```bash
+# Verificar tipos TypeScript
+npx tsc --noEmit
+
+# Iniciar servidor Expo (móvil / emulador)
+npx expo start
+
+# Exportar build web estática en dist/
+npx expo export -p web
+```
 
 ---
 
-## 🗄️ Configuración de la Base de Datos (Supabase)
+## Servicios Gratuitos Integrados (Zero Credit Card)
 
-1. Inicia sesión en el [Dashboard de Supabase](https://supabase.com/dashboard).
-2. Crea un nuevo proyecto (ej. `clima-comunidad-espana`).
-3. Ve a la pestaña **SQL Editor** en el menú lateral izquierdo.
-4. Ejecuta el script de migración inicial definido en `context.md` (o en `supabase/migrations/01_initial_schema.sql` si existe) para crear las tablas:
-   - `profiles`
-   - `user_locations`
-   - `categories`
-   - `forums`
-   - `messages`
-   - `reports`
-5. Habilita **Realtime** para la tabla `messages` en **Database > Publications > supabase_realtime**.
+- **Pronóstico Meteorológico:** [Open-Meteo](https://open-meteo.com) (sin clave ni tarjeta).
+- **Radar de Precipitación:** API pública de [RainViewer](https://www.rainviewer.com/api.html).
+- **Cartografía Base:** [OpenStreetMap](https://www.openstreetmap.org) por defecto (o CARTO gratuito opcional).
+- **Backend, Auth y DB:** [Supabase Free Tier](https://supabase.com) (PostgreSQL + PostGIS + Auth + Realtime).
 
 ---
 
-## 🗺️ Servicios Gratuitos Integrados (Zero Credit Card)
-
-- **Mapas:** Motor Leaflet.js con capas de mapa base CartoDB Positron / OpenStreetMap renderizadas dentro de `react-native-webview`.
-- **Radar de Lluvias:** API pública de tiles de radar de [RainViewer](https://www.rainviewer.com/api.html) (sin clave, sin coste).
-- **Pronóstico:** API abierta de [Open-Meteo](https://open-meteo.com) con modelos DWD/ECMWF para la península y Baleares.
-- **Backend:** Supabase Free Tier (PostgreSQL + PostGIS + Auth + Realtime).
-- **Notificaciones Push:** Firebase Cloud Messaging (Spark Free Tier).
-
----
-
-## 📁 Estructura del Proyecto
-
-Seguimos una arquitectura modular **Feature-Sliced Design (FSD)**:
+## Estructura del Proyecto (Feature-Sliced Design)
 
 ```text
 src/
-├── app/               # Enrutadores, Navigation y Providers globales
-├── features/          # Módulos aislados funcionalmente
-│   ├── home/          # Pronóstico por horas, titulares y consejo del día
-│   ├── weather-map/   # Visor de radar Leaflet y avisos oficiales
-│   ├── community/     # Foros temáticos, chat en tiempo real y reportes
-│   ├── profile/       # Perfil, ubicaciones fijas, alertas y tema claro/oscuro
-│   └── auth/          # Login, registro y sesión
-└── shared/            # Componentes atómicos Airbnb, hooks, clientes y tokens de tema
+├── app/
+│   ├── navigation/          # RootNavigator, BottomTabNavigator y tipos de rutas
+│   └── providers/           # AppProvider (hidratación de tema y perfil)
+├── features/
+│   ├── auth/                # WelcomeAuthScreen (Login, Registro, Invitado)
+│   ├── home/                # Clima actual, timeline 24h, rulesEngine y noticias
+│   ├── weather-map/         # Leaflet + RainViewer, selector 7 días y boletines
+│   ├── community/           # 50 provincias, comarcas, favoritas, 3 chats y reportes
+│   └── profile/             # Perfil, ubicación fija única, umbrales, tonos y AuthModal
+└── shared/
+    ├── api/                 # Cliente singleton de Supabase
+    ├── components/          # UI Kit Airbnb (Typography, Card, Button, Badge)
+    ├── store/               # useThemeStore (Claro/Oscuro persistido)
+    └── theme/               # Tokens de color, espaciado y tipografía
 ```
 
----
-
-## 📖 Documentación Viva
-
-Para consultar las reglas de negocio detalladas, decisiones de arquitectura y la matriz de recomendaciones, revisa [context.md](file:///c:/Users/jfure/Documents/Idearium/App/context.md).
+Para más detalle de arquitectura y reglas de negocio, consulta [context.md](file:///c:/Users/jfure/Documents/Idearium/App/context.md).

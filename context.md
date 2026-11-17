@@ -1,154 +1,104 @@
-# Contexto del Proyecto: Aplicación Meteorológica y Comunidad (España)
+# Contexto del Proyecto: Clima & Comunidad España (MVP)
 
-*Documento vivo de arquitectura, decisiones de diseño, reglas de negocio y estado del proyecto.*
+*Documento vivo de arquitectura, decisiones de diseño, reglas de negocio y estado final del MVP.*
 
 ---
 
 ## 1. Visión y Propósito
-Aplicación móvil en **React Native (Expo SDK)** dirigida a usuarios en España (Península y Baleares). Combina:
-1. **Utilidad Meteorológica de Alta Precisión:** Pronósticos horarios, radar interactivo en tiempo real y alertas geolocalizadas personalizadas (estilo ES-Alert) para ubicaciones fijas del usuario.
-2. **Red Social y Comunidad Local:** Foros organizados por categorías fijas para debatir sobre eventos meteorológicos, compartir partes locales y consultar incidencias.
-3. **Recomendaciones Inteligentes:** Consejos de ropa y actividades basados en una matriz de reglas predefinidas según las condiciones actuales.
+Aplicación móvil multiplataforma en **React Native con Expo SDK 52 (TypeScript)** dirigida a usuarios en España. Combina:
+1. **Utilidad Meteorológica:** Pronósticos horarios en tiempo real (Open-Meteo), mapa radar interactivo (Leaflet + RainViewer) y alertas personalizadas para la ubicación fija del usuario.
+2. **Comunidad Local por Provincia y Comarca:** Foros provinciales con subforos por comarca, acceso rápido a comarcas favoritas y 3 chats fijos por comarca con moderación comunitaria.
+3. **Recomendaciones Inteligentes:** Consejos de vestimenta y planes evaluados por un motor de reglas según temperatura, viento y precipitación.
 
 ---
 
 ## 2. Principios de Diseño Visual (Referencia: Airbnb)
-- **Minimalismo y Pulcritud:** Ausencia total de bordes gruesos o tarjetas saturadas. Espaciado generoso basado en un grid de 8pt (paddings típicos de 16px, 20px, 24px).
-- **Tipografía y Jerarquía:** Textos limpios con alto contraste y pesos diferenciados (Regular, Medium, SemiBold). Textos secundarios en gris suave (`#717171` en modo claro, `#A0A0A0` en modo oscuro).
-- **Elevación Sutil:** Sombras muy suaves y desenfocadas para simular profundidad natural (`shadowOpacity: 0.05-0.08`, `elevation: 2`).
-- **Paleta de Color Semántica:** Tonos desaturados y elegantes para niveles de alerta (lluvia, viento, calor) y soporte dual nativo de **Modo Claro** y **Modo Oscuro** con toggle manual en perfil.
+- **Minimalismo y Pulcritud:** Ausencia de bordes gruesos o sobrecarga textual. Espaciado generoso en grid de 8pt (`16px`, `20px`, `24px`).
+- **Tipografía y Jerarquía:** Contraste nítido en encabezados y cuerpo; textos secundarios suaves (`#717171` claro / `#A0A0A0` oscuro) sin etiquetas superiores redundantes.
+- **Elevación Sutil:** Sombras suaves (`shadowOpacity: 0.06`, `elevation: 2`) y radios redondeados (`borderRadius: 16`).
+- **Modo Claro y Modo Oscuro:** Cambio manual desde Perfil con persistencia local en `AsyncStorage`.
 
 ---
 
 ## 3. Reglas de Negocio por Módulo
 
-### 3.1. Inicio (Home)
-- **Noticias Destacadas:** Carrusel horizontal o tarjeta principal con avisos meteorológicos destacados de fuentes oficiales.
-- **Pronóstico Diario:** Timeline horizontal con scroll fluido que muestra temperatura, icono de clima y probabilidad de lluvia por horas.
-- **Consejo del Día (Rules Engine):**
-  - Evalúa la temperatura actual, rachas de viento y precipitación.
-  - Genera recomendaciones de vestimenta (ej. *Capas ligeras y paraguas compacto*, *Abrigo térmico y cortavientos*) y planes (ej. *Ideal para actividades al aire libre*, *Evitar zonas expuestas a viento*).
+### 3.0. Acceso Inicial (`WelcomeAuthScreen`)
+- Al abrir la app sin sesión activa se muestran 3 opciones:
+  1. **Iniciar sesión** (Supabase Auth).
+  2. **Registrarse** (Nombre, usuario, provincia, email y contraseña en Supabase Auth).
+  3. **Continuar como invitado** (accede a Inicio, Noticias & Radar y Perfil, **sin acceso a los foros**).
+- Al completar cualquiera de las opciones se accede a la app principal. Si el usuario invitado inicia sesión o se registra desde Perfil, la pestaña **Comunidad** se desbloquea de inmediato; al cerrar sesión se vuelve a la pantalla inicial de acceso.
 
-### 3.2. Noticias & Radar
-- **Feed Oficial:** Partes y avisos sincronizados con fuentes oficiales (AEMET / Meteocat vía Supabase).
-- **Selector de Días:** Filtro rápido por días de la semana para previsualizar previsiones y comunicados.
-- **Visor de Mapa / Radar:**
-  - Incrustado en la pantalla mediante `react-native-webview` utilizando **Leaflet.js + CartoDB Positron**.
-  - Capa de radar meteorológico en tiempo real proporcionada por la API abierta de **RainViewer**.
-  - Botón interactivo para expandir el mapa a **Pantalla Completa (Full Screen Modal)**.
+### 3.1. Inicio (`HomeScreen`)
+- **Clima Actual y Selector de Ciudad:** Datos en tiempo real de Open-Meteo sincronizados con la ubicación fija del perfil (y selector rápido de ciudades españolas).
+- **Pronóstico 24h:** Timeline horizontal con temperatura, icono climático y probabilidad de precipitación por hora.
+- **Consejo del Día (`rulesEngine.ts`):** Recomendaciones automáticas de vestimenta y planes según temperatura, viento y lluvia.
+- **Avisos Destacados:** Resumen de avisos oficiales con acceso directo a la pestaña de Noticias & Mapa.
 
-### 3.3. Comunidad / Foro
-- **Categorías Fijas:** Creadas y gestionadas exclusivamente por administradores en la base de datos (ej. *Previsión General*, *Temporales y Alertas*, *Nieve y Montaña*, *Fotografía Meteorológica*, *Consultas Locales*). Los usuarios no pueden crear categorías.
-- **Hilos y Mensajería Realtime:** Chat fluido estilo iMessage / Airbnb conectado mediante Supabase Realtime Channels.
+### 3.2. Noticias & Radar (`WeatherMapScreen`)
+- **Selector de 7 Días:** Permite consultar previsiones y comunicados por día de la semana.
+- **Mapa Interactivo (`Leaflet.js` + `RainViewer`):**
+  - Mapa base abierto con **OpenStreetMap** por defecto (cero marcas de agua y sin tarjeta) y soporte opcional de **CARTO Positron/Dark Matter** mediante `EXPO_PUBLIC_CARTO_API_KEY`.
+  - Capa de radar de precipitación en tiempo real mediante la API pública de **RainViewer**.
+  - Modal de mapa a **pantalla completa** (`FullScreenMapModal`).
+- **Boletines Oficiales:** Feed de comunicados meteorológicos de fuentes oficiales (AEMET, Meteocat).
+
+### 3.3. Comunidad / Foros (`ForumListScreen`, `ComarcaDetailScreen`, `ChatConversationScreen`)
+- **Acceso Exclusivo para Usuarios Registrados:** Oculto y bloqueado en modo invitado.
+- **Jerarquía Provincia → Comarca → 3 Chats:**
+  - Cada una de las **50 provincias de España** dispone de su propio foro provincial; cambiar de provincia cambia de foro.
+  - Buscador integrado de subforos por **comarca** dentro de la provincia activa.
+  - **Comarcas Favoritas:** Hasta un máximo de **3 comarcas favoritas** persistidas localmente, mostradas las 3 simultáneamente en la sección **Favoritas** para acceso directo.
+  - Al abrir cualquier comarca se muestran siempre los mismos **3 chats fijos**:
+    1. **General**
+    2. **Accidentes y problemas**
+    3. **Cielo y Paisajes**
+  - Cada chat muestra en la cabecera un **mensaje predeterminado de 1 línea** explicando su temática.
 - **Moderación Comunitaria:**
-  - Cada mensaje incluye un botón de **Reportar**.
-  - Al reportar: el mensaje se oculta inmediatamente de forma local para el usuario que reporta (`reported_messages` en store local), y se crea un registro en la tabla `reports` de Supabase para su resolución manual desde el dashboard web.
+  - Los mensajes muestran nombre y provincia pública del autor.
+  - Cada mensaje de otro usuario dispone de botón de **Reportar** (`ReportMessageModal`): oculta el mensaje al instante de forma local y registra el reporte en la tabla `reports` de Supabase.
 
-### 3.4. Perfil y Alertas
-- **Gestión de Identidad:** Nombre, Foto de perfil, Provincia asignada, Email y Contraseña.
-- **Privacidad Estricta:** Solo el Nombre, Foto y Provincia son públicos dentro del foro y mensajes. El Email y la contraseña son completamente privados.
-- **Edición de Perfil:** Se permite editar Foto y Provincia; el Email y el Nombre de usuario permanecen inmutables tras el registro para mantener la integridad comunitaria.
-- **Ubicación Fija para Alertas:**
-  - El usuario dispone de **una única ubicación fija** configurada para recibir alertas (ej. *Madrid* o su municipio habitual). Si desea cambiarla, modifica la existente.
-  - Almacenamiento en Supabase con soporte PostGIS (`geography(Point, 4326)`).
-- **Configuración de Alertas Personalizadas:**
-  - Toggles y umbrales por tipo de evento: Viento (> 50 km/h), Lluvia (Avisos amarillos/naranjas), Calor Extremo (> 36°C).
-  - Canales de sonido diferenciados por tipología de alerta usando `expo-av`.
+### 3.4. Perfil y Alertas (`ProfileScreen`)
+- **Identidad y Privacidad:**
+  - Nombre, foto/avatar (color o URL) y provincia son visibles en los foros; email y contraseña permanecen privados.
+  - En cuentas registradas, email y nombre permanecen inmutables; foto y provincia se editan libremente y se sincronizan automáticamente con los foros.
+- **Ubicación Fija Única:**
+  - El usuario mantiene **exactamente 1 ubicación fija** para alertas meteorológicas. Para cambiarla, modifica la existente mediante buscador de municipios/capitales de España (`EditLocationModal`), sincronizando además con Inicio y con `user_locations` en Supabase.
+- **Alertas Personalizadas y Tonos Diferenciados:**
+  - Switches independientes para **Lluvia torrencial**, **Viento y temporales** y **Calor extremo**.
+  - Modal de **Umbrales y Tonos de Alerta** (`AlertSettingsModal`) con umbrales ajustables (Amarillo/Naranja/Rojo, `> 50/70/90 km/h`, `> 34/36/40°C`) y tonos diferenciados por fenómeno con reproducción de vista previa en vivo (`alertSoundService.ts`).
 
 ---
 
-## 4. Stack Tecnológico y Restricciones
+## 4. Stack Tecnológico y Restricción Zero-Credit-Card
 
-| Área | Tecnología Elegida | Justificación / Restricción |
+| Área | Tecnología | Motivo |
 | :--- | :--- | :--- |
-| **Framework Móvil** | React Native + Expo SDK (TypeScript) | Soporte nativo para iOS/Android sin fricciones de toolchain. |
-| **Navegación** | React Navigation (Bottom Tabs + Native Stack) | Modularidad estándar de la industria. |
-| **Estado Global** | Zustand | Stores atómicos, ligeros y desacoplados por módulo. |
-| **BaaS / Base de Datos** | Supabase (PostgreSQL + PostGIS + Auth + Realtime) | Free tier sin tarjeta de crédito. Gestión web nativa. |
-| **Mapas & Radar** | `react-native-webview` + Leaflet + RainViewer | 100% open-source, sin APIs comerciales con tarjeta (Mapbox descartado). |
-| **Datos Meteorológicos** | Open-Meteo API + AEMET OpenData | Modelos ECMWF/ICON de alta resolución para España, gratuitos sin tarjeta. |
-| **Push Notifications** | Firebase Cloud Messaging (FCM) / Expo Notifications | Notificaciones push de alta prioridad para alertas a ubicaciones fijas. |
+| **Framework** | React Native + Expo SDK 52 (TypeScript estricto) | Desarrollo ágil para Android, iOS y Web preview. |
+| **Navegación** | React Navigation (Bottom Tabs + Native Stack) | Navegación modular con control de acceso por sesión. |
+| **Estado Global** | Zustand + `AsyncStorage` | Stores ligeros, desacoplados y con persistencia local. |
+| **Backend & DB** | Supabase Free Tier (PostgreSQL + PostGIS + Auth + Realtime) | Sin tarjeta bancaria; gestión completa desde dashboard. |
+| **Mapas & Radar** | `react-native-webview` + Leaflet 1.9.4 + OpenStreetMap + RainViewer | 100% gratuito, sin APIs comerciales con tarjeta. |
+| **Meteorología** | Open-Meteo API | Modelos de alta precisión para España, gratuito y abierto. |
+| **Audio de Alertas** | Web Audio API / `expo-av` | Tonos diferenciados con preescucha sin dependencias externas. |
 
 ---
 
 ## 5. Modelo de Datos Relacional (Supabase / PostgreSQL)
-
-```sql
--- Perfiles de usuario (complemento de auth.users)
-CREATE TABLE profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
-  username TEXT UNIQUE NOT NULL,
-  full_name TEXT NOT NULL,
-  avatar_url TEXT,
-  province TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Ubicaciones fijas para alertas del usuario
-CREATE TABLE user_locations (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  latitude DOUBLE PRECISION NOT NULL,
-  longitude DOUBLE PRECISION NOT NULL,
-  geom GEOGRAPHY(Point, 4326),
-  notify_rain BOOLEAN DEFAULT TRUE,
-  notify_wind BOOLEAN DEFAULT TRUE,
-  notify_heat BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Categorías fijas de foros (solo administradores)
-CREATE TABLE categories (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  slug TEXT UNIQUE NOT NULL,
-  description TEXT,
-  icon TEXT,
-  order_index INT DEFAULT 0,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Foros o canales de debate
-CREATE TABLE forums (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  province_code TEXT, -- Opcional, para foros provinciales
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Mensajes en tiempo real
-CREATE TABLE messages (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  forum_id UUID REFERENCES forums(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  content TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Reportes de moderación comunitaria
-CREATE TABLE reports (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  reporter_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
-  message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
-  reason TEXT NOT NULL,
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'dismissed', 'actioned')),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+Esquema desplegado en Supabase (ver `supabase/migrations/01_initial_schema.sql`):
+- `profiles`: `id`, `username`, `full_name`, `avatar_url`, `province`, timestamps.
+- `user_locations`: `id`, `user_id`, `name`, `latitude`, `longitude`, `geom` (`GEOGRAPHY(Point, 4326)` con trigger PostGIS), `notify_rain`, `notify_wind`, `notify_heat`.
+- `categories`, `forums`, `messages` (Realtime habilitado) y `reports` (moderación comunitaria).
+- Políticas **RLS (Row Level Security)** activas en todas las tablas.
 
 ---
 
-## 6. Estado Actual del Proyecto
-- [x] **Fase 1: Arquitectura y Planificación** (Completada y aprobada).
-- [x] **Fase 2: Documentación Inicial y Base de Datos** (Completada: `context.md`, `README.md`, `.env`, tablas creadas en Supabase con PostGIS y Realtime activo).
-- [x] **Fase 3: Scaffolding y Navegación** (Completada: Proyecto Expo SDK 52 con TypeScript estricto, estructura FSD, sistema de diseño Airbnb Claro/Oscuro con Zustand, cliente Supabase singleton y 4 Bottom Tabs funcionales).
-- [ ] **Fase 4: Desarrollo Iterativo por Módulos:**
-  - [x] **Pestaña 1: Inicio (Home)** (Completada: Conexión en tiempo real con Open-Meteo para España, timeline horizontal por horas con probabilidad de lluvia, motor de reglas para ropa y planes, avisos destacados y selector modal de ciudades).
-  - [ ] **Pestaña 2: Noticias & Radar** (Próximo: Visor interactivo Leaflet.js / RainViewer en `react-native-webview`, modal de pantalla completa y selector de días).
-  - [ ] **Pestaña 3: Foros y Comunidad** (Chat en tiempo real, categorías fijas y reportes con ocultamiento local).
-  - [ ] **Pestaña 4: Perfil y Alertas** (Gestión de ubicaciones fijas, umbrales y sonidos de alerta).
+## 6. Estado de Fases
+- [x] **Fase 1:** Arquitectura, stack zero-credit-card y plan técnico.
+- [x] **Fase 2:** Documentación inicial y despliegue de esquema PostgreSQL + PostGIS + RLS en Supabase.
+- [x] **Fase 3:** Scaffolding Expo TypeScript, tokens Airbnb Claro/Oscuro y navegación base.
+- [x] **Fase 4 - Módulo 1:** Inicio (Open-Meteo, timeline 24h, motor de consejos, selector de ciudad).
+- [x] **Fase 4 - Módulo 2:** Noticias & Radar (Leaflet + OSM/CARTO + RainViewer, selector 7 días, pantalla completa).
+- [x] **Fase 4 - Módulo 3:** Comunidad (50 foros provinciales, buscador de comarcas, máx 3 favoritas, 3 chats fijos con explicación de 1 línea, moderación).
+- [x] **Fase 4 - Módulo 4:** Perfil, ubicación fija única, umbrales/tonos con preescucha y flujo inicial de acceso (Login / Registro / Invitado sin foros).
+- [x] **Fase 5:** Integración transversal entre módulos, auditoría QA, build web verificada y documentación final.
