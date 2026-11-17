@@ -1,10 +1,11 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { registerRootComponent } from 'expo';
 import { AppProvider } from '@/app/providers/AppProvider';
 import { RootNavigator } from '@/app/navigation/RootNavigator';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 
-export default function App() {
+function App() {
   const { mode } = useThemeStore();
 
   return (
@@ -14,3 +15,6 @@ export default function App() {
     </AppProvider>
   );
 }
+
+export default registerRootComponent(App);
+
