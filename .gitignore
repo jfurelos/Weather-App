@@ -2,8 +2,9 @@
 node_modules/
 package-lock.json
 
-# Expo
+# Expo & Vercel
 .expo/
+.vercel/
 dist/
 web-build/
 
@@ -36,3 +37,6 @@ Thumbs.db
 *.swo
 .vscode/
 .idea/
+
+.vercel
+.env*
