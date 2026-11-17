@@ -1,18 +1,48 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, ScrollView, SafeAreaView, RefreshControl } from 'react-native';
 import { Typography } from '@/shared/components/Typography';
-import { Card } from '@/shared/components/Card';
-import { Button } from '@/shared/components/Button';
-import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
+import { useWeatherMapStore } from '../store/useWeatherMapStore';
+import { WeekDaySelector } from '../components/WeekDaySelector';
+import { RadarMapView } from '../components/RadarMapView';
+import { FullScreenMapModal } from '../components/FullScreenMapModal';
+import { OfficialBulletinsList } from '../components/OfficialBulletinsList';
 
 export const WeatherMapScreen: React.FC = () => {
   const { colors } = useThemeStore();
+  const {
+    days,
+    selectedDayIndex,
+    bulletins,
+    isLoading,
+    setSelectedDayIndex,
+    loadInitialData,
+  } = useWeatherMapStore();
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  const selectedDay = days.find((d) => d.index === selectedDayIndex);
+  const selectedDayLabel = selectedDay
+    ? `${selectedDay.label} (${selectedDay.dateFormatted})`
+    : 'Hoy';
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={loadInitialData}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        {/* Header */}
         <View style={styles.header}>
           <Typography variant="caption" color="secondary">
             PARTES Y RADAR
@@ -22,48 +52,28 @@ export const WeatherMapScreen: React.FC = () => {
           </Typography>
         </View>
 
-        {/* Visor de Mapa / Radar Container Placeholder */}
-        <Card style={styles.mapCard}>
-          <View style={styles.mapHeader}>
-            <View>
-              <Typography variant="h3">Radar Peninsular</Typography>
-              <Typography variant="caption" color="secondary">
-                Lluvia y nubosidad en tiempo real
-              </Typography>
-            </View>
-            <Badge label="En directo" tone="rain" />
-          </View>
+        {/* 7-Day Selector */}
+        <WeekDaySelector
+          days={days}
+          selectedIndex={selectedDayIndex}
+          onSelectDay={(idx) => {
+            setSelectedDayIndex(idx);
+          }}
+        />
 
-          {/* Placeholder para el WebView de Leaflet */}
-          <View style={[styles.mapPlaceholder, { backgroundColor: colors.surface }]}>
-            <Typography variant="callout" color="secondary" style={{ textAlign: 'center' }}>
-              🗺️ Visor Leaflet.js / RainViewer (Se activará en Fase 4)
-            </Typography>
-          </View>
+        {/* Interactive Radar Leaflet Map Card */}
+        <RadarMapView />
 
-          <Button
-            title="Ver a Pantalla Completa"
-            variant="outline"
-            style={{ marginTop: spacing.sm }}
-            onPress={() => console.log('Fullscreen map')}
-          />
-        </Card>
-
-        {/* Feed de noticias oficiales */}
-        <View style={styles.sectionHeader}>
-          <Typography variant="h2">Boletines Oficiales</Typography>
-        </View>
-
-        <Card>
-          <Badge label="AEMET" tone="neutral" style={{ marginBottom: spacing.xs }} />
-          <Typography variant="h3" style={{ marginBottom: spacing.xs }}>
-            Boletín general de la Península y Baleares
-          </Typography>
-          <Typography variant="body" color="secondary">
-            Bajas presiones atlánticas aproximándose por el oeste peninsular. Vientos del suroeste moderados a fuertes en litorales gallegos.
-          </Typography>
-        </Card>
+        {/* Official Bulletins */}
+        <OfficialBulletinsList
+          bulletins={bulletins}
+          isLoading={isLoading}
+          selectedDayLabel={selectedDayLabel}
+        />
       </ScrollView>
+
+      {/* Fullscreen Map Modal */}
+      <FullScreenMapModal />
     </SafeAreaView>
   );
 };
@@ -74,6 +84,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.xl,
+    paddingBottom: 90, // safe distance from 80px bottom tab bar
     gap: spacing.base,
   },
   header: {
@@ -81,23 +92,5 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: spacing.xs,
-  },
-  mapCard: {
-    gap: spacing.sm,
-  },
-  mapHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  mapPlaceholder: {
-    height: 220,
-    borderRadius: spacing.borderRadiusMd,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: spacing.xs,
-  },
-  sectionHeader: {
-    marginTop: spacing.sm,
   },
 });
