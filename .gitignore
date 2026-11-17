@@ -26,6 +26,8 @@ web-build/
 # Screenshots & Playwright
 .playwright-mcp/
 *.png
+!assets/*.png
+!public/*.png
 
 # OS / Editor
 .DS_Store

@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FBF8F3"
     },
     "ios": {
       "supportsTablet": true
@@ -17,8 +17,19 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FBF8F3"
       }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "Clima & Comunidad España",
+      "shortName": "Clima España",
+      "lang": "es",
+      "display": "standalone",
+      "themeColor": "#FBF8F3",
+      "backgroundColor": "#FBF8F3"
     },
     "plugins": []
   }
