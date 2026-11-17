@@ -1,30 +1,64 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Star, ChevronRight } from 'lucide-react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Star, ChevronRight, AlertCircle, X } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { Comarca } from '../data/provincesData';
+import { MAX_FAVORITE_COMARCAS } from '../store/useComarcasForumStore';
 
 interface Props {
   favorites: Comarca[];
+  limitMessage?: string | null;
+  onDismissLimitMessage?: () => void;
   onSelectComarca: (comarca: Comarca) => void;
+  onRemoveFavorite?: (comarca: Comarca) => void;
 }
 
 export const FavoriteComarcasBar: React.FC<Props> = ({
   favorites,
+  limitMessage,
+  onDismissLimitMessage,
   onSelectComarca,
+  onRemoveFavorite,
 }) => {
   const { colors } = useThemeStore();
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Star size={14} color="#F59E0B" fill="#F59E0B" />
-        <Typography variant="captionMedium" color="secondary" style={{ fontWeight: '700' }}>
-          ACCESO RÁPIDO • COMARCAS FAVORITAS
+        <View style={styles.headerLeft}>
+          <Star size={14} color="#F59E0B" fill="#F59E0B" />
+          <Typography variant="captionMedium" color="secondary" style={{ fontWeight: '700' }}>
+            ACCESO RÁPIDO • FAVORITAS
+          </Typography>
+        </View>
+        <Typography variant="caption" color="secondary" style={{ fontWeight: '600' }}>
+          {favorites.length}/{MAX_FAVORITE_COMARCAS}
         </Typography>
       </View>
+
+      {limitMessage && (
+        <View
+          style={[
+            styles.limitBanner,
+            { backgroundColor: colors.warning + '18', borderColor: colors.warning },
+          ]}
+        >
+          <AlertCircle size={15} color={colors.warning} />
+          <Typography
+            variant="captionMedium"
+            style={{ flex: 1, color: colors.textPrimary, fontSize: 12 }}
+          >
+            {limitMessage}
+          </Typography>
+          {onDismissLimitMessage && (
+            <TouchableOpacity onPress={onDismissLimitMessage} style={styles.dismissBtn}>
+              <X size={14} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {favorites.length === 0 ? (
         <View
@@ -34,52 +68,60 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
           ]}
         >
           <Typography variant="caption" color="secondary">
-            Marca cualquier comarca con la estrella ☆ para tener acceso directo aquí.
+            Marca hasta {MAX_FAVORITE_COMARCAS} comarcas con la estrella ☆ para acceder rápidamente aquí.
           </Typography>
         </View>
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
+        <View style={styles.listContainer}>
           {favorites.map((comarca) => (
-            <TouchableOpacity
+            <View
               key={comarca.id}
-              activeOpacity={0.75}
               style={[
-                styles.favCard,
+                styles.favRow,
                 {
                   backgroundColor: colors.card,
                   borderColor: colors.border,
                 },
               ]}
-              onPress={() => onSelectComarca(comarca)}
             >
-              <View style={styles.favTopRow}>
-                <Star size={13} color="#F59E0B" fill="#F59E0B" />
-                <Typography
-                  variant="caption"
-                  color="secondary"
-                  style={{ fontSize: 10, fontWeight: '600' }}
-                >
-                  {comarca.provinceName}
-                </Typography>
-              </View>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={styles.favMainTouch}
+                onPress={() => onSelectComarca(comarca)}
+              >
+                <Star size={15} color="#F59E0B" fill="#F59E0B" />
+                <View style={styles.favInfo}>
+                  <Typography
+                    variant="bodyMedium"
+                    numberOfLines={1}
+                    style={{ fontWeight: '700' }}
+                  >
+                    {comarca.name}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="secondary"
+                    style={{ fontSize: 11 }}
+                  >
+                    {comarca.provinceName}
+                  </Typography>
+                </View>
+                <ChevronRight size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
 
-              <View style={styles.favBottomRow}>
-                <Typography
-                  variant="bodyMedium"
-                  numberOfLines={1}
-                  style={{ fontWeight: '700', flex: 1 }}
+              {onRemoveFavorite && (
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  style={[styles.removeBtn, { borderLeftColor: colors.border }]}
+                  onPress={() => onRemoveFavorite(comarca)}
+                  accessibilityLabel={`Quitar ${comarca.name} de favoritas`}
                 >
-                  {comarca.name}
-                </Typography>
-                <ChevronRight size={14} color={colors.textSecondary} />
-              </View>
-            </TouchableOpacity>
+                  <X size={14} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+            </View>
           ))}
-        </ScrollView>
+        </View>
       )}
     </View>
   );
@@ -92,7 +134,24 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
+  },
+  limitBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+  },
+  dismissBtn: {
+    padding: 4,
   },
   emptyHint: {
     padding: spacing.md,
@@ -100,32 +159,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderStyle: 'dashed',
   },
-  scrollContent: {
-    gap: spacing.sm,
-    paddingVertical: 2,
+  listContainer: {
+    gap: spacing.xs + 2,
   },
-  favCard: {
-    width: 175,
+  favRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  favMainTouch: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
-    borderRadius: spacing.borderRadiusLg,
-    borderWidth: 1,
-    gap: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
   },
-  favTopRow: {
+  favInfo: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+    alignItems: 'baseline',
+    gap: 6,
+    flexWrap: 'wrap',
   },
-  favBottomRow: {
-    flexDirection: 'row',
+  removeBtn: {
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.sm + 4,
+    borderLeftWidth: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 4,
+    justifyContent: 'center',
   },
 });

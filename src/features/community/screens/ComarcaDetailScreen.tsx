@@ -36,7 +36,12 @@ export const ComarcaDetailScreen: React.FC = () => {
 
   const { comarcaId, comarcaName, provinceName } = route.params;
 
-  const { isFavorite, toggleFavoriteComarca } = useComarcasForumStore();
+  const {
+    isFavorite,
+    toggleFavoriteComarca,
+    favoriteLimitMessage,
+    clearFavoriteLimitMessage,
+  } = useComarcasForumStore();
   const favorite = isFavorite(comarcaId);
 
   const handleOpenChat = (chatType: ChatType) => {
@@ -122,6 +127,24 @@ export const ComarcaDetailScreen: React.FC = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {favoriteLimitMessage && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={clearFavoriteLimitMessage}
+            style={{
+              backgroundColor: colors.warning + '18',
+              borderColor: colors.warning,
+              borderWidth: 1,
+              borderRadius: spacing.borderRadiusMd,
+              padding: spacing.md,
+            }}
+          >
+            <Typography variant="captionMedium" style={{ color: colors.textPrimary }}>
+              {favoriteLimitMessage} (Pulsa para cerrar)
+            </Typography>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.intro}>
           <Typography variant="hero" style={styles.introTitle}>
             Chats de {comarcaName}

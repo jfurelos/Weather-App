@@ -31,10 +31,12 @@ export const ForumListScreen: React.FC = () => {
     selectedProvince,
     searchQuery,
     favoriteComarcas,
+    favoriteLimitMessage,
     loadPersistedState,
     setSelectedProvince,
     setSearchQuery,
     toggleFavoriteComarca,
+    clearFavoriteLimitMessage,
     isFavorite,
   } = useComarcasForumStore();
 
@@ -111,10 +113,13 @@ export const ForumListScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
 
-        {/* Sección de Comarcas Favoritas (Acceso Rápido) */}
+        {/* Sección de Comarcas Favoritas (Acceso Rápido - Máximo 3, todas visibles) */}
         <FavoriteComarcasBar
           favorites={favoriteComarcas}
+          limitMessage={favoriteLimitMessage}
+          onDismissLimitMessage={clearFavoriteLimitMessage}
           onSelectComarca={handleOpenComarca}
+          onRemoveFavorite={toggleFavoriteComarca}
         />
 
         {/* Buscador de Subforums (Comarcas) */}

@@ -6,6 +6,7 @@ import { ChatType } from '../data/chatTypes';
 
 const FAVORITES_STORAGE_KEY = '@clima_comunidad_favorite_comarcas_v2';
 const REPORTED_STORAGE_KEY = '@clima_comunidad_reported_messages_v2';
+export const MAX_FAVORITE_COMARCAS = 3;
 
 export interface ChatMessage {
   id: string;
@@ -107,6 +108,7 @@ interface ComarcasForumState {
   selectedProvince: string;
   searchQuery: string;
   favoriteComarcas: Comarca[];
+  favoriteLimitMessage: string | null;
   reportedMessageIds: string[];
   messagesByChatKey: Record<string, ChatMessage[]>;
   reportingMessage: ChatMessage | null;
@@ -120,6 +122,7 @@ interface ComarcasForumState {
   setSelectedProvince: (provinceName: string) => void;
   setSearchQuery: (query: string) => void;
   toggleFavoriteComarca: (comarca: Comarca) => Promise<void>;
+  clearFavoriteLimitMessage: () => void;
   isFavorite: (comarcaId: string) => boolean;
   getMessagesForChat: (comarcaId: string, chatType: ChatType) => ChatMessage[];
   sendMessage: (comarcaId: string, chatType: ChatType, content: string) => Promise<void>;
@@ -141,6 +144,7 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
       activeCount: 34,
     },
   ],
+  favoriteLimitMessage: null,
   reportedMessageIds: [],
   messagesByChatKey: SAMPLE_CHAT_MESSAGES,
   reportingMessage: null,
@@ -159,7 +163,8 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
 
       const updates: Partial<ComarcasForumState> = {};
       if (favStored) {
-        updates.favoriteComarcas = JSON.parse(favStored);
+        const parsed: Comarca[] = JSON.parse(favStored);
+        updates.favoriteComarcas = parsed.slice(0, MAX_FAVORITE_COMARCAS);
       }
       if (repStored) {
         updates.reportedMessageIds = JSON.parse(repStored);
@@ -173,22 +178,33 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
   },
 
   setSelectedProvince: (provinceName: string) => {
-    set({ selectedProvince: provinceName, searchQuery: '' });
+    set({ selectedProvince: provinceName, searchQuery: '', favoriteLimitMessage: null });
   },
 
   setSearchQuery: (query: string) => {
     set({ searchQuery: query });
   },
 
+  clearFavoriteLimitMessage: () => {
+    set({ favoriteLimitMessage: null });
+  },
+
   toggleFavoriteComarca: async (comarca: Comarca) => {
     const { favoriteComarcas } = get();
     const exists = favoriteComarcas.some((c) => c.id === comarca.id);
+
+    if (!exists && favoriteComarcas.length >= MAX_FAVORITE_COMARCAS) {
+      set({
+        favoriteLimitMessage: `Máximo ${MAX_FAVORITE_COMARCAS} comarcas favoritas. Quita una para añadir otra.`,
+      });
+      return;
+    }
 
     const nextFavorites = exists
       ? favoriteComarcas.filter((c) => c.id !== comarca.id)
       : [comarca, ...favoriteComarcas];
 
-    set({ favoriteComarcas: nextFavorites });
+    set({ favoriteComarcas: nextFavorites, favoriteLimitMessage: null });
 
     try {
       await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(nextFavorites));
