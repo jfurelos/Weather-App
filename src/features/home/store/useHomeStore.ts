@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { WeatherData, fetchWeatherData } from '../services/weatherApi';
 import { DailyAdvice, evaluateDailyAdvice } from '../services/rulesEngine';
 import { FeaturedNews, fetchFeaturedNews } from '../services/newsService';
+import type { MockStormUser } from '@/shared/data/mockStormUsers';
 
 export interface City {
   name: string;
@@ -15,44 +16,88 @@ export const SPANISH_CITIES: City[] = [
   { name: 'Barcelona', province: 'Barcelona', latitude: 41.3879, longitude: 2.1699 },
   { name: 'Valencia', province: 'Valencia', latitude: 39.4699, longitude: -0.3763 },
   { name: 'Sevilla', province: 'Sevilla', latitude: 37.3891, longitude: -5.9845 },
-  { name: 'Bilbao', province: 'Bizkaia', latitude: 43.2630, longitude: -2.9350 },
+  { name: 'Bilbao', province: 'Vizcaya', latitude: 43.2630, longitude: -2.9350 },
   { name: 'Zaragoza', province: 'Zaragoza', latitude: 41.6488, longitude: -0.8891 },
   { name: 'Málaga', province: 'Málaga', latitude: 36.7213, longitude: -4.4214 },
-  { name: 'Palma', province: 'Illes Balears', latitude: 39.5696, longitude: 2.6502 },
+  { name: 'Palma', province: 'Baleares', latitude: 39.5696, longitude: 2.6502 },
   { name: 'A Coruña', province: 'A Coruña', latitude: 43.3623, longitude: -8.4115 },
   { name: 'Valladolid', province: 'Valladolid', latitude: 41.6523, longitude: -4.7245 },
 ];
+
+export interface ActiveMockScenario {
+  userId: string;
+  userName: string;
+  stormTitle: string;
+  stormBadge: string;
+}
 
 interface HomeState {
   selectedCity: City;
   weather: WeatherData | null;
   advice: DailyAdvice | null;
   news: FeaturedNews[];
+  activeMockScenario: ActiveMockScenario | null;
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
 
   setSelectedCity: (city: City) => Promise<void>;
+  applyMockStormScenario: (mockUser: MockStormUser) => void;
+  clearMockStormScenario: () => Promise<void>;
   loadHomeData: () => Promise<void>;
   refreshHomeData: () => Promise<void>;
 }
 
 export const useHomeStore = create<HomeState>((set, get) => ({
-  selectedCity: SPANISH_CITIES[0], // Madrid por defecto
+  selectedCity: SPANISH_CITIES[0],
   weather: null,
   advice: null,
   news: [],
+  activeMockScenario: null,
   isLoading: true,
   isRefreshing: false,
   error: null,
 
   setSelectedCity: async (city: City) => {
-    set({ selectedCity: city, isLoading: true, error: null });
+    set({ selectedCity: city, activeMockScenario: null, isLoading: true, error: null });
+    await get().loadHomeData();
+  },
+
+  applyMockStormScenario: (mockUser: MockStormUser) => {
+    const advice = evaluateDailyAdvice(mockUser.weather);
+    set({
+      selectedCity: {
+        name: mockUser.location.name,
+        province: mockUser.location.province,
+        latitude: mockUser.location.latitude,
+        longitude: mockUser.location.longitude,
+      },
+      weather: mockUser.weather,
+      advice,
+      news: mockUser.news,
+      activeMockScenario: {
+        userId: mockUser.id,
+        userName: mockUser.fullName,
+        stormTitle: mockUser.stormTitle,
+        stormBadge: mockUser.stormBadge,
+      },
+      isLoading: false,
+      isRefreshing: false,
+      error: null,
+    });
+  },
+
+  clearMockStormScenario: async () => {
+    set({ activeMockScenario: null });
     await get().loadHomeData();
   },
 
   loadHomeData: async () => {
-    const { selectedCity } = get();
+    const { selectedCity, activeMockScenario } = get();
+    if (activeMockScenario) {
+      set({ isLoading: false });
+      return;
+    }
     try {
       set({ isLoading: true, error: null });
       const [weatherData, newsData] = await Promise.all([
@@ -78,7 +123,11 @@ export const useHomeStore = create<HomeState>((set, get) => ({
   },
 
   refreshHomeData: async () => {
-    const { selectedCity } = get();
+    const { selectedCity, activeMockScenario } = get();
+    if (activeMockScenario) {
+      set({ isRefreshing: false });
+      return;
+    }
     try {
       set({ isRefreshing: true, error: null });
       const [weatherData, newsData] = await Promise.all([
@@ -94,7 +143,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
         news: newsData,
         isRefreshing: false,
       });
-    } catch (err: any) {
+    } catch {
       set({ isRefreshing: false });
     }
   },

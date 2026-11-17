@@ -16,14 +16,20 @@ import {
   Check,
   Search,
   UserRound,
+  Eye,
+  EyeOff,
+  CloudLightning,
+  ChevronRight,
 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
+import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { SPANISH_PROVINCES } from '@/features/community/data/provincesData';
 import { useProfileStore } from '@/features/profile/store/useProfileStore';
+import { MOCK_STORM_USERS } from '@/shared/data/mockStormUsers';
 
 type AuthStep = 'welcome' | 'login' | 'register';
 
@@ -36,17 +42,20 @@ export const WelcomeAuthScreen: React.FC = () => {
     signIn,
     signUp,
     continueAsGuest,
+    enterAsMockStormUser,
     clearAuthError,
   } = useProfileStore();
 
   const [step, setStep] = useState<AuthStep>('welcome');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [province, setProvince] = useState(profile.province || 'Madrid');
   const [showProvinces, setShowProvinces] = useState(false);
   const [provinceFilter, setProvinceFilter] = useState('');
+  const [showDemoUsers, setShowDemoUsers] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const filteredProvinces = SPANISH_PROVINCES.filter((p) =>
@@ -58,6 +67,7 @@ export const WelcomeAuthScreen: React.FC = () => {
     setLocalError(null);
     clearAuthError();
     setShowProvinces(false);
+    setShowPassword(false);
   };
 
   const handleLogin = async () => {
@@ -172,6 +182,69 @@ export const WelcomeAuthScreen: React.FC = () => {
                     Sin acceso a los foros comunitarios
                   </Typography>
                 </TouchableOpacity>
+              </Card>
+
+              {/* Selector de Usuarios Mock con Temporales */}
+              <Card style={styles.demoCard}>
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={() => setShowDemoUsers((prev) => !prev)}
+                  style={styles.demoHeader}
+                >
+                  <View style={styles.demoTitleRow}>
+                    <CloudLightning size={16} color={colors.warning} />
+                    <View>
+                      <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+                        Probar usuarios con temporales (Mock)
+                      </Typography>
+                      <Typography variant="caption" color="secondary">
+                        5 perfiles con distintos fenómenos extremos
+                      </Typography>
+                    </View>
+                  </View>
+                  <Typography variant="captionMedium" color="brand">
+                    {showDemoUsers ? 'Ocultar' : 'Ver'}
+                  </Typography>
+                </TouchableOpacity>
+
+                {showDemoUsers && (
+                  <View style={styles.demoList}>
+                    {MOCK_STORM_USERS.map((mock) => (
+                      <TouchableOpacity
+                        key={mock.id}
+                        activeOpacity={0.75}
+                        onPress={() => enterAsMockStormUser(mock)}
+                        style={[
+                          styles.demoUserRow,
+                          { backgroundColor: colors.surface, borderColor: colors.border },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.demoAvatar,
+                            { backgroundColor: mock.avatarColor },
+                          ]}
+                        >
+                          <Typography variant="captionMedium" style={{ color: '#FFFFFF', fontWeight: '700' }}>
+                            {mock.fullName.charAt(0)}
+                          </Typography>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <View style={styles.demoUserTop}>
+                            <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+                              {mock.fullName}
+                            </Typography>
+                            <Badge label={mock.stormBadge} tone="warning" />
+                          </View>
+                          <Typography variant="caption" color="secondary" numberOfLines={1}>
+                            {mock.province} • {mock.stormTitle}
+                          </Typography>
+                        </View>
+                        <ChevronRight size={15} color={colors.textSecondary} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
               </Card>
             </View>
           ) : (
@@ -353,21 +426,35 @@ export const WelcomeAuthScreen: React.FC = () => {
                   <Typography variant="captionMedium" color="secondary">
                     CONTRASEÑA
                   </Typography>
-                  <TextInput
+                  <View
                     style={[
-                      styles.input,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                        color: colors.textPrimary,
-                      },
+                      styles.passwordWrapper,
+                      { backgroundColor: colors.surface, borderColor: colors.border },
                     ]}
-                    placeholder="Mínimo 6 caracteres"
-                    placeholderTextColor={colors.textSecondary}
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                  />
+                  >
+                    <TextInput
+                      style={[styles.passwordInput, { color: colors.textPrimary }]}
+                      placeholder="Mínimo 6 caracteres"
+                      placeholderTextColor={colors.textSecondary}
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                    />
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => setShowPassword((prev) => !prev)}
+                      style={styles.eyeButton}
+                      accessibilityLabel={
+                        showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff size={18} color={colors.textSecondary} />
+                      ) : (
+                        <Eye size={18} color={colors.textSecondary} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 {activeError && (
@@ -432,7 +519,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   welcomeWrapper: {
-    gap: spacing.xl,
+    gap: spacing.lg,
   },
   brandHeader: {
     alignItems: 'center',
@@ -478,6 +565,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
+  demoCard: {
+    gap: spacing.sm,
+  },
+  demoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  demoTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  demoList: {
+    gap: spacing.xs + 2,
+    marginTop: spacing.xs,
+  },
+  demoUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.sm + 2,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+  },
+  demoAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  demoUserTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
   formWrapper: {
     gap: spacing.base,
   },
@@ -506,6 +633,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: spacing.md,
     fontSize: 14,
+  },
+  passwordWrapper: {
+    height: 46,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 14,
+    height: '100%',
+  },
+  eyeButton: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   provinceBtn: {
     height: 46,

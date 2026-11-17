@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { X, Radio } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
@@ -61,13 +61,10 @@ export const FullScreenMapModal: React.FC = () => {
             ]}
           >
             <View style={styles.headerInfo}>
-              <View style={styles.liveIndicator}>
-                <View style={styles.pulsingDot} />
-                <Typography variant="caption" style={{ fontWeight: '700', color: '#008489' }}>
-                  EN DIRECTO
-                </Typography>
-              </View>
               <Typography variant="h3">Radar Meteorológico</Typography>
+              <Typography variant="caption" color="secondary">
+                Satélite y lluvia en tiempo real
+              </Typography>
             </View>
 
             <TouchableOpacity
@@ -126,17 +123,6 @@ const styles = StyleSheet.create({
   },
   headerInfo: {
     gap: 2,
-  },
-  liveIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  pulsingDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#008489',
   },
   closeButton: {
     width: 36,

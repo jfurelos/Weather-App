@@ -10,9 +10,9 @@ export function getLeafletMapHtml(themeMode: 'light' | 'dark', apiKey?: string):
         : `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`)
     : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-  const bgColor = isDark ? '#121212' : '#F7F7F7';
-  const textColor = isDark ? '#F7F7F7' : '#222222';
-  const cardBg = isDark ? 'rgba(30,30,30,0.85)' : 'rgba(255,255,255,0.85)';
+  const bgColor = isDark ? '#181614' : '#FBF8F3';
+  const textColor = isDark ? '#F7F3EC' : '#2A2623';
+  const cardBg = isDark ? 'rgba(38,34,31,0.9)' : 'rgba(255,253,249,0.9)';
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -43,7 +43,7 @@ export function getLeafletMapHtml(themeMode: 'light' | 'dark', apiKey?: string):
       font-size: 11px;
       color: ${textColor};
       font-weight: 500;
-      border: 1px solid ${isDark ? '#333' : '#EBEBEB'};
+      border: 1px solid ${isDark ? '#36312C' : '#EAE2D4'};
     }
     .legend-gradient {
       width: 70px;
@@ -52,7 +52,7 @@ export function getLeafletMapHtml(themeMode: 'light' | 'dark', apiKey?: string):
       background: linear-gradient(to right, #7bc8f6, #3b82f6, #eab308, #ef4444);
     }
     .leaflet-bar { border: none !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; border-radius: 8px !important; overflow: hidden; }
-    .leaflet-bar a { background-color: ${cardBg} !important; color: ${textColor} !important; border-bottom: 1px solid ${isDark ? '#333' : '#EBEBEB'} !important; }
+    .leaflet-bar a { background-color: ${cardBg} !important; color: ${textColor} !important; border-bottom: 1px solid ${isDark ? '#36312C' : '#EAE2D4'} !important; }
   </style>
 </head>
 <body>

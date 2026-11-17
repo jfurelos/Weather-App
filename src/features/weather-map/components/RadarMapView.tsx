@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { Maximize2, Radio } from 'lucide-react-native';
+import { Maximize2 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
-import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { getLeafletMapHtml } from '../webview/leafletMapHtml';
@@ -24,7 +23,6 @@ export const RadarMapView: React.FC = () => {
             Satélite y lluvia en tiempo real
           </Typography>
         </View>
-        <Badge label="En directo" tone="rain" />
       </View>
 
       <View

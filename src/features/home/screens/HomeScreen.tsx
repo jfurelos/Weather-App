@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Typography } from '@/shared/components/Typography';
@@ -28,12 +29,14 @@ export const HomeScreen: React.FC = () => {
     weather,
     advice,
     news,
+    activeMockScenario,
     isLoading,
     isRefreshing,
     error,
     loadHomeData,
     refreshHomeData,
     setSelectedCity,
+    clearMockStormScenario,
   } = useHomeStore();
 
   const [isCityModalVisible, setCityModalVisible] = useState(false);
@@ -62,6 +65,33 @@ export const HomeScreen: React.FC = () => {
             El Tiempo Hoy
           </Typography>
         </View>
+
+        {activeMockScenario && (
+          <View
+            style={[
+              styles.mockBanner,
+              { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+            ]}
+          >
+            <View style={{ flex: 1 }}>
+              <Typography variant="captionMedium" color="brand" style={{ fontWeight: '700' }}>
+                Temporal demo: {activeMockScenario.stormTitle}
+              </Typography>
+              <Typography variant="caption" color="secondary">
+                Perfil {activeMockScenario.userName} • {selectedCity.name}
+              </Typography>
+            </View>
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={clearMockStormScenario}
+              style={[styles.mockResetBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <Typography variant="captionMedium" style={{ fontWeight: '600' }}>
+                Clima real
+              </Typography>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Estado de Carga Inicial */}
         {isLoading && !weather ? (
@@ -137,6 +167,21 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: spacing.xs,
+  },
+  mockBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+  },
+  mockResetBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: spacing.borderRadiusFull,
+    borderWidth: 1,
   },
   loadingContainer: {
     height: 320,

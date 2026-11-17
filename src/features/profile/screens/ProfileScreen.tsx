@@ -7,6 +7,7 @@ import {
   Switch,
   TouchableOpacity,
   Image,
+  Modal,
 } from 'react-native';
 import {
   MapPin,
@@ -18,6 +19,8 @@ import {
   Volume2,
   LogIn,
   LogOut,
+  BellRing,
+  CloudLightning,
 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
@@ -31,6 +34,7 @@ import { EditProfileModal } from '../components/EditProfileModal';
 import { EditLocationModal } from '../components/EditLocationModal';
 import { AlertSettingsModal } from '../components/AlertSettingsModal';
 import { AuthModal } from '../components/AuthModal';
+import { MOCK_ALERT_SCENARIOS, MOCK_STORM_USERS } from '@/shared/data/mockStormUsers';
 
 export const ProfileScreen: React.FC = () => {
   const { colors, mode, toggleTheme } = useThemeStore();
@@ -49,6 +53,8 @@ export const ProfileScreen: React.FC = () => {
     setWindThreshold,
     setHeatThreshold,
     setAlertTone,
+    triggerMockAlert,
+    enterAsMockStormUser,
     signIn,
     signUp,
     signOut,
@@ -60,6 +66,7 @@ export const ProfileScreen: React.FC = () => {
   const [showAlertSettings, setShowAlertSettings] = useState(false);
   const [alertModalTab, setAlertModalTab] = useState<AlertCategory>('rain');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [avatarLoadError, setAvatarLoadError] = useState(false);
 
   useEffect(() => {
@@ -75,6 +82,11 @@ export const ProfileScreen: React.FC = () => {
   const openAlertSettingsOn = (tab: AlertCategory) => {
     setAlertModalTab(tab);
     setShowAlertSettings(true);
+  };
+
+  const handleConfirmSignOut = async () => {
+    setShowSignOutConfirm(false);
+    await signOut();
   };
 
   const initials = (profile.fullName.trim() || 'U').charAt(0).toUpperCase();
@@ -121,8 +133,8 @@ export const ProfileScreen: React.FC = () => {
               </View>
               <Typography variant="caption" color="secondary">
                 {profile.isAuthenticated
-                  ? `Provincia: ${profile.province} • Visible en foro`
-                  : `Provincia: ${profile.province} • Modo invitado (sin acceso a foros)`}
+                  ? `${profile.province} • Visible en foro`
+                  : `${profile.province} • Modo invitado (sin acceso a foros)`}
               </Typography>
             </View>
           </View>
@@ -134,19 +146,7 @@ export const ProfileScreen: React.FC = () => {
               style={{ flex: 1 }}
               onPress={() => setShowEditProfile(true)}
             />
-            {profile.isAuthenticated ? (
-              <TouchableOpacity
-                activeOpacity={0.75}
-                onPress={signOut}
-                style={[
-                  styles.authIconBtn,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
-                ]}
-                accessibilityLabel="Cerrar sesión"
-              >
-                <LogOut size={18} color={colors.textSecondary} />
-              </TouchableOpacity>
-            ) : (
+            {!profile.isAuthenticated && (
               <TouchableOpacity
                 activeOpacity={0.75}
                 onPress={() => {
@@ -213,7 +213,7 @@ export const ProfileScreen: React.FC = () => {
                 {fixedLocation.name}
               </Typography>
               <Typography variant="caption" color="secondary">
-                Provincia de {fixedLocation.province}
+                {fixedLocation.province}
               </Typography>
             </View>
 
@@ -335,6 +335,118 @@ export const ProfileScreen: React.FC = () => {
             <ChevronRight size={16} color={colors.textSecondary} />
           </TouchableOpacity>
         </Card>
+
+        {/* 5. Simulador de Alertas (Mock) */}
+        <Card style={styles.settingCard}>
+          <View style={styles.rowBetween}>
+            <View style={styles.tagWrapper}>
+              <BellRing size={16} color={colors.primary} />
+              <Typography variant="h3">Simulador de Alertas</Typography>
+            </View>
+            <Badge label="Mock" tone="neutral" />
+          </View>
+          <Typography variant="caption" color="secondary" style={{ marginTop: 2, marginBottom: spacing.xs }}>
+            Pulsa un evento para comprobar si notifica y reproduce tu tono según tus umbrales activos.
+          </Typography>
+
+          <View style={styles.mockGrid}>
+            {MOCK_ALERT_SCENARIOS.map((scenario) => {
+              const accent =
+                scenario.category === 'rain'
+                  ? colors.rain
+                  : scenario.category === 'wind'
+                    ? colors.wind
+                    : colors.heat;
+              return (
+                <TouchableOpacity
+                  key={scenario.id}
+                  activeOpacity={0.75}
+                  onPress={() => triggerMockAlert(scenario)}
+                  style={[
+                    styles.mockChip,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                  ]}
+                >
+                  <View style={[styles.mockDot, { backgroundColor: accent }]} />
+                  <View style={{ flex: 1 }}>
+                    <Typography variant="captionMedium" style={{ fontWeight: '600' }} numberOfLines={1}>
+                      {scenario.shortLabel}
+                    </Typography>
+                    <Typography variant="caption" color="secondary" style={{ fontSize: 11 }} numberOfLines={1}>
+                      {scenario.severityLabel}
+                    </Typography>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Card>
+
+        {/* 6. Usuarios Mock con Diferentes Temporales */}
+        <Card style={styles.settingCard}>
+          <View style={styles.rowBetween}>
+            <View style={styles.tagWrapper}>
+              <CloudLightning size={16} color={colors.warning} />
+              <Typography variant="h3">Usuarios con Temporales</Typography>
+            </View>
+            <Badge label="Mock" tone="neutral" />
+          </View>
+          <Typography variant="caption" color="secondary" style={{ marginTop: 2, marginBottom: spacing.xs }}>
+            Cambia de usuario demo para ver distintos temporales en Inicio, Perfil y Comunidad.
+          </Typography>
+
+          <View style={styles.stormUsersList}>
+            {MOCK_STORM_USERS.map((mock) => {
+              const isActive = profile.id === mock.id;
+              return (
+                <TouchableOpacity
+                  key={mock.id}
+                  activeOpacity={0.75}
+                  onPress={() => enterAsMockStormUser(mock)}
+                  style={[
+                    styles.stormUserRow,
+                    {
+                      backgroundColor: isActive ? colors.primaryMuted : colors.surface,
+                      borderColor: isActive ? colors.primary : colors.border,
+                    },
+                  ]}
+                >
+                  <View style={[styles.stormAvatar, { backgroundColor: mock.avatarColor }]}>
+                    <Typography variant="captionMedium" style={{ color: '#FFFFFF', fontWeight: '700' }}>
+                      {mock.fullName.charAt(0)}
+                    </Typography>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+                      {mock.fullName}
+                    </Typography>
+                    <Typography variant="caption" color="secondary" numberOfLines={1}>
+                      {mock.province} • {mock.stormTitle}
+                    </Typography>
+                  </View>
+                  <Badge label={mock.stormBadge} tone={isActive ? 'brand' : 'warning'} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Card>
+
+        {/* 7. Botón de Cerrar Sesión abajo */}
+        {profile.isAuthenticated && (
+          <TouchableOpacity
+            activeOpacity={0.75}
+            onPress={() => setShowSignOutConfirm(true)}
+            style={[
+              styles.signOutButton,
+              { backgroundColor: colors.card, borderColor: colors.primary },
+            ]}
+          >
+            <LogOut size={18} color={colors.primary} />
+            <Typography variant="bodyMedium" color="brand" style={{ fontWeight: '600' }}>
+              Cerrar sesión
+            </Typography>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {/* Modales interactivos */}
@@ -374,6 +486,47 @@ export const ProfileScreen: React.FC = () => {
         onClearError={clearAuthError}
         onClose={() => setShowAuthModal(false)}
       />
+
+      {/* Pop-up de confirmación de cierre de sesión */}
+      <Modal
+        visible={showSignOutConfirm}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowSignOutConfirm(false)}
+      >
+        <View style={styles.confirmOverlay}>
+          <View
+            style={[
+              styles.confirmCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <View style={[styles.confirmIcon, { backgroundColor: colors.primaryMuted }]}>
+              <LogOut size={22} color={colors.primary} />
+            </View>
+            <Typography variant="h3" style={{ textAlign: 'center' }}>
+              ¿Cerrar sesión?
+            </Typography>
+            <Typography variant="body" color="secondary" style={{ textAlign: 'center' }}>
+              Volverás a la pantalla de acceso y tendrás que iniciar sesión para entrar en los foros.
+            </Typography>
+            <View style={styles.confirmActions}>
+              <Button
+                title="Cancelar"
+                variant="outline"
+                style={{ flex: 1 }}
+                onPress={() => setShowSignOutConfirm(false)}
+              />
+              <Button
+                title="Cerrar sesión"
+                variant="primary"
+                style={{ flex: 1 }}
+                onPress={handleConfirmSignOut}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -434,14 +587,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
-  authIconBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: spacing.borderRadiusFull,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   settingCard: {
     gap: spacing.xs,
   },
@@ -493,5 +638,82 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginVertical: spacing.xs,
+  },
+  mockGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs + 2,
+  },
+  mockChip: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.sm + 2,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+  },
+  mockDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+  },
+  stormUsersList: {
+    gap: spacing.xs + 2,
+  },
+  stormUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.sm + 2,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+  },
+  stormAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signOutButton: {
+    height: 50,
+    borderRadius: spacing.borderRadiusFull,
+    borderWidth: 1.2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.48)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  confirmCard: {
+    width: '100%',
+    maxWidth: 360,
+    borderRadius: spacing.borderRadiusXl,
+    borderWidth: 1,
+    padding: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  confirmIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    width: '100%',
+    marginTop: spacing.xs,
   },
 });

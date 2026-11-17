@@ -7,7 +7,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
-import { X, MapPin, Check } from 'lucide-react-native';
+import { X, MapPin, Check, Eye, EyeOff } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
@@ -45,6 +45,7 @@ export const AuthModal: React.FC<Props> = ({
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [province, setProvince] = useState(defaultProvince);
@@ -297,21 +298,35 @@ export const AuthModal: React.FC<Props> = ({
               <Typography variant="captionMedium" color="secondary">
                 CONTRASEÑA
               </Typography>
-              <TextInput
+              <View
                 style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    color: colors.textPrimary,
-                  },
+                  styles.passwordWrapper,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
                 ]}
-                placeholder="Mínimo 6 caracteres"
-                placeholderTextColor={colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+              >
+                <TextInput
+                  style={[styles.passwordInput, { color: colors.textPrimary }]}
+                  placeholder="Mínimo 6 caracteres"
+                  placeholderTextColor={colors.textSecondary}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setShowPassword((prev) => !prev)}
+                  style={styles.eyeButton}
+                  accessibilityLabel={
+                    showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} color={colors.textSecondary} />
+                  ) : (
+                    <Eye size={18} color={colors.textSecondary} />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             {activeError && (
@@ -389,6 +404,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: spacing.md,
     fontSize: 14,
+  },
+  passwordWrapper: {
+    height: 44,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+    paddingLeft: spacing.md,
+    paddingRight: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 14,
+    height: '100%',
+  },
+  eyeButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   provinceBtn: {
     height: 44,

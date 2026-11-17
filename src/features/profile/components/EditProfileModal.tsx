@@ -8,7 +8,7 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { X, Check, MapPin, Lock, Search } from 'lucide-react-native';
+import { X, Check, MapPin, Lock, Search, ImagePlus, Trash2 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
@@ -16,6 +16,7 @@ import { spacing } from '@/shared/theme/spacing';
 import { SPANISH_PROVINCES } from '@/features/community/data/provincesData';
 import { AVATAR_COLORS } from '../data/locationsData';
 import { UserProfileData } from '../store/useProfileStore';
+import { pickProfileImageFromGallery } from '../services/imagePickerService';
 
 interface Props {
   visible: boolean;
@@ -40,10 +41,11 @@ export const EditProfileModal: React.FC<Props> = ({
   const [fullName, setFullName] = useState(profile.fullName);
   const [province, setProvince] = useState(profile.province);
   const [avatarColor, setAvatarColor] = useState(profile.avatarColor);
-  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? '');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile.avatarUrl ?? null);
   const [provinceQuery, setProvinceQuery] = useState('');
   const [showProvincePicker, setShowProvincePicker] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPickingImage, setIsPickingImage] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export const EditProfileModal: React.FC<Props> = ({
       setFullName(profile.fullName);
       setProvince(profile.province);
       setAvatarColor(profile.avatarColor);
-      setAvatarUrl(profile.avatarUrl ?? '');
+      setAvatarUrl(profile.avatarUrl ?? null);
       setProvinceQuery('');
       setShowProvincePicker(false);
       setImageFailed(false);
@@ -63,7 +65,20 @@ export const EditProfileModal: React.FC<Props> = ({
   );
 
   const initials = (fullName.trim() || 'U').charAt(0).toUpperCase();
-  const hasValidUrl = avatarUrl.trim().startsWith('http') && !imageFailed;
+  const hasValidImage = Boolean(avatarUrl && !imageFailed);
+
+  const handlePickFromGallery = async () => {
+    setIsPickingImage(true);
+    try {
+      const picked = await pickProfileImageFromGallery();
+      if (picked) {
+        setImageFailed(false);
+        setAvatarUrl(picked);
+      }
+    } finally {
+      setIsPickingImage(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -72,7 +87,7 @@ export const EditProfileModal: React.FC<Props> = ({
         fullName: profile.isAuthenticated ? undefined : fullName,
         province,
         avatarColor,
-        avatarUrl: avatarUrl.trim() ? avatarUrl.trim() : null,
+        avatarUrl,
       });
       onClose();
     } finally {
@@ -108,12 +123,12 @@ export const EditProfileModal: React.FC<Props> = ({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
-            {/* Vista previa del Avatar */}
+            {/* Vista previa del Avatar y Botón de Galería */}
             <View style={styles.avatarPreviewRow}>
               <View style={[styles.avatarCircle, { backgroundColor: avatarColor }]}>
-                {hasValidUrl ? (
+                {hasValidImage ? (
                   <Image
-                    source={{ uri: avatarUrl.trim() }}
+                    source={{ uri: avatarUrl! }}
                     style={styles.avatarImage}
                     onError={() => setImageFailed(true)}
                   />
@@ -123,13 +138,40 @@ export const EditProfileModal: React.FC<Props> = ({
                   </Typography>
                 )}
               </View>
-              <View style={{ flex: 1 }}>
-                <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
-                  {fullName.trim() || 'Usuario Invitado'}
-                </Typography>
-                <Typography variant="caption" color="secondary">
-                  Provincia de {province}
-                </Typography>
+              <View style={styles.photoActions}>
+                <TouchableOpacity
+                  activeOpacity={0.75}
+                  onPress={handlePickFromGallery}
+                  disabled={isPickingImage}
+                  style={[
+                    styles.galleryBtn,
+                    { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+                  ]}
+                >
+                  <ImagePlus size={16} color={colors.primary} />
+                  <Typography variant="captionMedium" color="brand" style={{ fontWeight: '600' }}>
+                    {isPickingImage ? 'Abriendo galería...' : 'Elegir foto de galería'}
+                  </Typography>
+                </TouchableOpacity>
+
+                {hasValidImage && (
+                  <TouchableOpacity
+                    activeOpacity={0.75}
+                    onPress={() => {
+                      setAvatarUrl(null);
+                      setImageFailed(false);
+                    }}
+                    style={[
+                      styles.removePhotoBtn,
+                      { backgroundColor: colors.surface, borderColor: colors.border },
+                    ]}
+                  >
+                    <Trash2 size={14} color={colors.textSecondary} />
+                    <Typography variant="caption" color="secondary">
+                      Quitar foto
+                    </Typography>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
@@ -160,32 +202,6 @@ export const EditProfileModal: React.FC<Props> = ({
                   );
                 })}
               </View>
-            </View>
-
-            {/* URL opcional de foto */}
-            <View style={styles.fieldGroup}>
-              <Typography variant="captionMedium" color="secondary">
-                FOTO DE PERFIL (URL OPCIONAL)
-              </Typography>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    color: colors.textPrimary,
-                  },
-                ]}
-                placeholder="https://ejemplo.com/tu-foto.jpg"
-                placeholderTextColor={colors.textSecondary}
-                value={avatarUrl}
-                onChangeText={(val) => {
-                  setImageFailed(false);
-                  setAvatarUrl(val);
-                }}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
             </View>
 
             {/* Nombre */}
@@ -383,16 +399,39 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   avatarCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarImage: {
-    width: 60,
-    height: 60,
+    width: 68,
+    height: 68,
+  },
+  photoActions: {
+    flex: 1,
+    gap: spacing.xs,
+    alignItems: 'flex-start',
+  },
+  galleryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: spacing.borderRadiusFull,
+    borderWidth: 1,
+  },
+  removePhotoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm + 2,
+    borderRadius: spacing.borderRadiusFull,
+    borderWidth: 1,
   },
   fieldGroup: {
     gap: spacing.xs,

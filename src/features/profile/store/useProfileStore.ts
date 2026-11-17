@@ -7,10 +7,14 @@ import {
   AlertToneId,
   AVATAR_COLORS,
   FixedLocation,
+  getToneLabel,
   HeatThreshold,
   RainThreshold,
   WindThreshold,
 } from '../data/locationsData';
+import type { MockAlertScenario, MockStormUser } from '@/shared/data/mockStormUsers';
+import { playAlertTonePreview } from '../services/alertSoundService';
+import { useAlertBannerStore } from './useAlertBannerStore';
 
 const PROFILE_STORAGE_KEY = '@clima_comunidad_profile_v1';
 
@@ -62,6 +66,8 @@ interface ProfileState {
 
   loadProfileState: () => Promise<void>;
   continueAsGuest: () => void;
+  enterAsMockStormUser: (mockUser: MockStormUser) => Promise<void>;
+  triggerMockAlert: (scenario: MockAlertScenario) => Promise<void>;
   returnToAuthGate: () => void;
   updateProfile: (updates: {
     fullName?: string;
@@ -200,6 +206,100 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     };
     set({ profile: guestProfile, hasEnteredApp: true, authError: null });
     syncProfileToForum(guestProfile);
+  },
+
+  enterAsMockStormUser: async (mockUser: MockStormUser) => {
+    const { alerts } = get();
+    const mockProfile: UserProfileData = {
+      id: mockUser.id,
+      fullName: mockUser.fullName,
+      username: mockUser.username,
+      email: mockUser.email,
+      avatarUrl: null,
+      avatarColor: mockUser.avatarColor,
+      province: mockUser.province,
+      isAuthenticated: true,
+    };
+
+    set({
+      profile: mockProfile,
+      fixedLocation: mockUser.location,
+      hasEnteredApp: true,
+      authError: null,
+    });
+
+    syncProfileToForum(mockProfile, true);
+    useHomeStore.getState().applyMockStormScenario(mockUser);
+    await persistLocalState({
+      profile: mockProfile,
+      fixedLocation: mockUser.location,
+      alerts,
+    });
+  },
+
+  triggerMockAlert: async (scenario: MockAlertScenario) => {
+    const { alerts, fixedLocation } = get();
+    const rainRank: Record<RainThreshold, number> = { yellow: 1, orange: 2, red: 3 };
+    const rainLabels: Record<RainThreshold, string> = {
+      yellow: 'Amarillo (≥ 15 mm/h)',
+      orange: 'Naranja (≥ 30 mm/h)',
+      red: 'Rojo (≥ 60 mm/h)',
+    };
+
+    let shouldTrigger = false;
+    let filterReason = '';
+    let toneId: AlertToneId = 'classic_chime';
+
+    if (scenario.category === 'rain') {
+      toneId = alerts.rain.toneId;
+      if (!alerts.rain.enabled) {
+        filterReason = 'Alerta de lluvia torrencial desactivada en tus ajustes.';
+      } else {
+        const scenarioRank = rainRank[scenario.rainLevel ?? 'yellow'];
+        const userRank = rainRank[alerts.rain.threshold];
+        if (scenarioRank >= userRank) {
+          shouldTrigger = true;
+        } else {
+          filterReason = `Tu umbral de lluvia es ${rainLabels[alerts.rain.threshold]} y el evento simulado es inferior (${scenario.rainMmH ?? 20} mm/h).`;
+        }
+      }
+    } else if (scenario.category === 'wind') {
+      toneId = alerts.wind.toneId;
+      if (!alerts.wind.enabled) {
+        filterReason = 'Alerta de viento y temporales desactivada en tus ajustes.';
+      } else if ((scenario.windKmh ?? 0) >= alerts.wind.thresholdKmh) {
+        shouldTrigger = true;
+      } else {
+        filterReason = `Tu umbral de viento es > ${alerts.wind.thresholdKmh} km/h (simulado: ${scenario.windKmh} km/h).`;
+      }
+    } else if (scenario.category === 'heat') {
+      toneId = alerts.heat.toneId;
+      if (!alerts.heat.enabled) {
+        filterReason = 'Alerta de calor extremo desactivada en tus ajustes.';
+      } else if ((scenario.heatC ?? 0) >= alerts.heat.thresholdC) {
+        shouldTrigger = true;
+      } else {
+        filterReason = `Tu umbral de calor es > ${alerts.heat.thresholdC}°C (simulado: ${scenario.heatC}°C).`;
+      }
+    }
+
+    const toneLabel = getToneLabel(toneId);
+    let soundPlayed = false;
+
+    if (shouldTrigger) {
+      soundPlayed = await playAlertTonePreview(toneId);
+    }
+
+    useAlertBannerStore.getState().showBanner({
+      id: `alert-${Date.now()}`,
+      status: shouldTrigger ? 'triggered' : 'filtered',
+      category: scenario.category,
+      title: scenario.title,
+      locationName: fixedLocation.name,
+      body: shouldTrigger ? scenario.description : filterReason,
+      toneLabel,
+      soundPlayed,
+    });
   },
 
   returnToAuthGate: () => {
@@ -506,6 +606,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
     set({ profile: guestProfile, hasEnteredApp: false, authError: null });
     syncProfileToForum(guestProfile);
+    useHomeStore.getState().clearMockStormScenario();
     await persistLocalState({ profile: guestProfile, fixedLocation, alerts });
   },
 
