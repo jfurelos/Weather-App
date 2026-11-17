@@ -1,9 +1,14 @@
-export function getLeafletMapHtml(themeMode: 'light' | 'dark'): string {
+export function getLeafletMapHtml(themeMode: 'light' | 'dark', apiKey?: string): string {
   const isDark = themeMode === 'dark';
+  const cartoKey = apiKey || process.env.EXPO_PUBLIC_CARTO_API_KEY;
 
-  const baseTileUrl = isDark
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  // Si el usuario tiene una API key gratuita de CARTO, usamos sus tiles limpios.
+  // Si no la tiene aún, usamos OpenStreetMap (100% libre, sin registro ni clave).
+  const baseTileUrl = cartoKey
+    ? (isDark
+        ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`
+        : `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`)
+    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   const bgColor = isDark ? '#121212' : '#F7F7F7';
   const textColor = isDark ? '#F7F7F7' : '#222222';
@@ -69,9 +74,9 @@ export function getLeafletMapHtml(themeMode: 'light' | 'dark'): string {
       attributionControl: false
     });
 
-    // Capa base CartoDB estilo Airbnb (limpio y minimalista)
+    // Capa base
     L.tileLayer('${baseTileUrl}', {
-      subdomains: 'abcd',
+      subdomains: '${cartoKey ? 'abcd' : 'abc'}',
       maxZoom: 19
     }).addTo(map);
 
