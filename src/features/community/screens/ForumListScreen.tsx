@@ -77,9 +77,6 @@ export const ForumListScreen: React.FC = () => {
           <Typography variant="hero" style={styles.title}>
             Foro Comunitario
           </Typography>
-          <Typography variant="body" color="secondary">
-            Debates hiperlocales organizados por provincia y comarca.
-          </Typography>
         </View>
 
         {/* Tarjeta de Provincia Activa y Selector */}

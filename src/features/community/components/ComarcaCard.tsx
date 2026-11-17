@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Star, MessageSquare, ChevronRight, Layers } from 'lucide-react-native';
+import { Star, ChevronRight, Layers } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
-import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { Comarca } from '../data/provincesData';
@@ -76,13 +75,6 @@ export const ComarcaCard: React.FC<Props> = ({
         </Typography>
 
         <View style={[styles.footerRow, { borderTopColor: colors.border }]}>
-          <View style={styles.activeInfo}>
-            <MessageSquare size={13} color={colors.textSecondary} />
-            <Typography variant="caption" color="secondary">
-              {comarca.activeCount} observadores activos
-            </Typography>
-          </View>
-
           <View style={styles.enterAction}>
             <Typography variant="captionMedium" style={{ color: colors.primary, fontWeight: '700' }}>
               Entrar al forum
@@ -131,16 +123,11 @@ const styles = StyleSheet.create({
   },
   footerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     paddingTop: spacing.sm,
     borderTopWidth: 1,
     marginTop: 2,
-  },
-  activeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
   },
   enterAction: {
     flexDirection: 'row',

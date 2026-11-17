@@ -30,7 +30,7 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
         <View style={styles.headerLeft}>
           <Star size={14} color="#F59E0B" fill="#F59E0B" />
           <Typography variant="captionMedium" color="secondary" style={{ fontWeight: '700' }}>
-            ACCESO RÁPIDO • FAVORITAS
+            FAVORITAS
           </Typography>
         </View>
         <Typography variant="caption" color="secondary" style={{ fontWeight: '600' }}>
