@@ -240,6 +240,22 @@ const SAMPLE_CHAT_MESSAGES: Record<string, ChatMessage[]> = {
   ],
 };
 
+async function getSupabaseSessionUserId(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session?.user) return null;
+    return data.session.user.id;
+  } catch {
+    return null;
+  }
+}
+
+function formatHour(isoOrText: string): string {
+  const parsed = new Date(isoOrText);
+  if (Number.isNaN(parsed.getTime())) return isoOrText;
+  return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 interface ComarcasForumState {
   selectedProvince: string;
   searchQuery: string;
@@ -261,8 +277,14 @@ interface ComarcasForumState {
   toggleFavoriteComarca: (comarca: Comarca) => Promise<void>;
   clearFavoriteLimitMessage: () => void;
   isFavorite: (comarcaId: string) => boolean;
+  loadMessagesForChat: (comarcaId: string, chatType: ChatType) => Promise<void>;
   getMessagesForChat: (comarcaId: string, chatType: ChatType) => ChatMessage[];
-  sendMessage: (comarcaId: string, chatType: ChatType, content: string) => Promise<void>;
+  sendMessage: (
+    comarcaId: string,
+    provinceName: string,
+    chatType: ChatType,
+    content: string
+  ) => Promise<void>;
   openReportModal: (message: ChatMessage) => void;
   closeReportModal: () => void;
   submitReport: (reason: string) => Promise<void>;
@@ -306,6 +328,47 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
       if (repStored) {
         updates.reportedMessageIds = JSON.parse(repStored);
       }
+
+      // Sincronizar favoritas y reportes desde Supabase si hay sesión real activa
+      const sessionUid = await getSupabaseSessionUserId();
+      if (sessionUid) {
+        const [{ data: dbFavs, error: favErr }, { data: dbReps, error: repErr }] = await Promise.all([
+          supabase
+            .from('user_favorite_comarcas')
+            .select('comarca_id, province_id, province_name, comarca_name, description')
+            .eq('user_id', sessionUid)
+            .order('created_at', { ascending: false })
+            .limit(MAX_FAVORITE_COMARCAS),
+          supabase
+            .from('comarca_reports')
+            .select('message_ref')
+            .eq('reporter_id', sessionUid),
+        ]);
+
+        if (favErr) {
+          console.warn('[useComarcasForumStore] Error leyendo user_favorite_comarcas:', favErr.message);
+        } else if (dbFavs && dbFavs.length > 0) {
+          updates.favoriteComarcas = dbFavs.map((row) => ({
+            id: row.comarca_id,
+            provinceId: row.province_id,
+            provinceName: row.province_name,
+            name: row.comarca_name,
+            description: row.description || '',
+            activeCount: 0,
+          }));
+        }
+
+        if (repErr) {
+          console.warn('[useComarcasForumStore] Error leyendo comarca_reports:', repErr.message);
+        } else if (dbReps && dbReps.length > 0) {
+          const merged = new Set<string>([
+            ...(updates.reportedMessageIds ?? get().reportedMessageIds),
+            ...dbReps.map((r) => r.message_ref),
+          ]);
+          updates.reportedMessageIds = Array.from(merged);
+        }
+      }
+
       if (Object.keys(updates).length > 0) {
         set(updates);
       }
@@ -356,12 +419,88 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
     try {
       await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(nextFavorites));
     } catch {
-      // Ignorar error de guardado
+      // Ignorar error de guardado local
+    }
+
+    // Persistir cambio en Supabase si hay sesión real activa
+    const sessionUid = await getSupabaseSessionUserId();
+    if (sessionUid) {
+      if (exists) {
+        const { error } = await supabase
+          .from('user_favorite_comarcas')
+          .delete()
+          .eq('user_id', sessionUid)
+          .eq('comarca_id', comarca.id);
+        if (error) {
+          console.error('[useComarcasForumStore] Error eliminando favorita en Supabase:', error.message);
+        }
+      } else {
+        const { error } = await supabase.from('user_favorite_comarcas').upsert(
+          {
+            user_id: sessionUid,
+            comarca_id: comarca.id,
+            province_id: comarca.provinceId,
+            province_name: comarca.provinceName,
+            comarca_name: comarca.name,
+            description: comarca.description,
+          },
+          { onConflict: 'user_id,comarca_id' }
+        );
+        if (error) {
+          console.error('[useComarcasForumStore] Error guardando favorita en Supabase:', error.message);
+        }
+      }
     }
   },
 
   isFavorite: (comarcaId: string) => {
     return get().favoriteComarcas.some((c) => c.id === comarcaId);
+  },
+
+  loadMessagesForChat: async (comarcaId: string, chatType: ChatType) => {
+    const key = `${comarcaId}_${chatType}`;
+    try {
+      const { data, error } = await supabase
+        .from('comarca_messages')
+        .select('id, comarca_id, chat_type, user_id, user_name, user_province, content, created_at')
+        .eq('comarca_id', comarcaId)
+        .eq('chat_type', chatType)
+        .order('created_at', { ascending: true })
+        .limit(100);
+
+      if (error) {
+        console.warn('[useComarcasForumStore] Error leyendo comarca_messages:', error.message);
+        return;
+      }
+
+      if (!data || data.length === 0) return;
+
+      const remoteMessages: ChatMessage[] = data.map((row) => ({
+        id: row.id,
+        comarcaId: row.comarca_id,
+        chatType: row.chat_type as ChatType,
+        userId: row.user_id,
+        userName: row.user_name,
+        userProvince: row.user_province,
+        content: row.content,
+        createdAt: formatHour(row.created_at),
+      }));
+
+      const sampleBase = SAMPLE_CHAT_MESSAGES[key] || [];
+      const existing = get().messagesByChatKey[key] || sampleBase;
+      const seenIds = new Set(remoteMessages.map((m) => m.id));
+      // Mantener mensajes de ejemplo + locales que no estén ya en remotos
+      const localOnly = existing.filter((m) => !seenIds.has(m.id) && m.id.startsWith('msg-'));
+
+      set((state) => ({
+        messagesByChatKey: {
+          ...state.messagesByChatKey,
+          [key]: [...localOnly, ...remoteMessages],
+        },
+      }));
+    } catch (err) {
+      console.warn('[useComarcasForumStore] Excepción cargando comarca_messages:', err);
+    }
   },
 
   getMessagesForChat: (comarcaId: string, chatType: ChatType) => {
@@ -371,7 +510,12 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
     return raw.filter((m) => !reported.includes(m.id));
   },
 
-  sendMessage: async (comarcaId: string, chatType: ChatType, content: string) => {
+  sendMessage: async (
+    comarcaId: string,
+    provinceName: string,
+    chatType: ChatType,
+    content: string
+  ) => {
     const trimmed = content.trim();
     if (!trimmed) return;
 
@@ -379,9 +523,10 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
     const key = `${comarcaId}_${chatType}`;
     const now = new Date();
     const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const tempId = `msg-${Date.now()}`;
 
-    const newMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
       comarcaId,
       chatType,
       userId: currentUser.id,
@@ -395,9 +540,43 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
     set({
       messagesByChatKey: {
         ...messagesByChatKey,
-        [key]: [...existing, newMsg],
+        [key]: [...existing, optimisticMsg],
       },
     });
+
+    // Persistir en Supabase `comarca_messages` si el usuario tiene sesión real activa
+    const sessionUid = await getSupabaseSessionUserId();
+    if (sessionUid) {
+      const { data, error } = await supabase
+        .from('comarca_messages')
+        .insert({
+          comarca_id: comarcaId,
+          province_name: provinceName,
+          chat_type: chatType,
+          user_id: sessionUid,
+          user_name: currentUser.name,
+          user_province: currentUser.province,
+          content: trimmed,
+        })
+        .select('id, created_at')
+        .single();
+
+      if (error) {
+        console.error('[useComarcasForumStore] Error insertando en comarca_messages:', error.message);
+      } else if (data) {
+        // Reemplazar ID temporal por el UUID real de BBDD
+        set((state) => ({
+          messagesByChatKey: {
+            ...state.messagesByChatKey,
+            [key]: (state.messagesByChatKey[key] || []).map((m) =>
+              m.id === tempId
+                ? { ...m, id: data.id, userId: sessionUid, createdAt: formatHour(data.created_at) }
+                : m
+            ),
+          },
+        }));
+      }
+    }
   },
 
   openReportModal: (message: ChatMessage) => {
@@ -414,16 +593,22 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
 
     const messageId = reportingMessage.id;
 
-    try {
-      await supabase.from('reports').insert([
-        {
-          message_id: messageId,
-          reason,
-          status: 'pending',
-        },
-      ]);
-    } catch {
-      // Tolerar offline / modo demo
+    // Registrar reporte en Supabase `comarca_reports` cumpliendo RLS (auth.uid() = reporter_id)
+    const sessionUid = await getSupabaseSessionUserId();
+    if (sessionUid) {
+      const { error } = await supabase.from('comarca_reports').insert({
+        reporter_id: sessionUid,
+        message_ref: messageId,
+        comarca_id: reportingMessage.comarcaId,
+        chat_type: reportingMessage.chatType,
+        message_excerpt: reportingMessage.content.slice(0, 200),
+        reason,
+        status: 'pending',
+      });
+
+      if (error) {
+        console.error('[useComarcasForumStore] Error insertando en comarca_reports:', error.message);
+      }
     }
 
     const nextReported = [...reportedMessageIds, messageId];
@@ -435,7 +620,7 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
     try {
       await AsyncStorage.setItem(REPORTED_STORAGE_KEY, JSON.stringify(nextReported));
     } catch {
-      // Ignorar error de guardado
+      // Ignorar error de guardado local
     }
   },
 }));

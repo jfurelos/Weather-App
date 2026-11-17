@@ -37,6 +37,7 @@ export const ChatConversationScreen: React.FC = () => {
   const [inputText, setInputText] = useState('');
 
   const {
+    loadMessagesForChat,
     getMessagesForChat,
     sendMessage,
     currentUser,
@@ -45,6 +46,10 @@ export const ChatConversationScreen: React.FC = () => {
     closeReportModal,
     submitReport,
   } = useComarcasForumStore();
+
+  useEffect(() => {
+    loadMessagesForChat(comarcaId, chatType);
+  }, [comarcaId, chatType, loadMessagesForChat]);
 
   const messages = getMessagesForChat(comarcaId, chatType);
 
@@ -58,7 +63,7 @@ export const ChatConversationScreen: React.FC = () => {
     const trimmed = inputText.trim();
     if (!trimmed) return;
     setInputText('');
-    await sendMessage(comarcaId, chatType, trimmed);
+    await sendMessage(comarcaId, provinceName, chatType, trimmed);
   };
 
   const getHeaderIcon = () => {

@@ -4,6 +4,7 @@ import { supabase } from '@/shared/api/supabaseClient';
 import { useComarcasForumStore } from '@/features/community/store/useComarcasForumStore';
 import { useHomeStore } from '@/features/home/store/useHomeStore';
 import {
+  ALERT_TONES,
   AlertToneId,
   AVATAR_COLORS,
   FixedLocation,
@@ -17,6 +18,7 @@ import { playAlertTonePreview } from '../services/alertSoundService';
 import { useAlertBannerStore } from './useAlertBannerStore';
 
 const PROFILE_STORAGE_KEY = '@clima_comunidad_profile_v1';
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface UserProfileData {
   id: string;
@@ -129,6 +131,43 @@ const DEFAULT_ALERTS: AlertsPreferences = {
   },
 };
 
+function isValidToneId(value: unknown, fallback: AlertToneId): AlertToneId {
+  if (typeof value === 'string' && ALERT_TONES.some((t) => t.id === value)) {
+    return value as AlertToneId;
+  }
+  return fallback;
+}
+
+function isValidRainThreshold(value: unknown, fallback: RainThreshold): RainThreshold {
+  if (value === 'yellow' || value === 'orange' || value === 'red') return value;
+  return fallback;
+}
+
+function isValidWindThreshold(value: unknown, fallback: WindThreshold): WindThreshold {
+  if (value === 50 || value === 70 || value === 90) return value;
+  return fallback;
+}
+
+function isValidHeatThreshold(value: unknown, fallback: HeatThreshold): HeatThreshold {
+  if (value === 34 || value === 36 || value === 40) return value;
+  return fallback;
+}
+
+async function getActiveSessionUserId(expectedId?: string): Promise<string | null> {
+  if (expectedId && !UUID_REGEX.test(expectedId)) {
+    return null;
+  }
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error || !data.session?.user) return null;
+    const sessionUid = data.session.user.id;
+    if (expectedId && sessionUid !== expectedId) return null;
+    return sessionUid;
+  } catch {
+    return null;
+  }
+}
+
 async function persistLocalState(payload: PersistedProfilePayload): Promise<void> {
   try {
     await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(payload));
@@ -141,7 +180,11 @@ function syncProfileToForum(profile: UserProfileData, syncActiveProvince = false
   const forumStore = useComarcasForumStore.getState();
   forumStore.syncCurrentUser({
     id: profile.id,
-    name: profile.isAuthenticated ? profile.fullName : profile.fullName === 'Usuario Invitado' ? 'Tú' : profile.fullName,
+    name: profile.isAuthenticated
+      ? profile.fullName
+      : profile.fullName === 'Usuario Invitado'
+        ? 'Tú'
+        : profile.fullName,
     province: profile.province,
   });
   if (syncActiveProvince && profile.province) {
@@ -164,28 +207,97 @@ function syncLocationToHome(location: FixedLocation): void {
   }
 }
 
+async function fetchLocationAndAlertsFromSupabase(
+  userId: string,
+  fallbackLocation: FixedLocation,
+  fallbackAlerts: AlertsPreferences
+): Promise<{ location: FixedLocation; alerts: AlertsPreferences }> {
+  try {
+    const { data, error } = await supabase
+      .from('user_locations')
+      .select(
+        'name, province, latitude, longitude, notify_rain, notify_wind, notify_heat, sound_rain, sound_wind, sound_heat, rain_threshold, wind_threshold_kmh, heat_threshold_c'
+      )
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('[useProfileStore] Error leyendo user_locations:', error.message);
+      return { location: fallbackLocation, alerts: fallbackAlerts };
+    }
+
+    if (!data) {
+      return { location: fallbackLocation, alerts: fallbackAlerts };
+    }
+
+    return {
+      location: {
+        name: data.name || fallbackLocation.name,
+        province: data.province || fallbackLocation.province,
+        latitude: typeof data.latitude === 'number' ? data.latitude : fallbackLocation.latitude,
+        longitude: typeof data.longitude === 'number' ? data.longitude : fallbackLocation.longitude,
+      },
+      alerts: {
+        rain: {
+          enabled: typeof data.notify_rain === 'boolean' ? data.notify_rain : fallbackAlerts.rain.enabled,
+          threshold: isValidRainThreshold(data.rain_threshold, fallbackAlerts.rain.threshold),
+          toneId: isValidToneId(data.sound_rain, fallbackAlerts.rain.toneId),
+        },
+        wind: {
+          enabled: typeof data.notify_wind === 'boolean' ? data.notify_wind : fallbackAlerts.wind.enabled,
+          thresholdKmh: isValidWindThreshold(data.wind_threshold_kmh, fallbackAlerts.wind.thresholdKmh),
+          toneId: isValidToneId(data.sound_wind, fallbackAlerts.wind.toneId),
+        },
+        heat: {
+          enabled: typeof data.notify_heat === 'boolean' ? data.notify_heat : fallbackAlerts.heat.enabled,
+          thresholdC: isValidHeatThreshold(data.heat_threshold_c, fallbackAlerts.heat.thresholdC),
+          toneId: isValidToneId(data.sound_heat, fallbackAlerts.heat.toneId),
+        },
+      },
+    };
+  } catch (err) {
+    console.warn('[useProfileStore] Excepción leyendo user_locations:', err);
+    return { location: fallbackLocation, alerts: fallbackAlerts };
+  }
+}
+
 async function syncSingleLocationToSupabase(
   profile: UserProfileData,
   location: FixedLocation,
   alerts: AlertsPreferences
 ): Promise<void> {
   if (!profile.isAuthenticated) return;
+  const sessionUid = await getActiveSessionUserId(profile.id);
+  if (!sessionUid) return;
+
   try {
-    // Mantener estrictamente 1 ubicación fija por usuario en Supabase
-    await supabase.from('user_locations').delete().eq('user_id', profile.id);
-    await supabase.from('user_locations').insert([
+    // UPSERT atómico respaldado por UNIQUE (user_id) en BBDD
+    const { error } = await supabase.from('user_locations').upsert(
       {
-        user_id: profile.id,
+        user_id: sessionUid,
         name: location.name,
+        province: location.province,
         latitude: location.latitude,
         longitude: location.longitude,
         notify_rain: alerts.rain.enabled,
         notify_wind: alerts.wind.enabled,
         notify_heat: alerts.heat.enabled,
+        sound_rain: alerts.rain.toneId,
+        sound_wind: alerts.wind.toneId,
+        sound_heat: alerts.heat.toneId,
+        rain_threshold: alerts.rain.threshold,
+        wind_threshold_kmh: alerts.wind.thresholdKmh,
+        heat_threshold_c: alerts.heat.thresholdC,
+        updated_at: new Date().toISOString(),
       },
-    ]);
-  } catch {
-    // Tolerar offline o tabla sin sesión remota
+      { onConflict: 'user_id' }
+    );
+
+    if (error) {
+      console.error('[useProfileStore] Error guardando user_locations en Supabase:', error.message);
+    }
+  } catch (err) {
+    console.error('[useProfileStore] Excepción guardando user_locations:', err);
   }
 }
 
@@ -328,14 +440,18 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
       // Verificar si hay sesión activa de Supabase
       try {
-        const { data } = await supabase.auth.getSession();
-        const user = data.session?.user;
+        const { data, error: sessionErr } = await supabase.auth.getSession();
+        const user = !sessionErr ? data.session?.user : null;
         if (user) {
-          const { data: dbProfile } = await supabase
+          const { data: dbProfile, error: profileErr } = await supabase
             .from('profiles')
             .select('username, full_name, avatar_url, province')
             .eq('id', user.id)
             .maybeSingle();
+
+          if (profileErr) {
+            console.warn('[useProfileStore] Error leyendo profiles:', profileErr.message);
+          }
 
           nextProfile = {
             ...nextProfile,
@@ -347,6 +463,14 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             province: dbProfile?.province || user.user_metadata?.province || nextProfile.province,
             isAuthenticated: true,
           };
+
+          const remoteData = await fetchLocationAndAlertsFromSupabase(
+            user.id,
+            nextLocation,
+            nextAlerts
+          );
+          nextLocation = remoteData.location;
+          nextAlerts = remoteData.alerts;
         } else {
           nextProfile = {
             ...nextProfile,
@@ -381,7 +505,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
     const updatedProfile: UserProfileData = {
       ...profile,
-      // El nombre completo es inmutable para cuentas registradas; en invitado puede editarse
       fullName:
         !profile.isAuthenticated && fullName !== undefined && fullName.trim().length > 0
           ? fullName.trim()
@@ -396,17 +519,24 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     await persistLocalState({ profile: updatedProfile, fixedLocation, alerts });
 
     if (updatedProfile.isAuthenticated) {
-      try {
-        await supabase
-          .from('profiles')
-          .update({
-            avatar_url: updatedProfile.avatarUrl,
-            province: updatedProfile.province,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', updatedProfile.id);
-      } catch {
-        // Tolerar fallo de red
+      const sessionUid = await getActiveSessionUserId(updatedProfile.id);
+      if (sessionUid) {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              avatar_url: updatedProfile.avatarUrl,
+              province: updatedProfile.province,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', sessionUid);
+
+          if (error) {
+            console.error('[useProfileStore] Error actualizando profiles:', error.message);
+          }
+        } catch (err) {
+          console.error('[useProfileStore] Excepción actualizando profiles:', err);
+        }
       }
     }
   },
@@ -441,6 +571,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     };
     set({ alerts: nextAlerts });
     await persistLocalState({ profile, fixedLocation, alerts: nextAlerts });
+    await syncSingleLocationToSupabase(profile, fixedLocation, nextAlerts);
   },
 
   setWindThreshold: async (thresholdKmh: WindThreshold) => {
@@ -451,6 +582,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     };
     set({ alerts: nextAlerts });
     await persistLocalState({ profile, fixedLocation, alerts: nextAlerts });
+    await syncSingleLocationToSupabase(profile, fixedLocation, nextAlerts);
   },
 
   setHeatThreshold: async (thresholdC: HeatThreshold) => {
@@ -461,6 +593,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     };
     set({ alerts: nextAlerts });
     await persistLocalState({ profile, fixedLocation, alerts: nextAlerts });
+    await syncSingleLocationToSupabase(profile, fixedLocation, nextAlerts);
   },
 
   setAlertTone: async (category: AlertCategory, toneId: AlertToneId) => {
@@ -474,6 +607,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     };
     set({ alerts: nextAlerts });
     await persistLocalState({ profile, fixedLocation, alerts: nextAlerts });
+    await syncSingleLocationToSupabase(profile, fixedLocation, nextAlerts);
   },
 
   signIn: async (email: string, password: string) => {
@@ -493,11 +627,15 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       }
 
       const { profile, fixedLocation, alerts } = get();
-      const { data: dbProfile } = await supabase
+      const { data: dbProfile, error: profileErr } = await supabase
         .from('profiles')
         .select('username, full_name, avatar_url, province')
         .eq('id', data.user.id)
         .maybeSingle();
+
+      if (profileErr) {
+        console.warn('[useProfileStore] Error leyendo perfil al iniciar sesión:', profileErr.message);
+      }
 
       const nextProfile: UserProfileData = {
         ...profile,
@@ -510,9 +648,28 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         isAuthenticated: true,
       };
 
-      set({ profile: nextProfile, hasEnteredApp: true, isLoadingAuth: false, authError: null });
+      const remoteData = await fetchLocationAndAlertsFromSupabase(
+        data.user.id,
+        fixedLocation,
+        alerts
+      );
+
+      set({
+        profile: nextProfile,
+        fixedLocation: remoteData.location,
+        alerts: remoteData.alerts,
+        hasEnteredApp: true,
+        isLoadingAuth: false,
+        authError: null,
+      });
+
       syncProfileToForum(nextProfile, true);
-      await persistLocalState({ profile: nextProfile, fixedLocation, alerts });
+      syncLocationToHome(remoteData.location);
+      await persistLocalState({
+        profile: nextProfile,
+        fixedLocation: remoteData.location,
+        alerts: remoteData.alerts,
+      });
       return true;
     } catch {
       set({
@@ -550,19 +707,20 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         return false;
       }
 
-      // Intentar crear registro en tabla profiles si hay sesión inmediata
+      // El trigger DB `on_auth_user_created` crea la fila en `profiles` y `user_locations`.
+      // Si hay sesión activa inmediata, reforzamos además con upsert explícito verificando errores.
       if (data.session) {
-        try {
-          await supabase.from('profiles').upsert([
-            {
-              id: data.user.id,
-              username: cleanUsername,
-              full_name: cleanName,
-              province,
-            },
-          ]);
-        } catch {
-          // Tolerar si requiere confirmación por correo primero
+        const { error: upsertErr } = await supabase.from('profiles').upsert(
+          {
+            id: data.user.id,
+            username: cleanUsername,
+            full_name: cleanName,
+            province,
+          },
+          { onConflict: 'id' }
+        );
+        if (upsertErr) {
+          console.error('[useProfileStore] Error en upsert de profiles tras signUp:', upsertErr.message);
         }
       }
 
@@ -577,10 +735,23 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         isAuthenticated: true,
       };
 
-      set({ profile: nextProfile, hasEnteredApp: true, isLoadingAuth: false, authError: null });
+      const nextLocation: FixedLocation = {
+        ...fixedLocation,
+        name: province,
+        province,
+      };
+
+      set({
+        profile: nextProfile,
+        fixedLocation: nextLocation,
+        hasEnteredApp: true,
+        isLoadingAuth: false,
+        authError: null,
+      });
+
       syncProfileToForum(nextProfile, true);
-      await persistLocalState({ profile: nextProfile, fixedLocation, alerts });
-      await syncSingleLocationToSupabase(nextProfile, fixedLocation, alerts);
+      await persistLocalState({ profile: nextProfile, fixedLocation: nextLocation, alerts });
+      await syncSingleLocationToSupabase(nextProfile, nextLocation, alerts);
       return true;
     } catch {
       set({

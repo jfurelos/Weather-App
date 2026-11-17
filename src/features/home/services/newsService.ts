@@ -28,16 +28,31 @@ const FALLBACK_NEWS: FeaturedNews[] = [
   },
 ];
 
+function formatRelativeTime(isoDate?: string | null): string {
+  if (!isoDate) return 'Reciente';
+  const diffMs = Date.now() - new Date(isoDate).getTime();
+  const diffMins = Math.max(1, Math.floor(diffMs / 60000));
+  if (diffMins < 60) return `Hace ${diffMins} min`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `Hace ${diffHours}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `Hace ${diffDays}d`;
+}
+
 export async function fetchFeaturedNews(): Promise<FeaturedNews[]> {
   try {
-    // Intentar consultar noticias desde Supabase si existe la tabla
     const { data, error } = await supabase
       .from('official_news')
-      .select('id, source, title, content, published_at')
+      .select('id, source, title, content, tag, published_at')
       .order('published_at', { ascending: false })
       .limit(3);
 
-    if (error || !data || data.length === 0) {
+    if (error) {
+      console.warn('[newsService] Error leyendo official_news:', error.message);
+      return FALLBACK_NEWS;
+    }
+
+    if (!data || data.length === 0) {
       return FALLBACK_NEWS;
     }
 
@@ -46,10 +61,11 @@ export async function fetchFeaturedNews(): Promise<FeaturedNews[]> {
       source: item.source || 'Oficial',
       title: item.title,
       summary: item.content,
-      tag: 'Aviso',
-      timeAgo: 'Reciente',
+      tag: item.tag || 'Aviso',
+      timeAgo: formatRelativeTime(item.published_at),
     }));
-  } catch {
+  } catch (err) {
+    console.warn('[newsService] Excepción consultando official_news:', err);
     return FALLBACK_NEWS;
   }
 }
