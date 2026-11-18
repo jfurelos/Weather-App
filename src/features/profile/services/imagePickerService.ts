@@ -1,5 +1,8 @@
 import { Platform } from 'react-native';
 
+const MAX_INPUT_FILE_BYTES = 5 * 1024 * 1024; // 5 MB máximo al seleccionar archivo
+const MAX_DATA_URL_LENGTH = 120_000; // ~120 KB máximo tras compresión (acorde al límite en BBDD)
+
 /**
  * Abre la galería / selector de imágenes del dispositivo y devuelve un Data URL compacto
  * (redimensionado a máx 256px) listo para mostrar y almacenar en perfil y Supabase.
@@ -9,7 +12,7 @@ export async function pickProfileImageFromGallery(): Promise<string | null> {
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = 'image/*';
+      input.accept = 'image/png,image/jpeg,image/webp';
       input.style.display = 'none';
 
       let settled = false;
@@ -27,18 +30,25 @@ export async function pickProfileImageFromGallery(): Promise<string | null> {
           return;
         }
 
+        if (!file.type.startsWith('image/') || file.size > MAX_INPUT_FILE_BYTES) {
+          finish(null);
+          return;
+        }
+
         const reader = new FileReader();
         reader.onerror = () => finish(null);
         reader.onload = () => {
           const rawDataUrl = typeof reader.result === 'string' ? reader.result : null;
-          if (!rawDataUrl) {
+          if (!rawDataUrl || !rawDataUrl.startsWith('data:image/')) {
             finish(null);
             return;
           }
 
           // Redimensionar suavemente en canvas para mantener el peso ligero
           const img = new window.Image();
-          img.onerror = () => finish(rawDataUrl);
+          img.onerror = () => {
+            finish(rawDataUrl.length <= MAX_DATA_URL_LENGTH ? rawDataUrl : null);
+          };
           img.onload = () => {
             try {
               const maxSize = 256;
@@ -53,14 +63,17 @@ export async function pickProfileImageFromGallery(): Promise<string | null> {
               canvas.height = height;
               const ctx = canvas.getContext('2d');
               if (!ctx) {
-                finish(rawDataUrl);
+                finish(rawDataUrl.length <= MAX_DATA_URL_LENGTH ? rawDataUrl : null);
                 return;
               }
               ctx.drawImage(img, 0, 0, width, height);
-              const compressed = canvas.toDataURL('image/jpeg', 0.82);
-              finish(compressed);
+              let compressed = canvas.toDataURL('image/jpeg', 0.8);
+              if (compressed.length > MAX_DATA_URL_LENGTH) {
+                compressed = canvas.toDataURL('image/jpeg', 0.6);
+              }
+              finish(compressed.length <= MAX_DATA_URL_LENGTH ? compressed : null);
             } catch {
-              finish(rawDataUrl);
+              finish(rawDataUrl.length <= MAX_DATA_URL_LENGTH ? rawDataUrl : null);
             }
           };
           img.src = rawDataUrl;

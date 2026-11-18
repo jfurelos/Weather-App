@@ -315,6 +315,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                         placeholderTextColor={colors.textSecondary}
                         value={fullName}
                         onChangeText={setFullName}
+                        maxLength={80}
                       />
                     </View>
 
@@ -335,6 +336,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                         placeholderTextColor={colors.textSecondary}
                         value={username}
                         onChangeText={setUsername}
+                        maxLength={40}
                         autoCapitalize="none"
                         autoCorrect={false}
                       />
@@ -437,6 +439,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                     placeholderTextColor={colors.textSecondary}
                     value={email}
                     onChangeText={setEmail}
+                    maxLength={120}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}

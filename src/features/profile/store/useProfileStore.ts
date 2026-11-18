@@ -501,15 +501,22 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
   updateProfile: async ({ fullName, province, avatarColor, avatarUrl }) => {
     const { profile, fixedLocation, alerts } = get();
-    const cleanedUrl = avatarUrl && avatarUrl.trim().length > 0 ? avatarUrl.trim() : null;
+    const trimmedUrl = avatarUrl && avatarUrl.trim().length > 0 ? avatarUrl.trim() : null;
+    const isSafeUrl =
+      trimmedUrl !== null &&
+      trimmedUrl.length <= 145_000 &&
+      (trimmedUrl.startsWith('data:image/') ||
+        trimmedUrl.startsWith('https://') ||
+        trimmedUrl.startsWith('http://'));
+    const cleanedUrl = isSafeUrl ? trimmedUrl : null;
 
     const updatedProfile: UserProfileData = {
       ...profile,
       fullName:
         !profile.isAuthenticated && fullName !== undefined && fullName.trim().length > 0
-          ? fullName.trim()
+          ? fullName.trim().slice(0, 80)
           : profile.fullName,
-      province,
+      province: province.trim().slice(0, 60) || profile.province,
       avatarColor,
       avatarUrl: cleanedUrl,
     };
@@ -683,9 +690,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   signUp: async ({ email, password, fullName, username, province }) => {
     set({ isLoadingAuth: true, authError: null });
     try {
-      const cleanEmail = email.trim();
-      const cleanName = fullName.trim();
-      const cleanUsername = username.trim().toLowerCase().replace(/\s+/g, '_');
+      const cleanEmail = email.trim().slice(0, 120);
+      const cleanName = fullName.trim().slice(0, 80);
+      const cleanUsername = username.trim().toLowerCase().replace(/\s+/g, '_').slice(0, 40);
 
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,

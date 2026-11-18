@@ -7,6 +7,9 @@ import { ChatType } from '../data/chatTypes';
 const FAVORITES_STORAGE_KEY = '@clima_comunidad_favorite_comarcas_v2';
 const REPORTED_STORAGE_KEY = '@clima_comunidad_reported_messages_v2';
 export const MAX_FAVORITE_COMARCAS = 3;
+export const MAX_CHAT_MESSAGE_LENGTH = 500;
+const SEND_COOLDOWN_MS = 1200;
+let lastSentAtMs = 0;
 
 export interface ChatMessage {
   id: string;
@@ -516,8 +519,12 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
     chatType: ChatType,
     content: string
   ) => {
-    const trimmed = content.trim();
+    const trimmed = content.trim().slice(0, MAX_CHAT_MESSAGE_LENGTH);
     if (!trimmed) return;
+
+    const nowMs = Date.now();
+    if (nowMs - lastSentAtMs < SEND_COOLDOWN_MS) return;
+    lastSentAtMs = nowMs;
 
     const { currentUser, messagesByChatKey } = get();
     const key = `${comarcaId}_${chatType}`;
@@ -596,15 +603,18 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
     // Registrar reporte en Supabase `comarca_reports` cumpliendo RLS (auth.uid() = reporter_id)
     const sessionUid = await getSupabaseSessionUserId();
     if (sessionUid) {
-      const { error } = await supabase.from('comarca_reports').insert({
-        reporter_id: sessionUid,
-        message_ref: messageId,
-        comarca_id: reportingMessage.comarcaId,
-        chat_type: reportingMessage.chatType,
-        message_excerpt: reportingMessage.content.slice(0, 200),
-        reason,
-        status: 'pending',
-      });
+      const { error } = await supabase.from('comarca_reports').upsert(
+        {
+          reporter_id: sessionUid,
+          message_ref: messageId.slice(0, 120),
+          comarca_id: reportingMessage.comarcaId.slice(0, 80),
+          chat_type: reportingMessage.chatType,
+          message_excerpt: reportingMessage.content.slice(0, 200),
+          reason: reason.trim().slice(0, 200) || 'Otro',
+          status: 'pending',
+        },
+        { onConflict: 'reporter_id,message_ref' }
+      );
 
       if (error) {
         console.error('[useComarcasForumStore] Error insertando en comarca_reports:', error.message);

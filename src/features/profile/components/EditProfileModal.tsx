@@ -254,6 +254,7 @@ export const EditProfileModal: React.FC<Props> = ({
                 placeholderTextColor={colors.textSecondary}
                 value={fullName}
                 onChangeText={setFullName}
+                maxLength={80}
                 editable={!profile.isAuthenticated}
               />
             </View>

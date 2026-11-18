@@ -206,6 +206,7 @@ export const ChatConversationScreen: React.FC = () => {
               placeholderTextColor={colors.textSecondary}
               value={inputText}
               onChangeText={setInputText}
+              maxLength={500}
               onSubmitEditing={handleSend}
               returnKeyType="send"
             />

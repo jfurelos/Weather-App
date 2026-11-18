@@ -7,10 +7,11 @@ export function getLeafletMapHtml(theme: AppTheme, apiKey?: string): string {
 
   // Si el usuario tiene una API key gratuita de CARTO, usamos sus tiles limpios.
   // Si no la tiene aún, usamos OpenStreetMap (100% libre, sin registro ni clave).
-  const baseTileUrl = cartoKey
+  const encodedCartoKey = cartoKey ? encodeURIComponent(cartoKey) : '';
+  const baseTileUrl = encodedCartoKey
     ? (isDark
-        ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`
-        : `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${cartoKey}`)
+        ? `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${encodedCartoKey}`
+        : `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${encodedCartoKey}`)
     : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   const bgColor = colors.background;
