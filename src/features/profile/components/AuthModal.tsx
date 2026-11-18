@@ -11,6 +11,7 @@ import { X, MapPin, Check, Eye, EyeOff } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { SPANISH_PROVINCES } from '@/features/community/data/provincesData';
 
@@ -41,7 +42,7 @@ export const AuthModal: React.FC<Props> = ({
   onClearError,
   onClose,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -108,14 +109,34 @@ export const AuthModal: React.FC<Props> = ({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.cardSolid,
+              borderColor: colors.border,
+              borderTopWidth: theme.metrics.windowBorderWidth,
+              borderTopLeftRadius: theme.metrics.windowRadius,
+              borderTopRightRadius: theme.metrics.windowRadius,
+            },
+            theme.shadows.modal,
+            getGlassStyle(theme),
+          ]}
+        >
           <View style={styles.header}>
             <Typography variant="h3">
               {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
             </Typography>
             <TouchableOpacity
               activeOpacity={0.7}
-              style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: colors.pillBg,
+                  borderColor: colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                },
+              ]}
               onPress={onClose}
               accessibilityLabel="Cerrar autenticación"
             >
@@ -124,20 +145,30 @@ export const AuthModal: React.FC<Props> = ({
           </View>
 
           {/* Selector Login / Registro */}
-          <View style={[styles.modeBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.modeBar,
+              {
+                backgroundColor: colors.pillBg,
+                borderColor: colors.subcardBorder,
+                borderWidth: theme.metrics.subcardBorderWidth,
+              },
+            ]}
+          >
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => switchMode('login')}
               style={[
                 styles.modeBtn,
-                { backgroundColor: mode === 'login' ? colors.primary : 'transparent' },
+                { backgroundColor: mode === 'login' ? colors.pillActiveBg : 'transparent' },
+                mode === 'login' && theme.shadows.pillActive,
               ]}
             >
               <Typography
                 variant="captionMedium"
                 style={{
-                  color: mode === 'login' ? '#FFFFFF' : colors.textPrimary,
-                  fontWeight: mode === 'login' ? '700' : '500',
+                  color: mode === 'login' ? colors.pillActiveText : colors.textPrimary,
+                  fontWeight: mode === 'login' ? '800' : '600',
                 }}
               >
                 Acceder
@@ -148,14 +179,15 @@ export const AuthModal: React.FC<Props> = ({
               onPress={() => switchMode('register')}
               style={[
                 styles.modeBtn,
-                { backgroundColor: mode === 'register' ? colors.primary : 'transparent' },
+                { backgroundColor: mode === 'register' ? colors.pillActiveBg : 'transparent' },
+                mode === 'register' && theme.shadows.pillActive,
               ]}
             >
               <Typography
                 variant="captionMedium"
                 style={{
-                  color: mode === 'register' ? '#FFFFFF' : colors.textPrimary,
-                  fontWeight: mode === 'register' ? '700' : '500',
+                  color: mode === 'register' ? colors.pillActiveText : colors.textPrimary,
+                  fontWeight: mode === 'register' ? '800' : '600',
                 }}
               >
                 Registrarse

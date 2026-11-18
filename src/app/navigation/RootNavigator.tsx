@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from './types';
 import { BottomTabNavigator } from './BottomTabNavigator';
 import { WelcomeAuthScreen } from '@/features/auth/screens/WelcomeAuthScreen';
 import { ComarcaDetailScreen } from '@/features/community/screens/ComarcaDetailScreen';
 import { ChatConversationScreen } from '@/features/community/screens/ChatConversationScreen';
+import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { useProfileStore } from '@/features/profile/store/useProfileStore';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 
@@ -19,9 +20,9 @@ export const RootNavigator: React.FC = () => {
 
   if (!hasHydrated) {
     return (
-      <View style={[styles.loader, { backgroundColor: colors.background }]}>
+      <ScreenBackground style={styles.loader}>
         <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      </ScreenBackground>
     );
   }
 

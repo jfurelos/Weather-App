@@ -75,14 +75,14 @@ export const HEAT_THRESHOLDS: { value: HeatThreshold; label: string }[] = [
 ];
 
 export const AVATAR_COLORS: string[] = [
-  '#FF385C',
-  '#2A9D8F',
-  '#457B9D',
-  '#E76F51',
-  '#264653',
-  '#6C5CE7',
-  '#D97706',
-  '#0D9488',
+  '#5A9BD5',
+  '#67B7B5',
+  '#58333E',
+  '#D99B26',
+  '#3B6478',
+  '#5B6E8C',
+  '#4A918F',
+  '#7B5EA7',
 ];
 
 export function getToneLabel(toneId: AlertToneId): string {

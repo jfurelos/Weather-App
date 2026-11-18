@@ -197,7 +197,7 @@ export const MOCK_STORM_USERS: MockStormUser[] = [
     username: 'rocio_sur',
     email: 'rocio.delgado@demo.es',
     province: 'Sevilla',
-    avatarColor: '#DC4C4E',
+    avatarColor: '#58333E',
     location: {
       name: 'Sevilla',
       province: 'Sevilla',
@@ -277,7 +277,7 @@ export const MOCK_STORM_USERS: MockStormUser[] = [
     username: 'laia_costa',
     email: 'laia.puig@demo.es',
     province: 'Barcelona',
-    avatarColor: '#DF6D49',
+    avatarColor: '#D99B26',
     location: {
       name: 'Barcelona',
       province: 'Barcelona',

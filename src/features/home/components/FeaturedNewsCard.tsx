@@ -40,7 +40,7 @@ export const FeaturedNewsCard: React.FC<Props> = ({ news, onPressSeeAll }) => {
         {topNews.summary}
       </Typography>
 
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
       <TouchableOpacity
         style={styles.footerRow}

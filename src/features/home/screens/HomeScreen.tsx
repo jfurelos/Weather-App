@@ -3,13 +3,14 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
+import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
@@ -21,7 +22,7 @@ import { FeaturedNewsCard } from '../components/FeaturedNewsCard';
 import { CitySelectorModal } from '../components/CitySelectorModal';
 
 export const HomeScreen: React.FC = () => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const navigation = useNavigation<any>();
 
   const {
@@ -46,7 +47,7 @@ export const HomeScreen: React.FC = () => {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenBackground>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -59,7 +60,7 @@ export const HomeScreen: React.FC = () => {
           />
         }
       >
-        {/* Encabezado Principal Airbnb */}
+        {/* Encabezado Principal */}
         <View style={styles.header}>
           <Typography variant="hero" style={styles.title}>
             El Tiempo Hoy
@@ -70,11 +71,17 @@ export const HomeScreen: React.FC = () => {
           <View
             style={[
               styles.mockBanner,
-              { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: theme.metrics.subcardBorderWidth,
+                borderRadius: theme.metrics.subcardRadius,
+              },
+              theme.shadows.subcard,
             ]}
           >
             <View style={{ flex: 1 }}>
-              <Typography variant="captionMedium" color="brand" style={{ fontWeight: '700' }}>
+              <Typography variant="captionMedium" color="brand" style={{ fontWeight: '800' }}>
                 Temporal demo: {activeMockScenario.stormTitle}
               </Typography>
               <Typography variant="caption" color="secondary">
@@ -84,9 +91,19 @@ export const HomeScreen: React.FC = () => {
             <TouchableOpacity
               activeOpacity={0.75}
               onPress={clearMockStormScenario}
-              style={[styles.mockResetBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              style={[
+                styles.mockResetBtn,
+                {
+                  backgroundColor: colors.pillActiveBg,
+                  borderColor: colors.border,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                },
+              ]}
             >
-              <Typography variant="captionMedium" style={{ fontWeight: '600' }}>
+              <Typography
+                variant="captionMedium"
+                style={{ color: colors.pillActiveText, fontWeight: '800' }}
+              >
                 Clima real
               </Typography>
             </TouchableOpacity>
@@ -103,7 +120,7 @@ export const HomeScreen: React.FC = () => {
           </View>
         ) : error && !weather ? (
           /* Estado de Error */
-          <View style={[styles.errorContainer, { backgroundColor: colors.surface }]}>
+          <Card style={styles.errorContainer}>
             <Typography variant="h3" style={{ textAlign: 'center' }}>
               No se pudo cargar el pronóstico
             </Typography>
@@ -116,11 +133,11 @@ export const HomeScreen: React.FC = () => {
               style={{ marginTop: spacing.base }}
               onPress={loadHomeData}
             />
-          </View>
+          </Card>
         ) : weather ? (
           /* Contenido Principal */
           <>
-            {/* 1. Tarjeta Clima Actual */}
+            {/* 1. Tarjeta Clima Actual con Mascota Nube SVG */}
             <WeatherHeroCard
               weather={weather}
               city={selectedCity}
@@ -149,24 +166,22 @@ export const HomeScreen: React.FC = () => {
         onClose={() => setCityModalVisible(false)}
         onSelectCity={(city) => setSelectedCity(city)}
       />
-    </SafeAreaView>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     padding: spacing.xl,
     gap: spacing.base,
     paddingBottom: spacing.xxxl,
   },
   header: {
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
+    marginBottom: 2,
   },
   title: {
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
   mockBanner: {
     flexDirection: 'row',
@@ -174,14 +189,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
     padding: spacing.md,
-    borderRadius: spacing.borderRadiusMd,
-    borderWidth: 1,
   },
   mockResetBtn: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
     borderRadius: spacing.borderRadiusFull,
-    borderWidth: 1,
   },
   loadingContainer: {
     height: 320,
@@ -190,8 +202,7 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     padding: spacing.xl,
-    borderRadius: spacing.borderRadiusLg,
     alignItems: 'center',
-    marginTop: spacing.xl,
+    marginTop: spacing.base,
   },
 });

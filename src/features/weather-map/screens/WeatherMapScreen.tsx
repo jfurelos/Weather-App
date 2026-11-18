@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
@@ -30,7 +31,7 @@ export const WeatherMapScreen: React.FC = () => {
     : 'Hoy';
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenBackground>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -71,23 +72,21 @@ export const WeatherMapScreen: React.FC = () => {
 
       {/* Fullscreen Map Modal */}
       <FullScreenMapModal />
-    </SafeAreaView>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     padding: spacing.xl,
-    paddingBottom: 90, // safe distance from 80px bottom tab bar
+    paddingBottom: spacing.xxxl,
     gap: spacing.base,
   },
   header: {
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
+    marginBottom: 2,
   },
   title: {
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
 });

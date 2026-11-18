@@ -19,6 +19,7 @@ import {
 import { Typography } from '@/shared/components/Typography';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import {
   ALERT_TONES,
@@ -54,7 +55,7 @@ export const AlertSettingsModal: React.FC<Props> = ({
   onChangeTone,
   onClose,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const [activeTab, setActiveTab] = useState<AlertCategory>(initialTab);
   const [playingToneId, setPlayingToneId] = useState<AlertToneId | null>(null);
 
@@ -83,7 +84,7 @@ export const AlertSettingsModal: React.FC<Props> = ({
   ];
 
   const renderTabIcon = (key: AlertCategory, active: boolean) => {
-    const iconColor = active ? '#FFFFFF' : colors.textSecondary;
+    const iconColor = active ? colors.pillActiveText : colors.textSecondary;
     switch (key) {
       case 'rain':
         return <CloudRain size={15} color={iconColor} />;
@@ -102,7 +103,20 @@ export const AlertSettingsModal: React.FC<Props> = ({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.cardSolid,
+              borderColor: colors.border,
+              borderTopWidth: theme.metrics.windowBorderWidth,
+              borderTopLeftRadius: theme.metrics.windowRadius,
+              borderTopRightRadius: theme.metrics.windowRadius,
+            },
+            theme.shadows.modal,
+            getGlassStyle(theme),
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
@@ -113,7 +127,14 @@ export const AlertSettingsModal: React.FC<Props> = ({
             </View>
             <TouchableOpacity
               activeOpacity={0.7}
-              style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: colors.pillBg,
+                  borderColor: colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                },
+              ]}
               onPress={onClose}
               accessibilityLabel="Cerrar ajustes de alertas"
             >
@@ -122,7 +143,16 @@ export const AlertSettingsModal: React.FC<Props> = ({
           </View>
 
           {/* Selector de categoría */}
-          <View style={[styles.tabBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.tabBar,
+              {
+                backgroundColor: colors.pillBg,
+                borderColor: colors.subcardBorder,
+                borderWidth: theme.metrics.subcardBorderWidth,
+              },
+            ]}
+          >
             {tabs.map((t) => {
               const isActive = activeTab === t.key;
               return (
@@ -133,16 +163,17 @@ export const AlertSettingsModal: React.FC<Props> = ({
                   style={[
                     styles.tabItem,
                     {
-                      backgroundColor: isActive ? colors.primary : 'transparent',
+                      backgroundColor: isActive ? colors.pillActiveBg : 'transparent',
                     },
+                    isActive && theme.shadows.pillActive,
                   ]}
                 >
                   {renderTabIcon(t.key, isActive)}
                   <Typography
                     variant="captionMedium"
                     style={{
-                      color: isActive ? '#FFFFFF' : colors.textPrimary,
-                      fontWeight: isActive ? '700' : '500',
+                      color: isActive ? colors.pillActiveText : colors.textPrimary,
+                      fontWeight: isActive ? '800' : '600',
                     }}
                   >
                     {t.label}
@@ -315,20 +346,20 @@ export const AlertSettingsModal: React.FC<Props> = ({
                           <TouchableOpacity
                             activeOpacity={0.7}
                             onPress={() => handlePreviewTone(tone.id)}
-                            style={[
-                              styles.playBtn,
-                              {
-                                backgroundColor: isPlaying ? colors.primary : colors.card,
-                                borderColor: isPlaying ? colors.primary : colors.border,
-                              },
-                            ]}
-                            accessibilityLabel={`Probar tono ${tone.label}`}
-                          >
-                            <Play
-                              size={12}
-                              color={isPlaying ? '#FFFFFF' : colors.textPrimary}
-                              fill={isPlaying ? '#FFFFFF' : 'transparent'}
-                            />
+                              style={[
+                                styles.playBtn,
+                                {
+                                  backgroundColor: isPlaying ? colors.primary : colors.cardSolid,
+                                  borderColor: isPlaying ? colors.primary : colors.subcardBorder,
+                                },
+                              ]}
+                              accessibilityLabel={`Probar tono ${tone.label}`}
+                            >
+                              <Play
+                                size={12}
+                                color={isPlaying ? colors.onPrimary : colors.textPrimary}
+                                fill={isPlaying ? colors.onPrimary : 'transparent'}
+                              />
                           </TouchableOpacity>
                         )}
                         {isSelected && <Check size={17} color={colors.primary} />}

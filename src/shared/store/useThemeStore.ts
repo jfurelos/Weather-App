@@ -1,49 +1,66 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { lightPalette, darkPalette, ThemeColors } from '../theme/colors';
+import {
+  AppTheme,
+  AppThemeId,
+  DEFAULT_THEME_ID,
+  isValidThemeId,
+  ThemeColors,
+  THEMES,
+} from '../theme/themes';
 
-const THEME_STORAGE_KEY = '@clima_comunidad_theme_mode_v1';
+const THEME_STORAGE_KEY = '@clima_comunidad_theme_style_v2';
 
 export type ThemeMode = 'light' | 'dark';
 
 interface ThemeState {
+  themeId: AppThemeId;
+  theme: AppTheme;
   mode: ThemeMode;
+  isDark: boolean;
   colors: ThemeColors;
   loadTheme: () => Promise<void>;
+  setTheme: (themeId: AppThemeId) => void;
   toggleTheme: () => void;
-  setTheme: (mode: ThemeMode) => void;
+}
+
+function buildThemeSlice(themeId: AppThemeId) {
+  const theme = THEMES[themeId];
+  return {
+    themeId,
+    theme,
+    isDark: theme.isDark,
+    mode: (theme.isDark ? 'dark' : 'light') as ThemeMode,
+    colors: theme.colors,
+  };
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({
-  mode: 'light',
-  colors: lightPalette,
+  ...buildThemeSlice(DEFAULT_THEME_ID),
+
   loadTheme: async () => {
     try {
       const stored = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-      if (stored === 'light' || stored === 'dark') {
-        set({
-          mode: stored,
-          colors: stored === 'light' ? lightPalette : darkPalette,
-        });
+      if (isValidThemeId(stored)) {
+        set(buildThemeSlice(stored));
+      } else {
+        set(buildThemeSlice(DEFAULT_THEME_ID));
       }
     } catch {
-      // Ignorar fallo de lectura local
+      // Mantener Nube Ilustrada por defecto ante fallo de lectura
     }
   },
+
+  setTheme: (themeId: AppThemeId) => {
+    if (!isValidThemeId(themeId)) return;
+    AsyncStorage.setItem(THEME_STORAGE_KEY, themeId).catch(() => {});
+    set(buildThemeSlice(themeId));
+  },
+
   toggleTheme: () =>
     set((state) => {
-      const nextMode: ThemeMode = state.mode === 'light' ? 'dark' : 'light';
-      AsyncStorage.setItem(THEME_STORAGE_KEY, nextMode).catch(() => {});
-      return {
-        mode: nextMode,
-        colors: nextMode === 'light' ? lightPalette : darkPalette,
-      };
+      const nextId: AppThemeId = state.isDark ? 'ilustrada' : 'tormenta';
+      AsyncStorage.setItem(THEME_STORAGE_KEY, nextId).catch(() => {});
+      return buildThemeSlice(nextId);
     }),
-  setTheme: (mode: ThemeMode) => {
-    AsyncStorage.setItem(THEME_STORAGE_KEY, mode).catch(() => {});
-    set({
-      mode,
-      colors: mode === 'light' ? lightPalette : darkPalette,
-    });
-  },
 }));

@@ -12,6 +12,7 @@ import { X, Check, MapPin, Lock, Search, ImagePlus, Trash2 } from 'lucide-react-
 import { Typography } from '@/shared/components/Typography';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { SPANISH_PROVINCES } from '@/features/community/data/provincesData';
 import { AVATAR_COLORS } from '../data/locationsData';
@@ -36,7 +37,7 @@ export const EditProfileModal: React.FC<Props> = ({
   onSave,
   onClose,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
 
   const [fullName, setFullName] = useState(profile.fullName);
   const [province, setProvince] = useState(profile.province);
@@ -103,7 +104,20 @@ export const EditProfileModal: React.FC<Props> = ({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.cardSolid,
+              borderColor: colors.border,
+              borderTopWidth: theme.metrics.windowBorderWidth,
+              borderTopLeftRadius: theme.metrics.windowRadius,
+              borderTopRightRadius: theme.metrics.windowRadius,
+            },
+            theme.shadows.modal,
+            getGlassStyle(theme),
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -114,7 +128,14 @@ export const EditProfileModal: React.FC<Props> = ({
             </View>
             <TouchableOpacity
               activeOpacity={0.7}
-              style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: colors.pillBg,
+                  borderColor: colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                },
+              ]}
               onPress={onClose}
               accessibilityLabel="Cerrar edición de perfil"
             >

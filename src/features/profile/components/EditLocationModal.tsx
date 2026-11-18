@@ -10,6 +10,7 @@ import {
 import { X, Search, MapPin, Check } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { FixedLocation, SPANISH_ALERT_LOCATIONS } from '../data/locationsData';
 
@@ -26,7 +27,7 @@ export const EditLocationModal: React.FC<Props> = ({
   onSelectLocation,
   onClose,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const [query, setQuery] = useState('');
 
   const normalized = query.trim().toLowerCase();
@@ -50,7 +51,20 @@ export const EditLocationModal: React.FC<Props> = ({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={[styles.sheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: colors.cardSolid,
+              borderColor: colors.border,
+              borderTopWidth: theme.metrics.windowBorderWidth,
+              borderTopLeftRadius: theme.metrics.windowRadius,
+              borderTopRightRadius: theme.metrics.windowRadius,
+            },
+            theme.shadows.modal,
+            getGlassStyle(theme),
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
@@ -61,7 +75,14 @@ export const EditLocationModal: React.FC<Props> = ({
             </View>
             <TouchableOpacity
               activeOpacity={0.7}
-              style={[styles.closeButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: colors.pillBg,
+                  borderColor: colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                },
+              ]}
               onPress={onClose}
               accessibilityLabel="Cerrar selector de ubicación"
             >
@@ -73,7 +94,11 @@ export const EditLocationModal: React.FC<Props> = ({
           <View
             style={[
               styles.searchContainer,
-              { backgroundColor: colors.surface, borderColor: colors.border },
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.subcardBorder,
+                borderWidth: theme.metrics.subcardBorderWidth,
+              },
             ]}
           >
             <Search size={16} color={colors.textSecondary} />

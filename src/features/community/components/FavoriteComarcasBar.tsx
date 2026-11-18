@@ -22,18 +22,18 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
   onSelectComarca,
   onRemoveFavorite,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
-          <Star size={14} color="#F59E0B" fill="#F59E0B" />
-          <Typography variant="captionMedium" color="secondary" style={{ fontWeight: '700' }}>
+          <Star size={14} color={colors.gold} fill={colors.gold} />
+          <Typography variant="captionMedium" color="secondary" style={{ fontWeight: '800' }}>
             FAVORITAS
           </Typography>
         </View>
-        <Typography variant="caption" color="secondary" style={{ fontWeight: '600' }}>
+        <Typography variant="caption" color="secondary" style={{ fontWeight: '700' }}>
           {favorites.length}/{MAX_FAVORITE_COMARCAS}
         </Typography>
       </View>
@@ -42,19 +42,23 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
         <View
           style={[
             styles.limitBanner,
-            { backgroundColor: colors.warning + '18', borderColor: colors.warning },
+            {
+              backgroundColor: colors.gold,
+              borderColor: colors.border,
+              borderWidth: theme.metrics.subcardBorderWidth,
+            },
           ]}
         >
-          <AlertCircle size={15} color={colors.warning} />
+          <AlertCircle size={15} color="#28323E" />
           <Typography
             variant="captionMedium"
-            style={{ flex: 1, color: colors.textPrimary, fontSize: 12 }}
+            style={{ flex: 1, color: '#28323E', fontSize: 12, fontWeight: '700' }}
           >
             {limitMessage}
           </Typography>
           {onDismissLimitMessage && (
             <TouchableOpacity onPress={onDismissLimitMessage} style={styles.dismissBtn}>
-              <X size={14} color={colors.textSecondary} />
+              <X size={14} color="#28323E" />
             </TouchableOpacity>
           )}
         </View>
@@ -64,7 +68,11 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
         <View
           style={[
             styles.emptyHint,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.subcardBorder,
+              borderWidth: theme.metrics.subcardBorderWidth,
+            },
           ]}
         >
           <Typography variant="caption" color="secondary">
@@ -81,7 +89,10 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
                 {
                   backgroundColor: colors.card,
                   borderColor: colors.border,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                  borderRadius: theme.metrics.subcardRadius - 2,
                 },
+                theme.shadows.subcard,
               ]}
             >
               <TouchableOpacity
@@ -89,7 +100,7 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
                 style={styles.favMainTouch}
                 onPress={() => onSelectComarca(comarca)}
               >
-                <Star size={15} color="#F59E0B" fill="#F59E0B" />
+                <Star size={15} color={colors.gold} fill={colors.gold} />
                 <View style={styles.favInfo}>
                   <Typography
                     variant="bodyMedium"
@@ -112,7 +123,7 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
               {onRemoveFavorite && (
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  style={[styles.removeBtn, { borderLeftColor: colors.border }]}
+                  style={[styles.removeBtn, { borderLeftColor: colors.divider }]}
                   onPress={() => onRemoveFavorite(comarca)}
                   accessibilityLabel={`Quitar ${comarca.name} de favoritas`}
                 >

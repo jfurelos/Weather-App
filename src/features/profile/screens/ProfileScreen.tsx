@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   Switch,
   TouchableOpacity,
   Image,
@@ -22,14 +21,17 @@ import {
   BellRing,
   CloudLightning,
 } from 'lucide-react-native';
+import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
 import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { AlertCategory, useProfileStore } from '../store/useProfileStore';
 import { getRainThresholdLabel, getToneLabel } from '../data/locationsData';
+import { ThemeSelectorCard } from '../components/ThemeSelectorCard';
 import { EditProfileModal } from '../components/EditProfileModal';
 import { EditLocationModal } from '../components/EditLocationModal';
 import { AlertSettingsModal } from '../components/AlertSettingsModal';
@@ -37,7 +39,7 @@ import { AuthModal } from '../components/AuthModal';
 import { MOCK_ALERT_SCENARIOS, MOCK_STORM_USERS } from '@/shared/data/mockStormUsers';
 
 export const ProfileScreen: React.FC = () => {
-  const { colors, mode, toggleTheme } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const {
     profile,
     fixedLocation,
@@ -93,7 +95,7 @@ export const ProfileScreen: React.FC = () => {
   const hasAvatarImage = Boolean(profile.avatarUrl && !avatarLoadError);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenBackground>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Typography variant="hero" style={styles.title}>
@@ -107,7 +109,11 @@ export const ProfileScreen: React.FC = () => {
             <View
               style={[
                 styles.avatarPlaceholder,
-                { backgroundColor: profile.avatarColor || colors.primary },
+                {
+                  backgroundColor: profile.avatarColor || colors.primary,
+                  borderColor: colors.border,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                },
               ]}
             >
               {hasAvatarImage ? (
@@ -148,19 +154,27 @@ export const ProfileScreen: React.FC = () => {
             />
             {!profile.isAuthenticated && (
               <TouchableOpacity
-                activeOpacity={0.75}
+                activeOpacity={0.78}
                 onPress={() => {
                   clearAuthError();
                   setShowAuthModal(true);
                 }}
                 style={[
                   styles.authPillBtn,
-                  { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
+                  {
+                    backgroundColor: colors.pillActiveBg,
+                    borderColor: colors.border,
+                    borderWidth: theme.metrics.subcardBorderWidth,
+                  },
+                  theme.shadows.pillActive,
                 ]}
                 accessibilityLabel="Iniciar sesión o crear cuenta"
               >
-                <LogIn size={15} color={colors.primary} />
-                <Typography variant="captionMedium" color="brand" style={{ fontWeight: '600' }}>
+                <LogIn size={15} color={colors.pillActiveText} />
+                <Typography
+                  variant="captionMedium"
+                  style={{ color: colors.pillActiveText, fontWeight: '800' }}
+                >
                   Acceder
                 </Typography>
               </TouchableOpacity>
@@ -168,23 +182,8 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </Card>
 
-        {/* 2. Ajuste de Tema: Claro / Oscuro */}
-        <Card style={styles.settingCard}>
-          <View style={styles.rowBetween}>
-            <View>
-              <Typography variant="h3">Modo Oscuro</Typography>
-              <Typography variant="caption" color="secondary">
-                {mode === 'dark' ? 'Activado' : 'Desactivado'}
-              </Typography>
-            </View>
-            <Switch
-              value={mode === 'dark'}
-              onValueChange={toggleTheme}
-              trackColor={{ false: colors.borderStrong, true: colors.primary }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-        </Card>
+        {/* 2. Selector de los 4 Estilos de Diseño Nube */}
+        <ThemeSelectorCard />
 
         {/* 3. Ubicación Fija Única para Alertas */}
         <Card style={styles.settingCard}>
@@ -193,7 +192,7 @@ export const ProfileScreen: React.FC = () => {
               <MapPin size={16} color={colors.primary} />
               <Typography variant="h3">Ubicación Fija</Typography>
             </View>
-            <Badge label="Activa" tone="brand" />
+            <Badge label="Activa" tone="rain" />
           </View>
 
           <Typography variant="body" color="secondary" style={{ marginTop: spacing.xs }}>
@@ -205,11 +204,17 @@ export const ProfileScreen: React.FC = () => {
             onPress={() => setShowEditLocation(true)}
             style={[
               styles.locationBox,
-              { backgroundColor: colors.surface, borderColor: colors.border },
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.subcardBorder,
+                borderWidth: theme.metrics.subcardBorderWidth,
+                borderRadius: theme.metrics.subcardRadius,
+              },
+              theme.shadows.subcard,
             ]}
           >
             <View style={{ flex: 1 }}>
-              <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+              <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
                 {fixedLocation.name}
               </Typography>
               <Typography variant="caption" color="secondary">
@@ -260,12 +265,12 @@ export const ProfileScreen: React.FC = () => {
             <Switch
               value={alerts.rain.enabled}
               onValueChange={(val) => toggleAlert('rain', val)}
-              trackColor={{ false: colors.borderStrong, true: colors.primary }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: colors.pillBg, true: colors.primary }}
+              thumbColor={colors.cardSolid}
             />
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
           {/* Toggle Viento */}
           <View style={styles.alertOptionRow}>
@@ -285,12 +290,12 @@ export const ProfileScreen: React.FC = () => {
             <Switch
               value={alerts.wind.enabled}
               onValueChange={(val) => toggleAlert('wind', val)}
-              trackColor={{ false: colors.borderStrong, true: colors.primary }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: colors.pillBg, true: colors.primary }}
+              thumbColor={colors.cardSolid}
             />
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
           {/* Toggle Calor */}
           <View style={styles.alertOptionRow}>
@@ -299,7 +304,7 @@ export const ProfileScreen: React.FC = () => {
               activeOpacity={0.7}
               onPress={() => openAlertSettingsOn('heat')}
             >
-              <Sun size={18} color={colors.heat} />
+              <Sun size={18} color={colors.warning} />
               <View style={{ flex: 1 }}>
                 <Typography variant="bodyMedium">Calor extremo</Typography>
                 <Typography variant="caption" color="secondary">
@@ -310,12 +315,12 @@ export const ProfileScreen: React.FC = () => {
             <Switch
               value={alerts.heat.enabled}
               onValueChange={(val) => toggleAlert('heat', val)}
-              trackColor={{ false: colors.borderStrong, true: colors.primary }}
-              thumbColor="#FFFFFF"
+              trackColor={{ false: colors.pillBg, true: colors.primary }}
+              thumbColor={colors.cardSolid}
             />
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
           {/* Umbrales y Tonos de Sonido */}
           <TouchableOpacity
@@ -356,7 +361,7 @@ export const ProfileScreen: React.FC = () => {
                   ? colors.rain
                   : scenario.category === 'wind'
                     ? colors.wind
-                    : colors.heat;
+                    : colors.plum;
               return (
                 <TouchableOpacity
                   key={scenario.id}
@@ -364,12 +369,17 @@ export const ProfileScreen: React.FC = () => {
                   onPress={() => triggerMockAlert(scenario)}
                   style={[
                     styles.mockChip,
-                    { backgroundColor: colors.surface, borderColor: colors.border },
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.subcardBorder,
+                      borderWidth: theme.metrics.subcardBorderWidth,
+                    },
+                    theme.shadows.subcard,
                   ]}
                 >
                   <View style={[styles.mockDot, { backgroundColor: accent }]} />
                   <View style={{ flex: 1 }}>
-                    <Typography variant="captionMedium" style={{ fontWeight: '600' }} numberOfLines={1}>
+                    <Typography variant="captionMedium" style={{ fontWeight: '700' }} numberOfLines={1}>
                       {scenario.shortLabel}
                     </Typography>
                     <Typography variant="caption" color="secondary" style={{ fontSize: 11 }} numberOfLines={1}>
@@ -407,8 +417,10 @@ export const ProfileScreen: React.FC = () => {
                     styles.stormUserRow,
                     {
                       backgroundColor: isActive ? colors.primaryMuted : colors.surface,
-                      borderColor: isActive ? colors.primary : colors.border,
+                      borderColor: isActive ? colors.primary : colors.subcardBorder,
+                      borderWidth: isActive ? 2 : theme.metrics.subcardBorderWidth,
                     },
+                    !isActive && theme.shadows.subcard,
                   ]}
                 >
                   <View style={[styles.stormAvatar, { backgroundColor: mock.avatarColor }]}>
@@ -417,7 +429,7 @@ export const ProfileScreen: React.FC = () => {
                     </Typography>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+                    <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
                       {mock.fullName}
                     </Typography>
                     <Typography variant="caption" color="secondary" numberOfLines={1}>
@@ -434,15 +446,20 @@ export const ProfileScreen: React.FC = () => {
         {/* 7. Botón de Cerrar Sesión abajo */}
         {profile.isAuthenticated && (
           <TouchableOpacity
-            activeOpacity={0.75}
+            activeOpacity={0.78}
             onPress={() => setShowSignOutConfirm(true)}
             style={[
               styles.signOutButton,
-              { backgroundColor: colors.card, borderColor: colors.primary },
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.plum,
+                borderWidth: theme.metrics.windowBorderWidth,
+              },
+              theme.shadows.subcard,
             ]}
           >
-            <LogOut size={18} color={colors.primary} />
-            <Typography variant="bodyMedium" color="brand" style={{ fontWeight: '600' }}>
+            <LogOut size={18} color={colors.plum} />
+            <Typography variant="bodyMedium" style={{ color: colors.plum, fontWeight: '700' }}>
               Cerrar sesión
             </Typography>
           </TouchableOpacity>
@@ -498,11 +515,23 @@ export const ProfileScreen: React.FC = () => {
           <View
             style={[
               styles.confirmCard,
-              { backgroundColor: colors.card, borderColor: colors.border },
+              {
+                backgroundColor: colors.cardSolid,
+                borderColor: colors.border,
+                borderWidth: theme.metrics.windowBorderWidth,
+                borderRadius: theme.metrics.windowRadius,
+              },
+              theme.shadows.window,
+              getGlassStyle(theme),
             ]}
           >
-            <View style={[styles.confirmIcon, { backgroundColor: colors.primaryMuted }]}>
-              <LogOut size={22} color={colors.primary} />
+            <View
+              style={[
+                styles.confirmIcon,
+                { backgroundColor: colors.pillBg, borderColor: colors.subcardBorder, borderWidth: 1.5 },
+              ]}
+            >
+              <LogOut size={22} color={colors.plum} />
             </View>
             <Typography variant="h3" style={{ textAlign: 'center' }}>
               ¿Cerrar sesión?
@@ -527,24 +556,22 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     padding: spacing.xl,
     gap: spacing.base,
     paddingBottom: spacing.xxxl,
   },
   header: {
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
+    marginBottom: 2,
   },
   title: {
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
   userCard: {
     gap: spacing.md,
@@ -579,9 +606,8 @@ const styles = StyleSheet.create({
   },
   authPillBtn: {
     height: 48,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.md + 2,
     borderRadius: spacing.borderRadiusFull,
-    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -605,8 +631,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: spacing.md,
-    borderRadius: spacing.borderRadiusMd,
-    borderWidth: 1,
     marginTop: spacing.sm,
     gap: spacing.sm,
   },
@@ -651,8 +675,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs + 2,
     paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.sm + 2,
-    borderRadius: spacing.borderRadiusMd,
-    borderWidth: 1,
+    borderRadius: 14,
   },
   mockDot: {
     width: 9,
@@ -667,8 +690,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     padding: spacing.sm + 2,
-    borderRadius: spacing.borderRadiusMd,
-    borderWidth: 1,
+    borderRadius: 14,
   },
   stormAvatar: {
     width: 34,
@@ -680,7 +702,6 @@ const styles = StyleSheet.create({
   signOutButton: {
     height: 50,
     borderRadius: spacing.borderRadiusFull,
-    borderWidth: 1.2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -689,7 +710,7 @@ const styles = StyleSheet.create({
   },
   confirmOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.48)',
+    backgroundColor: 'rgba(18, 24, 34, 0.52)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
@@ -697,8 +718,6 @@ const styles = StyleSheet.create({
   confirmCard: {
     width: '100%',
     maxWidth: 360,
-    borderRadius: spacing.borderRadiusXl,
-    borderWidth: 1,
     padding: spacing.xl,
     alignItems: 'center',
     gap: spacing.md,

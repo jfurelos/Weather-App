@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextProps, StyleSheet } from 'react-native';
+import { Text, TextProps } from 'react-native';
 import { typography } from '../theme/typography';
 import { useThemeStore } from '../store/useThemeStore';
 
@@ -14,7 +14,7 @@ export type TypographyVariant =
   | 'caption'
   | 'captionMedium';
 
-export type TypographyColor = 'primary' | 'secondary' | 'muted' | 'brand';
+export type TypographyColor = 'primary' | 'secondary' | 'muted' | 'brand' | 'onPrimary';
 
 interface Props extends TextProps {
   variant?: TypographyVariant;
@@ -36,6 +36,7 @@ export const Typography: React.FC<Props> = ({
     secondary: colors.textSecondary,
     muted: colors.textMuted,
     brand: colors.primary,
+    onPrimary: colors.onPrimary,
   }[color];
 
   return (

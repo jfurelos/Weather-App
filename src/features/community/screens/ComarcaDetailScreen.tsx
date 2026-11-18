@@ -2,7 +2,6 @@ import React from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
@@ -15,12 +14,13 @@ import {
   AlertTriangle,
   Camera,
   ChevronRight,
-  ShieldAlert,
 } from 'lucide-react-native';
+import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { COMARCA_CHAT_ROOMS, ChatType } from '../data/chatTypes';
 import { useComarcasForumStore } from '../store/useComarcasForumStore';
@@ -30,7 +30,7 @@ type ComarcaDetailRouteProp = RouteProp<RootStackParamList, 'ComarcaDetail'>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const ComarcaDetailScreen: React.FC = () => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<ComarcaDetailRouteProp>();
 
@@ -76,12 +76,29 @@ export const ComarcaDetailScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenBackground>
       {/* Header superior */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: colors.headerBg,
+            borderBottomColor: colors.border,
+            borderBottomWidth: theme.metrics.windowBorderWidth,
+          },
+          getGlassStyle(theme),
+        ]}
+      >
         <TouchableOpacity
           activeOpacity={0.7}
-          style={[styles.roundBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[
+            styles.roundBtn,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.subcardBorder,
+              borderWidth: theme.metrics.subcardBorderWidth,
+            },
+          ]}
           onPress={() => navigation.goBack()}
           accessibilityLabel="Volver al listado de comarcas"
         >
@@ -102,8 +119,9 @@ export const ComarcaDetailScreen: React.FC = () => {
           style={[
             styles.roundBtn,
             {
-              backgroundColor: favorite ? '#FEF3C7' : colors.surface,
-              borderColor: favorite ? '#F59E0B' : colors.border,
+              backgroundColor: favorite ? colors.gold : colors.card,
+              borderColor: favorite ? colors.border : colors.subcardBorder,
+              borderWidth: theme.metrics.subcardBorderWidth,
             },
           ]}
           onPress={() =>
@@ -120,8 +138,8 @@ export const ComarcaDetailScreen: React.FC = () => {
         >
           <Star
             size={18}
-            color={favorite ? '#F59E0B' : colors.textSecondary}
-            fill={favorite ? '#F59E0B' : 'transparent'}
+            color={favorite ? '#28323E' : colors.textSecondary}
+            fill={favorite ? '#28323E' : 'transparent'}
           />
         </TouchableOpacity>
       </View>
@@ -132,14 +150,14 @@ export const ComarcaDetailScreen: React.FC = () => {
             activeOpacity={0.8}
             onPress={clearFavoriteLimitMessage}
             style={{
-              backgroundColor: colors.warning + '18',
-              borderColor: colors.warning,
-              borderWidth: 1,
+              backgroundColor: colors.gold,
+              borderColor: colors.border,
+              borderWidth: theme.metrics.subcardBorderWidth,
               borderRadius: spacing.borderRadiusMd,
               padding: spacing.md,
             }}
           >
-            <Typography variant="captionMedium" style={{ color: colors.textPrimary }}>
+            <Typography variant="captionMedium" style={{ color: '#28323E', fontWeight: '700' }}>
               {favoriteLimitMessage} (Pulsa para cerrar)
             </Typography>
           </TouchableOpacity>
@@ -165,7 +183,16 @@ export const ComarcaDetailScreen: React.FC = () => {
               <Card style={styles.chatCard}>
                 <View style={styles.cardHeader}>
                   <View style={styles.iconAndTitle}>
-                    <View style={[styles.iconBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                    <View
+                      style={[
+                        styles.iconBox,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.subcardBorder,
+                          borderWidth: theme.metrics.subcardBorderWidth,
+                        },
+                      ]}
+                    >
                       {getChatIcon(chat.type)}
                     </View>
                     <View style={styles.titles}>
@@ -185,7 +212,7 @@ export const ComarcaDetailScreen: React.FC = () => {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenBackground>
   );
 };
 

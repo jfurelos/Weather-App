@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const AdviceCard: React.FC<Props> = ({ advice }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
 
   return (
     <Card style={styles.card}>
@@ -33,7 +33,18 @@ export const AdviceCard: React.FC<Props> = ({ advice }) => {
       </Typography>
 
       {/* Bloque 1: Recomendación de Ropa (Outfit) */}
-      <View style={[styles.adviceBlock, { backgroundColor: colors.surface }]}>
+      <View
+        style={[
+          styles.adviceBlock,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.subcardBorder,
+            borderWidth: theme.metrics.subcardBorderWidth,
+            borderRadius: theme.metrics.subcardRadius - 2,
+          },
+          theme.shadows.subcard,
+        ]}
+      >
         <View style={styles.iconCircle}>
           <Shirt size={18} color={colors.primary} />
         </View>
@@ -48,9 +59,20 @@ export const AdviceCard: React.FC<Props> = ({ advice }) => {
       </View>
 
       {/* Bloque 2: Recomendación de Planes (Activities) */}
-      <View style={[styles.adviceBlock, { backgroundColor: colors.surface }]}>
+      <View
+        style={[
+          styles.adviceBlock,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.subcardBorder,
+            borderWidth: theme.metrics.subcardBorderWidth,
+            borderRadius: theme.metrics.subcardRadius - 2,
+          },
+          theme.shadows.subcard,
+        ]}
+      >
         <View style={styles.iconCircle}>
-          <Compass size={18} color={colors.accent} />
+          <Compass size={18} color={colors.turquoise} />
         </View>
         <View style={styles.textBlock}>
           <Typography variant="captionMedium" color="secondary">

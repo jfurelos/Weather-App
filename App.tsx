@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { Platform, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Platform, View, StyleSheet, useWindowDimensions, ViewStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { registerRootComponent } from 'expo';
 import { AppProvider } from '@/app/providers/AppProvider';
 import { RootNavigator } from '@/app/navigation/RootNavigator';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 
-// Reset de márgenes, altura y metadatos PWA para entorno web
+// Reset de márgenes, fuentes Fredoka/Nunito y metadatos PWA para entorno web
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   document.title = 'Clima & Comunidad España';
 
@@ -22,6 +22,23 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     }
     Object.entries(attrs).forEach(([k, v]) => el!.setAttribute(k, v));
   };
+
+  ensureHeadTag('link[data-font-preconnect="googleapis"]', 'link', {
+    rel: 'preconnect',
+    href: 'https://fonts.googleapis.com',
+    'data-font-preconnect': 'googleapis',
+  });
+  ensureHeadTag('link[data-font-preconnect="gstatic"]', 'link', {
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
+    crossorigin: 'anonymous',
+    'data-font-preconnect': 'gstatic',
+  });
+  ensureHeadTag('link[data-google-fonts="nube"]', 'link', {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap',
+    'data-google-fonts': 'nube',
+  });
 
   ensureHeadTag('link[rel="manifest"]', 'link', { rel: 'manifest', href: '/manifest.json' });
   ensureHeadTag('link[rel="apple-touch-icon"]', 'link', {
@@ -54,10 +71,16 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
       width: 100% !important;
       overflow: hidden !important;
       overscroll-behavior: none;
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+      transition: background-color 0.35s ease, color 0.3s ease;
     }
     #root {
       height: 100% !important;
       width: 100% !important;
+    }
+    ::selection {
+      background: #FAD165;
+      color: #28323E;
     }
   `;
   document.head.appendChild(style);
@@ -71,11 +94,12 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 }
 
 function App() {
-  const { mode, colors } = useThemeStore();
+  const { themeId, theme, isDark, colors } = useThemeStore();
   const { width } = useWindowDimensions();
 
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.body.setAttribute('data-theme', themeId);
       let themeMeta = document.head.querySelector('meta[name="theme-color"]');
       if (!themeMeta) {
         themeMeta = document.createElement('meta');
@@ -83,23 +107,29 @@ function App() {
         document.head.appendChild(themeMeta);
       }
       themeMeta.setAttribute('content', colors.background);
-      document.body.style.backgroundColor = mode === 'dark' ? '#100F0E' : '#EFE9DD';
+      document.body.style.backgroundColor = colors.outerShellBg;
+      document.body.style.backgroundImage = theme.webPattern.backgroundImage;
+      document.body.style.backgroundSize = theme.webPattern.backgroundSize;
     }
-  }, [mode, colors.background]);
+  }, [themeId, theme, colors.background, colors.outerShellBg]);
 
   const isDesktopWeb = Platform.OS === 'web' && width > 520;
+  const webOuterPattern =
+    Platform.OS === 'web'
+      ? ({
+          backgroundImage: theme.webPattern.backgroundImage,
+          backgroundSize: theme.webPattern.backgroundSize,
+        } as unknown as ViewStyle)
+      : undefined;
 
   return (
     <View
       style={[
         styles.outerShell,
         {
-          backgroundColor: isDesktopWeb
-            ? mode === 'dark'
-              ? '#100F0E'
-              : '#EFE9DD'
-            : colors.background,
+          backgroundColor: isDesktopWeb ? colors.outerShellBg : colors.background,
         },
+        webOuterPattern,
       ]}
     >
       <View
@@ -110,13 +140,15 @@ function App() {
             styles.desktopFrame,
             {
               borderColor: colors.border,
-              shadowColor: '#000',
+              borderWidth: theme.metrics.windowBorderWidth,
+              borderRadius: theme.metrics.windowRadius + 4,
             },
+            theme.shadows.window,
           ],
         ]}
       >
         <AppProvider>
-          <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+          <StatusBar style={isDark ? 'light' : 'dark'} />
           <RootNavigator />
         </AppProvider>
       </View>
@@ -139,10 +171,8 @@ const styles = StyleSheet.create({
   desktopFrame: {
     maxWidth: 430,
     maxHeight: 900,
-    borderRadius: 28,
-    borderWidth: 1,
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.14,
+    shadowOpacity: 0.16,
     shadowRadius: 30,
     elevation: 10,
   },

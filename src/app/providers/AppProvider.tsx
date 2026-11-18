@@ -11,7 +11,7 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const { mode, colors, loadTheme } = useThemeStore();
+  const { isDark, colors, loadTheme } = useThemeStore();
   const loadProfileState = useProfileStore((state) => state.loadProfileState);
 
   useEffect(() => {
@@ -20,14 +20,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, [loadTheme, loadProfileState]);
 
   const navigationTheme = {
-    ...(mode === 'dark' ? DarkTheme : DefaultTheme),
+    ...(isDark ? DarkTheme : DefaultTheme),
     colors: {
-      ...(mode === 'dark' ? DarkTheme.colors : DefaultTheme.colors),
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
       primary: colors.primary,
       background: colors.background,
-      card: colors.card,
+      card: colors.cardSolid,
       text: colors.textPrimary,
       border: colors.border,
+      notification: colors.gold,
     },
   };
 

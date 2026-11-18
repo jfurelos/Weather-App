@@ -4,49 +4,54 @@ import { WebView } from 'react-native-webview';
 import { Maximize2 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
+import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { getLeafletMapHtml } from '../webview/leafletMapHtml';
 import { useWeatherMapStore } from '../store/useWeatherMapStore';
 
 export const RadarMapView: React.FC = () => {
-  const { colors, mode } = useThemeStore();
+  const { themeId, theme, colors } = useThemeStore();
   const { setFullScreenModalVisible } = useWeatherMapStore();
-  const htmlContent = getLeafletMapHtml(mode);
+  const htmlContent = getLeafletMapHtml(theme);
 
   return (
-    <Card style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Typography variant="h3">Radar de Precipitaciones</Typography>
-          <Typography variant="caption" color="secondary">
-            Satélite y lluvia en tiempo real
-          </Typography>
-        </View>
-      </View>
+    <Card
+      showWindowDots
+      windowTitle="Radar de Precipitaciones"
+      windowRight={<Badge label="En vivo" tone="rain" />}
+      contentStyle={styles.cardBody}
+    >
+      <Typography variant="caption" color="secondary">
+        Satélite y lluvia en tiempo real sobre España
+      </Typography>
 
       <View
         style={[
           styles.mapContainer,
           {
             backgroundColor: colors.surface,
-            borderColor: colors.border,
+            borderColor: colors.subcardBorder,
+            borderWidth: theme.metrics.subcardBorderWidth,
+            borderRadius: theme.metrics.subcardRadius - 2,
           },
         ]}
       >
         {Platform.OS === 'web' ? (
           React.createElement('iframe', {
+            key: `radar-${themeId}`,
             srcDoc: htmlContent,
             style: {
               width: '100%',
               height: '100%',
               border: 'none',
-              borderRadius: spacing.borderRadiusMd,
+              borderRadius: theme.metrics.subcardRadius - 4,
             },
             title: 'Radar Map Web',
           })
         ) : (
           <WebView
+            key={`radar-native-${themeId}`}
             originWhitelist={['*']}
             source={{ html: htmlContent }}
             style={styles.webView}
@@ -60,14 +65,16 @@ export const RadarMapView: React.FC = () => {
         style={[
           styles.expandButton,
           {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
+            backgroundColor: colors.pillBg,
+            borderColor: colors.subcardBorder,
+            borderWidth: theme.metrics.subcardBorderWidth,
           },
+          theme.shadows.subcard,
         ]}
         onPress={() => setFullScreenModalVisible(true)}
       >
         <Maximize2 size={16} color={colors.textPrimary} />
-        <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
           Ver radar a pantalla completa
         </Typography>
       </TouchableOpacity>
@@ -76,22 +83,12 @@ export const RadarMapView: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  card: {
+  cardBody: {
     gap: spacing.sm,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  titleContainer: {
-    gap: 2,
   },
   mapContainer: {
     height: 240,
-    borderRadius: spacing.borderRadiusMd,
     overflow: 'hidden',
-    borderWidth: 1,
   },
   webView: {
     flex: 1,
@@ -103,8 +100,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xs,
     paddingVertical: spacing.md,
-    borderRadius: spacing.borderRadiusMd,
-    borderWidth: 1,
-    marginTop: spacing.xs,
+    borderRadius: spacing.borderRadiusFull,
+    marginTop: 2,
   },
 });

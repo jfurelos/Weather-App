@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   TextInput,
@@ -10,13 +9,14 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { ArrowLeft, Send, MapPin, Info, Sparkles, MessageSquare, AlertTriangle, Camera } from 'lucide-react-native';
+import { ArrowLeft, Send, MapPin, Info, MessageSquare, AlertTriangle, Camera } from 'lucide-react-native';
+import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
-import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
-import { getChatRoomDefinition, ChatType } from '../data/chatTypes';
-import { useComarcasForumStore, ChatMessage } from '../store/useComarcasForumStore';
+import { getChatRoomDefinition } from '../data/chatTypes';
+import { useComarcasForumStore } from '../store/useComarcasForumStore';
 import { MessageBubble } from '../components/MessageBubble';
 import { ReportMessageModal } from '../components/ReportMessageModal';
 import { RootStackParamList } from '@/app/navigation/types';
@@ -24,7 +24,7 @@ import { RootStackParamList } from '@/app/navigation/types';
 type ChatRouteProp = RouteProp<RootStackParamList, 'ChatConversation'>;
 
 export const ChatConversationScreen: React.FC = () => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const navigation = useNavigation();
   const route = useRoute<ChatRouteProp>();
 
@@ -78,16 +78,33 @@ export const ChatConversationScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenBackground>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardContainer}
       >
         {/* Cabecera Superior */}
-        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: colors.headerBg,
+              borderBottomColor: colors.border,
+              borderBottomWidth: theme.metrics.windowBorderWidth,
+            },
+            getGlassStyle(theme),
+          ]}
+        >
           <TouchableOpacity
             activeOpacity={0.7}
-            style={[styles.backBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[
+              styles.backBtn,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.subcardBorder,
+                borderWidth: theme.metrics.subcardBorderWidth,
+              },
+            ]}
             onPress={() => navigation.goBack()}
             accessibilityLabel="Volver a los chats de la comarca"
           >
@@ -114,7 +131,10 @@ export const ChatConversationScreen: React.FC = () => {
         <View
           style={[
             styles.defaultNoticeBox,
-            { backgroundColor: colors.card, borderBottomColor: colors.border },
+            {
+              backgroundColor: colors.card,
+              borderBottomColor: colors.divider,
+            },
           ]}
         >
           <View style={[styles.infoIconCircle, { backgroundColor: colors.primaryMuted }]}>
@@ -153,7 +173,17 @@ export const ChatConversationScreen: React.FC = () => {
         </ScrollView>
 
         {/* Barra de envío */}
-        <View style={[styles.inputBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <View
+          style={[
+            styles.inputBar,
+            {
+              backgroundColor: colors.headerBg,
+              borderTopColor: colors.border,
+              borderTopWidth: theme.metrics.windowBorderWidth,
+            },
+            getGlassStyle(theme),
+          ]}
+        >
           <View style={styles.authorBadgeRow}>
             <MapPin size={11} color={colors.textSecondary} />
             <Typography variant="caption" color="secondary" style={{ fontSize: 11 }}>
@@ -166,8 +196,9 @@ export const ChatConversationScreen: React.FC = () => {
               style={[
                 styles.textInput,
                 {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                  borderColor: colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
                   color: colors.textPrimary,
                 },
               ]}
@@ -185,16 +216,18 @@ export const ChatConversationScreen: React.FC = () => {
               style={[
                 styles.sendBtn,
                 {
-                  backgroundColor: inputText.trim() ? colors.primary : colors.surface,
-                  borderColor: colors.border,
+                  backgroundColor: inputText.trim() ? colors.pillActiveBg : colors.pillBg,
+                  borderColor: inputText.trim() ? colors.border : colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
                 },
+                inputText.trim() ? theme.shadows.pillActive : undefined,
               ]}
               onPress={handleSend}
               accessibilityLabel="Enviar mensaje"
             >
               <Send
                 size={18}
-                color={inputText.trim() ? '#FFFFFF' : colors.textSecondary}
+                color={inputText.trim() ? colors.pillActiveText : colors.textSecondary}
               />
             </TouchableOpacity>
           </View>
@@ -207,7 +240,7 @@ export const ChatConversationScreen: React.FC = () => {
         onClose={closeReportModal}
         onSubmitReport={submitReport}
       />
-    </SafeAreaView>
+    </ScreenBackground>
   );
 };
 

@@ -1,13 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import {
-  Sun,
-  CloudSun,
-  Cloud,
-  CloudRain,
-  Snowflake,
-  CloudLightning,
-  CloudFog,
   MapPin,
   ChevronDown,
   Wind,
@@ -16,10 +9,15 @@ import {
 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
-import { Badge } from '@/shared/components/Badge';
+import {
+  CloudMascotSvg,
+  MASCOT_STATE_META,
+  resolveMascotWeatherState,
+} from '@/shared/components/CloudMascotSvg';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
-import { WeatherData, getWMOCondition } from '../services/weatherApi';
+import { DISPLAY_FONT } from '@/shared/theme/typography';
+import { WeatherData } from '../services/weatherApi';
 import { City } from '../store/useHomeStore';
 
 interface Props {
@@ -29,152 +27,288 @@ interface Props {
 }
 
 export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const { current, daily } = weather;
 
-  const renderWeatherIcon = (code: number, size = 48) => {
-    const { iconName } = getWMOCondition(code);
-    switch (iconName) {
-      case 'Sun':
-        return <Sun size={size} color="#F4A261" />;
-      case 'CloudSun':
-        return <CloudSun size={size} color="#E76F51" />;
-      case 'CloudRain':
-      case 'CloudDrizzle':
-        return <CloudRain size={size} color="#457B9D" />;
-      case 'Snowflake':
-        return <Snowflake size={size} color="#A8DADC" />;
-      case 'CloudLightning':
-        return <CloudLightning size={size} color="#E63946" />;
-      case 'CloudFog':
-        return <CloudFog size={size} color="#8D99AE" />;
-      case 'Cloud':
-      default:
-        return <Cloud size={size} color="#6C757D" />;
-    }
-  };
+  const mascotState = resolveMascotWeatherState({
+    weatherCode: current.weatherCode,
+    temperature: current.temperature,
+    windSpeed: current.windSpeed,
+    precipitation: current.precipitation,
+  });
+  const mascotMeta = MASCOT_STATE_META[mascotState];
+
+  const windPct = Math.min(100, Math.max(12, Math.round((current.windSpeed / 60) * 100)));
+  const humidityPct = Math.min(100, Math.max(8, current.humidity));
+
+  const citySelectorPill = (
+    <TouchableOpacity
+      style={[
+        styles.cityPill,
+        {
+          backgroundColor: colors.pillActiveBg,
+          borderColor: colors.border,
+          borderWidth: theme.metrics.subcardBorderWidth,
+        },
+        theme.shadows.pillActive,
+      ]}
+      activeOpacity={0.8}
+      onPress={onPressCity}
+      accessibilityLabel={`Cambiar ciudad actual (${city.name})`}
+    >
+      <MapPin size={12} color={colors.pillActiveText} />
+      <Typography
+        variant="captionMedium"
+        numberOfLines={1}
+        style={{
+          color: colors.pillActiveText,
+          fontWeight: '800',
+          fontSize: 11,
+          maxWidth: 112,
+        }}
+      >
+        {city.name}
+      </Typography>
+      <ChevronDown size={13} color={colors.pillActiveText} />
+    </TouchableOpacity>
+  );
 
   return (
-    <Card style={styles.card}>
-      {/* Selector de Ciudad */}
-      <TouchableOpacity
-        style={styles.cityRow}
-        activeOpacity={0.7}
-        onPress={onPressCity}
-      >
-        <MapPin size={16} color={colors.primary} />
-        <Typography variant="h2" style={styles.cityName}>
-          {city.name}
-        </Typography>
-        <ChevronDown size={18} color={colors.textSecondary} />
-      </TouchableOpacity>
-
-      <Typography variant="caption" color="secondary">
-        {city.province}
-      </Typography>
-
-      {/* Bloque Principal: Temperatura y Condición */}
-      <View style={styles.mainBlock}>
+    <Card
+      showWindowDots
+      windowTitle={`${city.province} · Ahora`}
+      windowRight={citySelectorPill}
+      contentStyle={styles.cardBody}
+    >
+      {/* Bloque Superior: Datos del clima + Ilustración SVG Mascota Nube */}
+      <View style={styles.heroRow}>
         <View style={styles.tempColumn}>
-          <Typography variant="hero" style={styles.mainTemp}>
-            {current.temperature}°
-          </Typography>
-          <Typography variant="h3" style={{ textTransform: 'capitalize' }}>
-            {current.conditionText}
-          </Typography>
-          <Typography variant="callout" color="secondary" style={styles.minMaxText}>
-            Mín: {daily.tempMin}° • Máx: {daily.tempMax}°
+          <View
+            style={[
+              styles.conditionPill,
+              {
+                backgroundColor: colors.pillBg,
+                borderColor: colors.subcardBorder,
+                borderWidth: 1,
+              },
+            ]}
+          >
+            <Typography variant="captionMedium" style={{ fontSize: 12 }}>
+              {mascotMeta.emoji}
+            </Typography>
+            <Typography
+              variant="captionMedium"
+              numberOfLines={1}
+              style={{
+                color: colors.textSecondary,
+                textTransform: 'capitalize',
+                fontWeight: '800',
+                fontSize: 11,
+                flexShrink: 1,
+              }}
+            >
+              {current.conditionText}
+            </Typography>
+          </View>
+
+          <View style={styles.tempBaseline}>
+            <Typography
+              variant="hero"
+              style={[styles.mainTemp, { fontFamily: DISPLAY_FONT, color: colors.textPrimary }]}
+            >
+              {current.temperature}°
+            </Typography>
+            <Typography variant="h3" color="muted" style={styles.unitC}>
+              C
+            </Typography>
+          </View>
+
+          <Typography variant="captionMedium" color="secondary" style={styles.minMaxText}>
+            Mín {daily.tempMin}° · Máx {daily.tempMax}°
           </Typography>
         </View>
 
-        <View style={styles.iconContainer}>
-          {renderWeatherIcon(current.weatherCode, 64)}
+        <View
+          style={[
+            styles.mascotFrame,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.primary,
+            },
+          ]}
+        >
+          <CloudMascotSvg state={mascotState} size={118} />
         </View>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      {/* Frase simpática de la Mascota Nube */}
+      <Typography variant="caption" color="secondary" style={styles.mascotQuote}>
+        {mascotMeta.quote}
+      </Typography>
 
-      {/* Métricas rápidas: Sensación, Humedad, Viento */}
-      <View style={styles.metricsRow}>
-        <View style={styles.metricItem}>
-          <Thermometer size={16} color={colors.textSecondary} />
-          <Typography variant="caption" color="secondary">
-            Sensación
+      {/* Subtarjetas de métricas atmosféricas */}
+      <View style={styles.metricsGrid}>
+        <Card variant="subcard" style={styles.metricCard}>
+          <View style={styles.metricTop}>
+            <Thermometer size={13} color={colors.warning} />
+            <Typography variant="caption" color="muted" style={styles.metricLabel}>
+              Sensación
+            </Typography>
+          </View>
+          <Typography variant="h3" style={styles.metricValue}>
+            {current.apparentTemperature}°C
           </Typography>
-          <Typography variant="bodyMedium">
-            {current.apparentTemperature}°
-          </Typography>
-        </View>
+          <View style={[styles.barTrack, { backgroundColor: colors.pillBg }]}>
+            <View
+              style={[
+                styles.barFill,
+                {
+                  width: `${Math.min(100, Math.max(15, Math.round(((current.apparentTemperature + 5) / 45) * 100)))}%`,
+                  backgroundColor: colors.gold,
+                },
+              ]}
+            />
+          </View>
+        </Card>
 
-        <View style={styles.metricItem}>
-          <Droplets size={16} color={colors.textSecondary} />
-          <Typography variant="caption" color="secondary">
-            Humedad
-          </Typography>
-          <Typography variant="bodyMedium">
+        <Card variant="subcard" style={styles.metricCard}>
+          <View style={styles.metricTop}>
+            <Droplets size={13} color={colors.turquoise} />
+            <Typography variant="caption" color="muted" style={styles.metricLabel}>
+              Humedad
+            </Typography>
+          </View>
+          <Typography variant="h3" style={styles.metricValue}>
             {current.humidity}%
           </Typography>
-        </View>
+          <View style={[styles.barTrack, { backgroundColor: colors.pillBg }]}>
+            <View
+              style={[
+                styles.barFill,
+                { width: `${humidityPct}%`, backgroundColor: colors.turquoise },
+              ]}
+            />
+          </View>
+        </Card>
 
-        <View style={styles.metricItem}>
-          <Wind size={16} color={colors.textSecondary} />
-          <Typography variant="caption" color="secondary">
-            Viento
-          </Typography>
-          <Typography variant="bodyMedium">
+        <Card variant="subcard" style={styles.metricCard}>
+          <View style={styles.metricTop}>
+            <Wind size={13} color={colors.primary} />
+            <Typography variant="caption" color="muted" style={styles.metricLabel}>
+              Viento
+            </Typography>
+          </View>
+          <Typography variant="h3" style={styles.metricValue}>
             {current.windSpeed} km/h
           </Typography>
-        </View>
+          <View style={[styles.barTrack, { backgroundColor: colors.pillBg }]}>
+            <View
+              style={[
+                styles.barFill,
+                { width: `${windPct}%`, backgroundColor: colors.primary },
+              ]}
+            />
+          </View>
+        </Card>
       </View>
     </Card>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
+  cardBody: {
+    gap: spacing.md,
+  },
+  cityPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: spacing.borderRadiusFull,
+  },
+  heroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  cityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  cityName: {
-    marginRight: 2,
-  },
-  mainBlock: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.xs,
-  },
   tempColumn: {
-    gap: 2,
+    flex: 1,
+    gap: 4,
   },
-  mainTemp: {
-    fontSize: 52,
-    lineHeight: 56,
-    fontWeight: '800',
-    letterSpacing: -1.5,
+  conditionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: spacing.borderRadiusFull,
+    maxWidth: '100%',
   },
-  minMaxText: {
+  tempBaseline: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 3,
     marginTop: 2,
   },
-  iconContainer: {
-    paddingRight: spacing.sm,
+  mainTemp: {
+    fontSize: 54,
+    lineHeight: 58,
+    fontWeight: '700',
+    letterSpacing: -1.5,
   },
-  divider: {
-    height: 1,
-    marginVertical: spacing.xs,
+  unitC: {
+    fontSize: 18,
   },
-  metricsRow: {
+  minMaxText: {
+    fontWeight: '700',
+  },
+  mascotFrame: {
+    width: 132,
+    height: 136,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+  },
+  mascotQuote: {
+    fontStyle: 'italic',
+    lineHeight: 17,
+  },
+  metricsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingTop: 2,
+    gap: spacing.xs + 2,
   },
-  metricItem: {
+  metricCard: {
+    flex: 1,
+    padding: spacing.sm + 2,
+    gap: 4,
+  },
+  metricTop: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 4,
+  },
+  metricLabel: {
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  metricValue: {
+    fontSize: 15,
+    lineHeight: 20,
+  },
+  barTrack: {
+    height: 6,
+    borderRadius: 99,
+    overflow: 'hidden',
+    marginTop: 2,
+  },
+  barFill: {
+    height: '100%',
+    borderRadius: 99,
   },
 });

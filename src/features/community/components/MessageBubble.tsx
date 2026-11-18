@@ -17,7 +17,7 @@ export const MessageBubble: React.FC<Props> = ({
   isOwnMessage,
   onReport,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
 
   const initial = message.userName ? message.userName.charAt(0).toUpperCase() : 'U';
 
@@ -32,7 +32,11 @@ export const MessageBubble: React.FC<Props> = ({
         <View
           style={[
             styles.avatar,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.subcardBorder,
+              borderWidth: theme.metrics.subcardBorderWidth,
+            },
           ]}
         >
           <Typography
@@ -53,7 +57,7 @@ export const MessageBubble: React.FC<Props> = ({
             {isOwnMessage ? 'Tú' : message.userName}
           </Typography>
 
-          <View style={styles.provinceBadge}>
+          <View style={[styles.provinceBadge, { backgroundColor: colors.pillBg }]}>
             <MapPin size={10} color={colors.textSecondary} />
             <Typography variant="caption" color="secondary" style={{ fontSize: 11 }}>
               {message.userProvince}
@@ -80,9 +84,12 @@ export const MessageBubble: React.FC<Props> = ({
           style={[
             styles.bubble,
             {
-              backgroundColor: isOwnMessage ? colors.primaryMuted : colors.surface,
-              borderColor: isOwnMessage ? colors.primary : colors.border,
+              backgroundColor: isOwnMessage ? colors.primaryMuted : colors.card,
+              borderColor: isOwnMessage ? colors.primary : colors.subcardBorder,
+              borderWidth: theme.metrics.subcardBorderWidth,
+              borderRadius: theme.metrics.subcardRadius,
             },
+            theme.shadows.subcard,
           ]}
         >
           <Typography variant="body" style={styles.messageText}>
@@ -130,7 +137,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: 'rgba(0,0,0,0.04)',
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: spacing.borderRadiusFull,

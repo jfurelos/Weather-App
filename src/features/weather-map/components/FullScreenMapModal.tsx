@@ -11,14 +11,15 @@ import { WebView } from 'react-native-webview';
 import { X } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { getLeafletMapHtml } from '../webview/leafletMapHtml';
 import { useWeatherMapStore } from '../store/useWeatherMapStore';
 
 export const FullScreenMapModal: React.FC = () => {
-  const { colors, mode } = useThemeStore();
+  const { themeId, theme, colors } = useThemeStore();
   const { isFullScreenModalVisible, setFullScreenModalVisible } = useWeatherMapStore();
-  const htmlContent = getLeafletMapHtml(mode);
+  const htmlContent = getLeafletMapHtml(theme);
 
   return (
     <Modal
@@ -32,6 +33,7 @@ export const FullScreenMapModal: React.FC = () => {
         <View style={styles.mapContainer}>
           {Platform.OS === 'web' ? (
             React.createElement('iframe', {
+              key: `radar-full-${themeId}`,
               srcDoc: htmlContent,
               style: {
                 width: '100%',
@@ -42,6 +44,7 @@ export const FullScreenMapModal: React.FC = () => {
             })
           ) : (
             <WebView
+              key={`radar-full-native-${themeId}`}
               originWhitelist={['*']}
               source={{ html: htmlContent }}
               style={styles.webView}
@@ -57,7 +60,11 @@ export const FullScreenMapModal: React.FC = () => {
               {
                 backgroundColor: colors.card,
                 borderColor: colors.border,
+                borderWidth: theme.metrics.windowBorderWidth,
+                borderRadius: theme.metrics.windowRadius,
               },
+              theme.shadows.window,
+              getGlassStyle(theme),
             ]}
           >
             <View style={styles.headerInfo}>
@@ -72,8 +79,9 @@ export const FullScreenMapModal: React.FC = () => {
               style={[
                 styles.closeButton,
                 {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
+                  backgroundColor: colors.pillBg,
+                  borderColor: colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
                 },
               ]}
               onPress={() => setFullScreenModalVisible(false)}

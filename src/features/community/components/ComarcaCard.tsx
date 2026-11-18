@@ -20,7 +20,7 @@ export const ComarcaCard: React.FC<Props> = ({
   onToggleFavorite,
   onPress,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
 
   return (
     <Card style={styles.card}>
@@ -48,8 +48,9 @@ export const ComarcaCard: React.FC<Props> = ({
             style={[
               styles.starButton,
               {
-                backgroundColor: isFavorite ? '#FEF3C7' : colors.surface,
-                borderColor: isFavorite ? '#F59E0B' : colors.border,
+                backgroundColor: isFavorite ? colors.gold : colors.pillBg,
+                borderColor: isFavorite ? colors.border : colors.subcardBorder,
+                borderWidth: theme.metrics.subcardBorderWidth,
               },
             ]}
             onPress={onToggleFavorite}
@@ -59,8 +60,8 @@ export const ComarcaCard: React.FC<Props> = ({
           >
             <Star
               size={18}
-              color={isFavorite ? '#F59E0B' : colors.textSecondary}
-              fill={isFavorite ? '#F59E0B' : 'transparent'}
+              color={isFavorite ? '#28323E' : colors.textSecondary}
+              fill={isFavorite ? '#28323E' : 'transparent'}
             />
           </TouchableOpacity>
         </View>
@@ -74,7 +75,7 @@ export const ComarcaCard: React.FC<Props> = ({
           {comarca.description}
         </Typography>
 
-        <View style={[styles.footerRow, { borderTopColor: colors.border }]}>
+        <View style={[styles.footerRow, { borderTopColor: colors.divider }]}>
           <View style={styles.enterAction}>
             <Typography variant="captionMedium" style={{ color: colors.primary, fontWeight: '700' }}>
               Entrar al forum

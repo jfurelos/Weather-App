@@ -10,6 +10,7 @@ import {
 import { X, Check, MapPin } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { City, SPANISH_CITIES } from '../store/useHomeStore';
 
@@ -26,7 +27,7 @@ export const CitySelectorModal: React.FC<Props> = ({
   onClose,
   onSelectCity,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
 
   return (
     <Modal
@@ -38,15 +39,35 @@ export const CitySelectorModal: React.FC<Props> = ({
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={[styles.sheet, { backgroundColor: colors.card }]}>
+            <View
+              style={[
+                styles.sheet,
+                {
+                  backgroundColor: colors.cardSolid,
+                  borderColor: colors.border,
+                  borderTopWidth: theme.metrics.windowBorderWidth,
+                  borderTopLeftRadius: theme.metrics.windowRadius,
+                  borderTopRightRadius: theme.metrics.windowRadius,
+                },
+                theme.shadows.modal,
+                getGlassStyle(theme),
+              ]}
+            >
               {/* Barra superior de arrastre */}
-              <View style={[styles.dragHandle, { backgroundColor: colors.border }]} />
+              <View style={[styles.dragHandle, { backgroundColor: colors.borderStrong }]} />
 
               {/* Cabecera */}
               <View style={styles.header}>
                 <Typography variant="h2">Seleccionar Ciudad</Typography>
                 <TouchableOpacity
-                  style={[styles.closeButton, { backgroundColor: colors.surface }]}
+                  style={[
+                    styles.closeButton,
+                    {
+                      backgroundColor: colors.pillBg,
+                      borderColor: colors.subcardBorder,
+                      borderWidth: theme.metrics.subcardBorderWidth,
+                    },
+                  ]}
                   onPress={onClose}
                   activeOpacity={0.7}
                 >
@@ -67,8 +88,9 @@ export const CitySelectorModal: React.FC<Props> = ({
                       style={[
                         styles.cityItem,
                         {
-                          backgroundColor: isSelected ? colors.surface : 'transparent',
-                          borderColor: isSelected ? colors.primary : colors.border,
+                          backgroundColor: isSelected ? colors.primaryMuted : colors.surface,
+                          borderColor: isSelected ? colors.primary : colors.subcardBorder,
+                          borderWidth: isSelected ? 2 : theme.metrics.subcardBorderWidth,
                         },
                       ]}
                       activeOpacity={0.7}

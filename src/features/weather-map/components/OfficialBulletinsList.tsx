@@ -90,7 +90,7 @@ export const OfficialBulletinsList: React.FC<Props> = ({
                   {item.summary}
                 </Typography>
 
-                <View style={[styles.bulletinFooter, { borderTopColor: colors.border }]}>
+                <View style={[styles.bulletinFooter, { borderTopColor: colors.divider }]}>
                   <Clock size={12} color={colors.textSecondary} />
                   <Typography variant="caption" color="secondary">
                     {item.timestamp}

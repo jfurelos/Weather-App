@@ -3,16 +3,17 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TextInput,
   TouchableOpacity,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MapPin, Search, ChevronDown, Layers } from 'lucide-react-native';
+import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { getComarcasForProvince, Comarca } from '../data/provincesData';
 import { useComarcasForumStore } from '../store/useComarcasForumStore';
@@ -24,7 +25,7 @@ import { RootStackParamList } from '@/app/navigation/types';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const ForumListScreen: React.FC = () => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const navigation = useNavigation<NavigationProp>();
 
   const {
@@ -64,7 +65,7 @@ export const ForumListScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenBackground>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -78,32 +79,61 @@ export const ForumListScreen: React.FC = () => {
 
         {/* Tarjeta de Provincia Activa y Selector */}
         <TouchableOpacity
-          activeOpacity={0.8}
+          activeOpacity={0.82}
           style={[
             styles.provinceSelectorCard,
-            { backgroundColor: colors.card, borderColor: colors.border },
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: theme.metrics.windowBorderWidth,
+              borderRadius: theme.metrics.windowRadius,
+            },
+            theme.shadows.window,
+            getGlassStyle(theme),
           ]}
           onPress={() => setProvinceModalVisible(true)}
         >
           <View style={styles.provinceCardLeft}>
-            <View style={[styles.pinCircle, { backgroundColor: colors.primaryMuted }]}>
+            <View
+              style={[
+                styles.pinCircle,
+                {
+                  backgroundColor: colors.primaryMuted,
+                  borderColor: colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                },
+              ]}
+            >
               <MapPin size={20} color={colors.primary} />
             </View>
             <View>
               <Typography variant="caption" color="secondary">
                 FORO PROVINCIAL ACTIVO
               </Typography>
-              <Typography variant="h2" style={{ fontWeight: '800' }}>
+              <Typography variant="h2" style={{ fontWeight: '700' }}>
                 {selectedProvince}
               </Typography>
             </View>
           </View>
 
-          <View style={[styles.changePill, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Typography variant="captionMedium" style={{ fontWeight: '700', color: colors.textPrimary }}>
+          <View
+            style={[
+              styles.changePill,
+              {
+                backgroundColor: colors.pillActiveBg,
+                borderColor: colors.border,
+                borderWidth: theme.metrics.subcardBorderWidth,
+              },
+              theme.shadows.pillActive,
+            ]}
+          >
+            <Typography
+              variant="captionMedium"
+              style={{ fontWeight: '800', color: colors.pillActiveText }}
+            >
               Cambiar
             </Typography>
-            <ChevronDown size={14} color={colors.textPrimary} />
+            <ChevronDown size={14} color={colors.pillActiveText} />
           </View>
         </TouchableOpacity>
 
@@ -121,7 +151,13 @@ export const ForumListScreen: React.FC = () => {
           <View
             style={[
               styles.searchBar,
-              { backgroundColor: colors.card, borderColor: colors.border },
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                borderWidth: theme.metrics.subcardBorderWidth,
+              },
+              theme.shadows.subcard,
+              getGlassStyle(theme),
             ]}
           >
             <Search size={18} color={colors.textSecondary} />
@@ -185,21 +221,18 @@ export const ForumListScreen: React.FC = () => {
         onSelectProvince={(prov) => setSelectedProvince(prov)}
         onClose={() => setProvinceModalVisible(false)}
       />
-    </SafeAreaView>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   content: {
     padding: spacing.xl,
-    paddingBottom: 90, // Margen de seguridad con la barra de navegación de 80px
+    paddingBottom: spacing.xxxl,
     gap: spacing.base,
   },
   header: {
-    gap: 4,
+    gap: spacing.xs,
   },
   title: {
     marginTop: 2,
@@ -209,13 +242,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: spacing.md + 2,
-    borderRadius: spacing.borderRadiusLg,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
   },
   provinceCardLeft: {
     flexDirection: 'row',

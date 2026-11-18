@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TextInput,
   TouchableOpacity,
@@ -10,7 +9,6 @@ import {
   Platform,
 } from 'react-native';
 import {
-  CloudSun,
   ArrowLeft,
   MapPin,
   Check,
@@ -21,6 +19,8 @@ import {
   CloudLightning,
   ChevronRight,
 } from 'lucide-react-native';
+import { ScreenBackground } from '@/shared/components/ScreenBackground';
+import { CloudMascotSvg } from '@/shared/components/CloudMascotSvg';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
@@ -34,7 +34,7 @@ import { MOCK_STORM_USERS } from '@/shared/data/mockStormUsers';
 type AuthStep = 'welcome' | 'login' | 'register';
 
 export const WelcomeAuthScreen: React.FC = () => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const {
     profile,
     isLoadingAuth,
@@ -115,7 +115,7 @@ export const WelcomeAuthScreen: React.FC = () => {
   const activeError = localError || authError;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScreenBackground>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
@@ -128,8 +128,18 @@ export const WelcomeAuthScreen: React.FC = () => {
           {step === 'welcome' ? (
             <View style={styles.welcomeWrapper}>
               <View style={styles.brandHeader}>
-                <View style={[styles.logoCircle, { backgroundColor: colors.primaryMuted }]}>
-                  <CloudSun size={40} color={colors.primary} />
+                <View
+                  style={[
+                    styles.mascotBox,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                      borderWidth: theme.metrics.windowBorderWidth,
+                    },
+                    theme.shadows.window,
+                  ]}
+                >
+                  <CloudMascotSvg state="soleado" size={96} />
                 </View>
                 <Typography variant="hero" style={styles.centerText}>
                   Clima & Comunidad
@@ -143,7 +153,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                 </Typography>
               </View>
 
-              <Card style={styles.actionsCard}>
+              <Card showWindowDots windowTitle="Acceso a la App" contentStyle={styles.actionsCard}>
                 <Button
                   title="Iniciar sesión"
                   variant="primary"
@@ -157,11 +167,11 @@ export const WelcomeAuthScreen: React.FC = () => {
                 />
 
                 <View style={styles.dividerRow}>
-                  <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                  <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
                   <Typography variant="caption" color="secondary">
                     o
                   </Typography>
-                  <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                  <View style={[styles.dividerLine, { backgroundColor: colors.divider }]} />
                 </View>
 
                 <TouchableOpacity
@@ -169,12 +179,18 @@ export const WelcomeAuthScreen: React.FC = () => {
                   onPress={continueAsGuest}
                   style={[
                     styles.guestButton,
-                    { backgroundColor: colors.surface, borderColor: colors.border },
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.subcardBorder,
+                      borderWidth: theme.metrics.subcardBorderWidth,
+                      borderRadius: theme.metrics.subcardRadius,
+                    },
+                    theme.shadows.subcard,
                   ]}
                 >
                   <View style={styles.guestTitleRow}>
                     <UserRound size={16} color={colors.textPrimary} />
-                    <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+                    <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
                       Continuar como invitado
                     </Typography>
                   </View>
@@ -194,7 +210,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                   <View style={styles.demoTitleRow}>
                     <CloudLightning size={16} color={colors.warning} />
                     <View>
-                      <Typography variant="bodyMedium" style={{ fontWeight: '600' }}>
+                      <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
                         Probar usuarios con temporales (Mock)
                       </Typography>
                       <Typography variant="caption" color="secondary">
@@ -216,7 +232,12 @@ export const WelcomeAuthScreen: React.FC = () => {
                         onPress={() => enterAsMockStormUser(mock)}
                         style={[
                           styles.demoUserRow,
-                          { backgroundColor: colors.surface, borderColor: colors.border },
+                          {
+                            backgroundColor: colors.surface,
+                            borderColor: colors.subcardBorder,
+                            borderWidth: theme.metrics.subcardBorderWidth,
+                          },
+                          theme.shadows.subcard,
                         ]}
                       >
                         <View
@@ -502,14 +523,11 @@ export const WelcomeAuthScreen: React.FC = () => {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   flex: {
     flex: 1,
   },
@@ -525,13 +543,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  mascotBox: {
+    width: 118,
+    height: 118,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xs,
+    padding: 6,
   },
   centerText: {
     textAlign: 'center',

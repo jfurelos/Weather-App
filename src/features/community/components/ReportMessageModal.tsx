@@ -4,6 +4,7 @@ import { ShieldAlert, X, Check } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { ChatMessage } from '../store/useComarcasForumStore';
 
@@ -25,7 +26,7 @@ export const ReportMessageModal: React.FC<Props> = ({
   onClose,
   onSubmitReport,
 }) => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const [selectedReason, setSelectedReason] = useState(REPORT_REASONS[0].id);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,15 +53,29 @@ export const ReportMessageModal: React.FC<Props> = ({
         <View
           style={[
             styles.dialog,
-            { backgroundColor: colors.card, borderColor: colors.border },
+            {
+              backgroundColor: colors.cardSolid,
+              borderColor: colors.border,
+              borderWidth: theme.metrics.windowBorderWidth,
+              borderRadius: theme.metrics.windowRadius,
+            },
+            theme.shadows.window,
+            getGlassStyle(theme),
           ]}
         >
           <View style={styles.header}>
             <View style={styles.iconTitleRow}>
               <View
-                style={[styles.iconCircle, { backgroundColor: colors.heat + '15' }]}
+                style={[
+                  styles.iconCircle,
+                  {
+                    backgroundColor: colors.pillBg,
+                    borderColor: colors.subcardBorder,
+                    borderWidth: theme.metrics.subcardBorderWidth,
+                  },
+                ]}
               >
-                <ShieldAlert size={20} color={colors.heat} />
+                <ShieldAlert size={20} color={colors.plum} />
               </View>
               <View>
                 <Typography variant="h3">Reportar Mensaje</Typography>
@@ -74,7 +89,11 @@ export const ReportMessageModal: React.FC<Props> = ({
               activeOpacity={0.7}
               style={[
                 styles.closeBtn,
-                { backgroundColor: colors.surface, borderColor: colors.border },
+                {
+                  backgroundColor: colors.pillBg,
+                  borderColor: colors.subcardBorder,
+                  borderWidth: theme.metrics.subcardBorderWidth,
+                },
               ]}
               onPress={onClose}
             >
@@ -115,7 +134,7 @@ export const ReportMessageModal: React.FC<Props> = ({
                       },
                     ]}
                   >
-                    {isSelected && <Check size={12} color="#FFFFFF" />}
+                    {isSelected && <Check size={12} color={colors.onPrimary} />}
                   </View>
                   <Typography
                     variant="bodyMedium"
@@ -134,7 +153,7 @@ export const ReportMessageModal: React.FC<Props> = ({
             })}
           </View>
 
-          <View style={[styles.footer, { borderTopColor: colors.border }]}>
+          <View style={[styles.footer, { borderTopColor: colors.divider }]}>
             <Button
               title="Cancelar"
               variant="outline"
@@ -147,8 +166,8 @@ export const ReportMessageModal: React.FC<Props> = ({
               disabled={isSubmitting}
               style={{
                 flex: 1.5,
-                backgroundColor: colors.heat,
-                borderColor: colors.heat,
+                backgroundColor: colors.plum,
+                borderColor: colors.border,
               }}
               onPress={handleConfirm}
             />

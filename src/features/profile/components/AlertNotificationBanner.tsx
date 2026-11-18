@@ -11,11 +11,12 @@ import {
 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
 import { useAlertBannerStore } from '../store/useAlertBannerStore';
 
 export const AlertNotificationBanner: React.FC = () => {
-  const { colors } = useThemeStore();
+  const { theme, colors } = useThemeStore();
   const { banner, dismissBanner } = useAlertBannerStore();
 
   if (!banner) return null;
@@ -54,12 +55,25 @@ export const AlertNotificationBanner: React.FC = () => {
         style={[
           styles.card,
           {
-            backgroundColor: colors.card,
-            borderColor: isTriggered ? accentColor : colors.borderStrong,
+            backgroundColor: colors.cardSolid,
+            borderColor: isTriggered ? accentColor : colors.border,
+            borderWidth: theme.metrics.windowBorderWidth,
+            borderRadius: theme.metrics.windowRadius,
           },
+          theme.shadows.window,
+          getGlassStyle(theme),
         ]}
       >
-        <View style={[styles.iconCircle, { backgroundColor: colors.surface }]}>
+        <View
+          style={[
+            styles.iconCircle,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.subcardBorder,
+              borderWidth: theme.metrics.subcardBorderWidth,
+            },
+          ]}
+        >
           {renderIcon()}
         </View>
 

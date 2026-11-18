@@ -17,27 +17,49 @@ export const Badge: React.FC<BadgeProps> = ({
   style,
   ...rest
 }) => {
-  const { colors } = useThemeStore();
+  const { themeId, isDark, colors } = useThemeStore();
 
   const getColors = () => {
     switch (tone) {
       case 'brand':
-        return { bg: colors.primaryMuted, text: colors.primary };
+        return isDark
+          ? { bg: colors.sky, text: '#1E2733', border: colors.border }
+          : { bg: colors.sky, text: '#28323E', border: themeId === 'ilustrada' ? '#28323E' : colors.subcardBorder };
       case 'warning':
-        return { bg: colors.surface, text: colors.warning };
+        return {
+          bg: colors.gold,
+          text: '#28323E',
+          border: themeId === 'ilustrada' ? '#28323E' : 'transparent',
+        };
       case 'rain':
-        return { bg: colors.surface, text: colors.rain };
+        return {
+          bg: colors.turquoise,
+          text: '#FFFFFF',
+          border: themeId === 'ilustrada' ? '#28323E' : 'transparent',
+        };
       case 'heat':
-        return { bg: colors.surface, text: colors.heat };
+        return {
+          bg: colors.plum,
+          text: isDark ? '#1E2733' : '#FFFFFF',
+          border: themeId === 'ilustrada' ? '#28323E' : 'transparent',
+        };
       case 'wind':
-        return { bg: colors.surface, text: colors.wind };
+        return {
+          bg: colors.primaryMuted,
+          text: isDark ? colors.sky : colors.textPrimary,
+          border: themeId === 'ilustrada' ? '#28323E' : colors.subcardBorder,
+        };
       case 'neutral':
       default:
-        return { bg: colors.surface, text: colors.textSecondary };
+        return {
+          bg: colors.pillBg,
+          text: colors.textSecondary,
+          border: themeId === 'ilustrada' ? '#28323E' : colors.subcardBorder,
+        };
     }
   };
 
-  const { bg, text } = getColors();
+  const { bg, text, border } = getColors();
 
   return (
     <View
@@ -45,7 +67,8 @@ export const Badge: React.FC<BadgeProps> = ({
         styles.badge,
         {
           backgroundColor: bg,
-          borderColor: colors.border,
+          borderColor: border,
+          borderWidth: themeId === 'ilustrada' ? 1.5 : 1,
         },
         style,
       ]}
@@ -53,7 +76,7 @@ export const Badge: React.FC<BadgeProps> = ({
     >
       <Typography
         variant="captionMedium"
-        style={{ color: text }}
+        style={{ color: text, fontWeight: '800', fontSize: 11 }}
       >
         {label}
       </Typography>
@@ -64,9 +87,8 @@ export const Badge: React.FC<BadgeProps> = ({
 const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.xs,
+    paddingVertical: 3,
     borderRadius: spacing.borderRadiusFull,
-    borderWidth: 1,
     alignSelf: 'flex-start',
   },
 });
