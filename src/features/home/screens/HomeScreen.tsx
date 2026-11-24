@@ -6,16 +6,15 @@ import {
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Sparkles } from 'lucide-react-native';
 import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
-import { useClaudyStore } from '@/features/claudy';
 import { useHomeStore } from '../store/useHomeStore';
 import { WeatherHeroCard } from '../components/WeatherHeroCard';
 import { HourlyTimeline } from '../components/HourlyTimeline';
@@ -26,8 +25,6 @@ import { CitySelectorModal } from '../components/CitySelectorModal';
 export const HomeScreen: React.FC = () => {
   const { theme, colors } = useThemeStore();
   const navigation = useNavigation<any>();
-  const claudyName = useClaudyStore((s) => s.config.name);
-  const reopenGreeting = useClaudyStore((s) => s.reopenGreeting);
 
   const {
     selectedCity,
@@ -91,27 +88,14 @@ export const HomeScreen: React.FC = () => {
       >
         {/* Encabezado Principal */}
         <View style={styles.header}>
+          <Image
+            source={require('../../../../assets/hoy_que_logo.png')}
+            style={styles.brandLogo}
+            resizeMode="cover"
+          />
           <Typography variant="hero" color="onBackground" style={styles.title}>
-            El Tiempo Hoy
+            Hoy qué?
           </Typography>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={reopenGreeting}
-            style={[
-              styles.greetingBtn,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.subcardBorder,
-              },
-              theme.shadows.subcard,
-            ]}
-            accessibilityLabel={`Volver a ver el saludo de ${claudyName}`}
-          >
-            <Sparkles size={13} color={colors.accent} />
-            <Typography variant="captionMedium" style={{ fontSize: 11.5 }}>
-              Saludo
-            </Typography>
-          </TouchableOpacity>
         </View>
 
         {activeMockScenario && (
@@ -240,22 +224,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
+    gap: spacing.sm + 2,
     marginBottom: 2,
   },
-  title: {
-    marginTop: 2,
-    flexShrink: 1,
+  brandLogo: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
   },
-  greetingBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-    borderRadius: spacing.borderRadiusFull,
-    borderWidth: 1,
+  title: {
+    flexShrink: 1,
   },
   mockBanner: {
     flexDirection: 'row',

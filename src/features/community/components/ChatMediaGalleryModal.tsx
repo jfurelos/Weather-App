@@ -7,13 +7,12 @@ import {
   ScrollView,
   Image,
 } from 'react-native';
-import { X, Images, Clock, Maximize2 } from 'lucide-react-native';
+import { X, Images, Maximize2 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { ChatMessage } from '../store/useComarcasForumStore';
-import { formatFileSize } from '../services/imageCompressionService';
 
 interface Props {
   visible: boolean;
@@ -64,7 +63,7 @@ export const ChatMediaGalleryModal: React.FC<Props> = ({
                 />
               </View>
               <Typography variant="caption" color="secondary" numberOfLines={1}>
-                {roomTitle} · Últimas 2 horas
+                {roomTitle}
               </Typography>
             </View>
 
@@ -84,22 +83,6 @@ export const ChatMediaGalleryModal: React.FC<Props> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Aviso efímero 2h */}
-          <View
-            style={[
-              styles.noticePill,
-              {
-                backgroundColor: colors.cardHighlight,
-                borderColor: colors.subcardBorder,
-              },
-            ]}
-          >
-            <Clock size={13} color={colors.primary} />
-            <Typography variant="caption" style={{ flex: 1, fontSize: 11.5 }}>
-              Solo se muestran imágenes compartidas en las últimas 2 horas.
-            </Typography>
-          </View>
-
           {/* Cuadrícula de archivos compartidos */}
           {mediaMessages.length === 0 ? (
             <View style={styles.emptyState}>
@@ -115,7 +98,7 @@ export const ChatMediaGalleryModal: React.FC<Props> = ({
                 Sin fotos recientes
               </Typography>
               <Typography variant="body" color="secondary" style={{ textAlign: 'center' }}>
-                Cuando alguien comparta una foto del cielo o una incidencia en esta sala, aparecerá aquí durante 2 horas.
+                Cuando alguien comparta una foto en esta sala, aparecerá aquí.
               </Typography>
             </View>
           ) : (
@@ -145,16 +128,6 @@ export const ChatMediaGalleryModal: React.FC<Props> = ({
                     <View style={styles.expandOverlay}>
                       <Maximize2 size={12} color="#FFFFFF" />
                     </View>
-                    {item.mediaMetadata ? (
-                      <View style={styles.sizeTag}>
-                        <Typography
-                          variant="captionMedium"
-                          style={{ color: '#FFFFFF', fontSize: 9.5 }}
-                        >
-                          {formatFileSize(item.mediaMetadata.sizeBytes)}
-                        </Typography>
-                      </View>
-                    ) : null}
                   </View>
 
                   <View style={styles.cardMeta}>

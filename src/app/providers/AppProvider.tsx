@@ -9,17 +9,12 @@ import { AlertNotificationBanner } from '@/features/profile/components/AlertNoti
 import { buildClaudyReminderPayload } from '@/features/profile/data/notificationPreferences';
 import { checkAndFireDueWebReminder } from '@/shared/services/dailyNotificationService';
 import {
-  buildWidgetPayload,
-  persistWidgetPayload,
-} from '@/shared/services/widgetDataSync';
-import {
   navigationRef,
   navigateToHomeOutfitRecommender,
 } from '@/app/navigation/navigationRef';
 import {
   ClaudyCustomizerModal,
   ClaudyGreetingOverlay,
-  ClaudyWidgetGalleryModal,
   useClaudyStore,
 } from '@/features/claudy';
 
@@ -28,7 +23,7 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const { themeId, isDark, colors, loadTheme } = useThemeStore();
+  const { isDark, colors, loadTheme } = useThemeStore();
   const loadProfileState = useProfileStore((state) => state.loadProfileState);
   const hasHydrated = useProfileStore((state) => state.hasHydrated);
   const hasEnteredApp = useProfileStore((state) => state.hasEnteredApp);
@@ -36,7 +31,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const fixedLocation = useProfileStore((state) => state.fixedLocation);
   const notificationPreferences = useProfileStore((state) => state.notificationPreferences);
 
-  const claudyConfig = useClaudyStore((state) => state.config);
   const loadClaudyConfig = useClaudyStore((state) => state.loadClaudyConfig);
   const initGreetingForSession = useClaudyStore((state) => state.initGreetingForSession);
 
@@ -56,7 +50,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   }, [hasHydrated, hasEnteredApp, initGreetingForSession]);
 
-  // Manejar deep-link web `?section=outfit` (al pulsar desde `/widget` o notificación)
+  // Manejar deep-link web `?section=outfit` (al abrir desde una notificación)
   useEffect(() => {
     if (Platform.OS !== 'web' || !hasHydrated || typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -72,22 +66,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   }, [hasHydrated]);
 
-  // Sincronización automática del payload estándar del widget (Web `/widget` + futuro WidgetKit/Glance)
-  useEffect(() => {
-    if (!weather) return;
-    const payload = buildWidgetPayload({
-      claudyConfig,
-      cityName: selectedCity.name || fixedLocation.name,
-      province: selectedCity.province || fixedLocation.province,
-      latitude: selectedCity.latitude,
-      longitude: selectedCity.longitude,
-      weather,
-      advice,
-      themeMode: themeId,
-    });
-    void persistWidgetPayload(payload);
-  }, [weather, advice, selectedCity, fixedLocation, claudyConfig, themeId]);
-
   // Comprobador ligero en pestaña web abierta para recordatorios diarios programados
   useEffect(() => {
     if (Platform.OS !== 'web' || !notificationPreferences.enabled) return;
@@ -95,7 +73,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const tick = () => {
       checkAndFireDueWebReminder(notificationPreferences, () =>
         buildClaudyReminderPayload({
-          claudyName: claudyConfig.name,
+          claudyName: 'Claudy',
           userName: profile.fullName,
           isAuthenticated: profile.isAuthenticated,
           cityName: fixedLocation.name || selectedCity.name || 'Madrid',
@@ -111,7 +89,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [
     notificationPreferences,
-    claudyConfig.name,
     profile.fullName,
     profile.isAuthenticated,
     fixedLocation.name,
@@ -141,7 +118,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         </NavigationContainer>
         <ClaudyGreetingOverlay />
         <ClaudyCustomizerModal />
-        <ClaudyWidgetGalleryModal />
         <AlertNotificationBanner />
       </View>
     </SafeAreaProvider>

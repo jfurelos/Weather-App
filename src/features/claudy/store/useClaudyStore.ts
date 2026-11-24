@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/shared/api/supabaseClient';
 import {
+  CLAUDY_FIXED_NAME,
   ClaudyConfig,
   DEFAULT_CLAUDY_CONFIG,
   sanitizeClaudyConfig,
@@ -61,25 +62,20 @@ interface ClaudyState {
   isSaving: boolean;
   isGreetingVisible: boolean;
   isCustomizerVisible: boolean;
-  isWidgetGalleryVisible: boolean;
 
   loadClaudyConfig: () => Promise<void>;
   hydrateFromRemoteConfig: (remoteRaw: unknown) => Promise<void>;
   saveClaudyConfig: (
-    nextConfig: Partial<ClaudyConfig>,
+    nextConfig: Partial<Omit<ClaudyConfig, 'name'>>,
     options?: { userId?: string; isAuthenticated?: boolean }
   ) => Promise<void>;
   resetClaudyConfig: (options?: { userId?: string; isAuthenticated?: boolean }) => Promise<void>;
 
   initGreetingForSession: () => void;
   dismissGreeting: () => void;
-  reopenGreeting: () => void;
 
   openCustomizer: () => void;
   closeCustomizer: () => void;
-
-  openWidgetGallery: () => void;
-  closeWidgetGallery: () => void;
 }
 
 export const useClaudyStore = create<ClaudyState>((set, get) => ({
@@ -88,7 +84,6 @@ export const useClaudyStore = create<ClaudyState>((set, get) => ({
   isSaving: false,
   isGreetingVisible: false,
   isCustomizerVisible: false,
-  isWidgetGalleryVisible: false,
 
   loadClaudyConfig: async () => {
     const localConfig = await readClaudyLocal();
@@ -108,7 +103,11 @@ export const useClaudyStore = create<ClaudyState>((set, get) => ({
 
   saveClaudyConfig: async (nextPartial, options) => {
     const current = get().config;
-    const sanitized = sanitizeClaudyConfig({ ...current, ...nextPartial });
+    const sanitized = sanitizeClaudyConfig({
+      ...current,
+      ...nextPartial,
+      name: CLAUDY_FIXED_NAME,
+    });
 
     set({ config: sanitized, isSaving: true });
     await persistClaudyLocal(sanitized);
@@ -132,7 +131,7 @@ export const useClaudyStore = create<ClaudyState>((set, get) => ({
 
           if (error) {
             console.warn(
-              '[useClaudyStore] No se pudo sincronizar claudy_config en Supabase (¿migración 05 pendiente?):',
+              '[useClaudyStore] No se pudo sincronizar claudy_config en Supabase:',
               error.message
             );
           }
@@ -160,13 +159,6 @@ export const useClaudyStore = create<ClaudyState>((set, get) => ({
     set({ isGreetingVisible: false });
   },
 
-  reopenGreeting: () => {
-    set({ isGreetingVisible: true });
-  },
-
   openCustomizer: () => set({ isCustomizerVisible: true }),
   closeCustomizer: () => set({ isCustomizerVisible: false }),
-
-  openWidgetGallery: () => set({ isWidgetGalleryVisible: true }),
-  closeWidgetGallery: () => set({ isWidgetGalleryVisible: false }),
 }));

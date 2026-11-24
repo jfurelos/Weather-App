@@ -22,7 +22,6 @@ import {
   Search,
   Images,
   ImagePlus,
-  Clock,
   ChevronUp,
   ChevronDown,
   X,
@@ -37,7 +36,6 @@ import { getChatRoomDefinition } from '../data/chatTypes';
 import { ChatMessage, useComarcasForumStore } from '../store/useComarcasForumStore';
 import {
   CompressedChatImage,
-  formatFileSize,
   pickAndCompressChatImage,
 } from '../services/imageCompressionService';
 import { MessageBubble } from '../components/MessageBubble';
@@ -346,7 +344,7 @@ export const ChatConversationScreen: React.FC = () => {
                   styles.searchInput,
                   { color: colors.textPrimary, fontFamily: FONT_BODY_BOLD },
                 ]}
-                placeholder="Buscar en las últimas 2h..."
+                placeholder="Buscar mensajes..."
                 placeholderTextColor={colors.textMuted}
                 value={chatSearchQuery}
                 onChangeText={(val) => {
@@ -409,26 +407,7 @@ export const ChatConversationScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Aviso discreto de chat efímero (2 horas) + línea temática del canal */}
-        <View
-          style={[
-            styles.ephemeralBanner,
-            {
-              backgroundColor: colors.cardHighlight,
-              borderBottomColor: colors.divider,
-            },
-          ]}
-        >
-          <Clock size={13} color={colors.primary} />
-          <Typography
-            variant="captionMedium"
-            numberOfLines={1}
-            style={{ flex: 1, fontSize: 11.5, color: colors.textPrimary }}
-          >
-            Chat efímero: los mensajes y fotos desaparecen a las 2 horas
-          </Typography>
-        </View>
-
+        {/* Línea temática del canal */}
         <View
           style={[
             styles.defaultNoticeBox,
@@ -449,7 +428,7 @@ export const ChatConversationScreen: React.FC = () => {
           </Typography>
         </View>
 
-        {/* Lista de Mensajes activos (< 2h) */}
+        {/* Lista de Mensajes activos */}
         <ScrollView
           ref={scrollViewRef}
           contentContainerStyle={styles.messagesList}
@@ -462,7 +441,7 @@ export const ChatConversationScreen: React.FC = () => {
                 color="onBackgroundSecondary"
                 style={{ textAlign: 'center' }}
               >
-                No hay mensajes en las últimas 2 horas. Sé el primero en escribir o compartir una foto en {comarcaName}.
+                Todavía no hay mensajes. Sé el primero en escribir o compartir una foto en {comarcaName}.
               </Typography>
             </View>
           ) : (
@@ -517,22 +496,6 @@ export const ChatConversationScreen: React.FC = () => {
             </View>
           )}
 
-          {(isCompressingImage || isUploadingMedia) && (
-            <View
-              style={[
-                styles.statusStrip,
-                { backgroundColor: colors.cardHighlight },
-              ]}
-            >
-              <ActivityIndicator size="small" color={colors.primary} />
-              <Typography variant="captionMedium" style={{ fontSize: 11.5, color: colors.textPrimary }}>
-                {isCompressingImage
-                  ? 'Comprimiendo imagen (máx. 1080px, < 300 KB)...'
-                  : 'Subiendo foto comprimida a Supabase Storage...'}
-              </Typography>
-            </View>
-          )}
-
           {pendingImage && !isUploadingMedia && (
             <View
               style={[
@@ -548,15 +511,13 @@ export const ChatConversationScreen: React.FC = () => {
                 style={styles.pendingThumb}
                 resizeMode="cover"
               />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Typography variant="captionMedium" numberOfLines={1} style={{ fontSize: 12 }}>
-                  Foto lista para enviar
-                </Typography>
-                <Typography variant="caption" color="secondary" style={{ fontSize: 11 }}>
-                  {formatFileSize(pendingImage.originalSizeBytes)} →{' '}
-                  {formatFileSize(pendingImage.sizeBytes)} · {pendingImage.width}×{pendingImage.height} ({pendingImage.extension.toUpperCase()})
-                </Typography>
-              </View>
+              <Typography
+                variant="captionMedium"
+                numberOfLines={1}
+                style={{ flex: 1, fontSize: 12.5 }}
+              >
+                Foto adjunta
+              </Typography>
               <TouchableOpacity
                 activeOpacity={0.75}
                 onPress={() => setPendingImage(null)}
@@ -571,7 +532,7 @@ export const ChatConversationScreen: React.FC = () => {
           <View style={styles.authorBadgeRow}>
             <MapPin size={11} color={colors.headerSubtext} />
             <Typography variant="caption" style={{ fontSize: 11, color: colors.headerSubtext }}>
-              Publicando desde {currentUser.province} · En vivo
+              Publicando desde {currentUser.province}
             </Typography>
           </View>
 
@@ -588,12 +549,16 @@ export const ChatConversationScreen: React.FC = () => {
                   borderWidth: theme.metrics.subcardBorderWidth,
                 },
               ]}
-              accessibilityLabel="Adjuntar imagen comprimida"
+              accessibilityLabel="Adjuntar imagen"
             >
-              <ImagePlus
-                size={19}
-                color={pendingImage ? colors.onAccent : colors.textPrimary}
-              />
+              {isCompressingImage ? (
+                <ActivityIndicator size="small" color={colors.textPrimary} />
+              ) : (
+                <ImagePlus
+                  size={19}
+                  color={pendingImage ? colors.onAccent : colors.textPrimary}
+                />
+              )}
             </TouchableOpacity>
 
             <TextInput

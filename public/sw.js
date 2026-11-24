@@ -1,5 +1,5 @@
-const CACHE_NAME = 'clima-comunidad-pwa-v1';
-const CORE_ASSETS = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png', '/favicon.png'];
+const CACHE_NAME = 'hoy-que-pwa-v2';
+const CORE_ASSETS = ['/', '/manifest.json', '/hoy_que_logo.png', '/icon-192.png', '/icon-512.png', '/favicon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

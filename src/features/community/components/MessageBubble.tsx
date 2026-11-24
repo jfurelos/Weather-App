@@ -5,7 +5,6 @@ import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { ChatMessage } from '../store/useComarcasForumStore';
-import { formatFileSize } from '../services/imageCompressionService';
 
 interface Props {
   message: ChatMessage;
@@ -175,14 +174,6 @@ export const MessageBubble: React.FC<Props> = ({
               />
               <View style={styles.imageExpandPill}>
                 <Maximize2 size={11} color="#FFFFFF" />
-                {message.mediaMetadata ? (
-                  <Typography
-                    variant="captionMedium"
-                    style={{ color: '#FFFFFF', fontSize: 10 }}
-                  >
-                    {formatFileSize(message.mediaMetadata.sizeBytes)}
-                  </Typography>
-                ) : null}
               </View>
             </TouchableOpacity>
           ) : null}

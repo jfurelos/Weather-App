@@ -4,22 +4,21 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   ScrollView,
 } from 'react-native';
-import { X, RotateCcw, Check, CloudSun, Sun, CloudRain, Snowflake, LayoutGrid } from 'lucide-react-native';
+import { X, RotateCcw, Check, CloudSun, Sun, CloudRain, Snowflake } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useProfileStore } from '@/features/profile/store/useProfileStore';
 import { useHomeStore } from '@/features/home/store/useHomeStore';
 import { spacing } from '@/shared/theme/spacing';
-import { FONT_BODY_BOLD } from '@/shared/theme/typography';
 import { useClaudyStore } from '../store/useClaudyStore';
 import { ClaudySvg } from './ClaudySvg';
 import {
   CLAUDY_DETAIL_TONES,
   CLAUDY_EXPRESSIONS,
+  CLAUDY_FIXED_NAME,
   CLAUDY_GLASSES_OPTIONS,
   CLAUDY_HEADWEAR_OPTIONS,
   CLAUDY_SCARF_OPTIONS,
@@ -43,7 +42,6 @@ export const ClaudyCustomizerModal: React.FC = () => {
     isSaving,
     saveClaudyConfig,
     closeCustomizer,
-    openWidgetGallery,
   } = useClaudyStore();
 
   const [draft, setDraft] = useState<ClaudyConfig>(config);
@@ -52,7 +50,7 @@ export const ClaudyCustomizerModal: React.FC = () => {
 
   useEffect(() => {
     if (isCustomizerVisible) {
-      setDraft(config);
+      setDraft({ ...config, name: CLAUDY_FIXED_NAME });
       setPreviewWeather('real');
       setHighlightUmbrella(false);
     }
@@ -71,7 +69,8 @@ export const ClaudyCustomizerModal: React.FC = () => {
     previewWeather === 'real' ? realWeatherMode : previewWeather;
 
   const handleSave = async () => {
-    await saveClaudyConfig(draft, {
+    const { name: _ignoredName, ...editableFields } = draft;
+    await saveClaudyConfig(editableFields, {
       userId: profile.id,
       isAuthenticated: profile.isAuthenticated,
     });
@@ -120,10 +119,46 @@ export const ClaudyCustomizerModal: React.FC = () => {
   );
 
   const previewModes: { id: PreviewWeatherOption; label: string; icon: React.ReactNode }[] = [
-    { id: 'real', label: 'Actual', icon: <CloudSun size={13} color={previewWeather === 'real' ? colors.onAccent : colors.textPrimary} /> },
-    { id: 'sunny', label: 'Sol', icon: <Sun size={13} color={previewWeather === 'sunny' ? colors.onAccent : colors.textPrimary} /> },
-    { id: 'rainy', label: 'Lluvia', icon: <CloudRain size={13} color={previewWeather === 'rainy' ? colors.onAccent : colors.textPrimary} /> },
-    { id: 'cold', label: 'Frío', icon: <Snowflake size={13} color={previewWeather === 'cold' ? colors.onAccent : colors.textPrimary} /> },
+    {
+      id: 'real',
+      label: 'Actual',
+      icon: (
+        <CloudSun
+          size={13}
+          color={previewWeather === 'real' ? colors.onAccent : colors.textPrimary}
+        />
+      ),
+    },
+    {
+      id: 'sunny',
+      label: 'Sol',
+      icon: (
+        <Sun
+          size={13}
+          color={previewWeather === 'sunny' ? colors.onAccent : colors.textPrimary}
+        />
+      ),
+    },
+    {
+      id: 'rainy',
+      label: 'Lluvia',
+      icon: (
+        <CloudRain
+          size={13}
+          color={previewWeather === 'rainy' ? colors.onAccent : colors.textPrimary}
+        />
+      ),
+    },
+    {
+      id: 'cold',
+      label: 'Frío',
+      icon: (
+        <Snowflake
+          size={13}
+          color={previewWeather === 'cold' ? colors.onAccent : colors.textPrimary}
+        />
+      ),
+    },
   ];
 
   return (
@@ -147,30 +182,11 @@ export const ClaudyCustomizerModal: React.FC = () => {
             theme.shadows.modal,
           ]}
         >
-          {/* Cabecera */}
+          {/* Cabecera fija */}
           <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <Typography variant="h2">Personalizar a {draft.name.trim() || 'Claudy'}</Typography>
-              <Typography variant="caption" color="secondary">
-                {profile.isAuthenticated
-                  ? 'Se guarda en tu perfil de Supabase'
-                  : 'Se guarda localmente en tu navegador'}
-              </Typography>
-            </View>
-            <TouchableOpacity
-              activeOpacity={0.75}
-              onPress={() => {
-                closeCustomizer();
-                openWidgetGallery();
-              }}
-              style={[
-                styles.iconBtn,
-                { backgroundColor: colors.cardHighlight, borderColor: 'rgba(224,159,62,0.5)' },
-              ]}
-              accessibilityLabel="Abrir galería de widgets de Claudy"
-            >
-              <LayoutGrid size={16} color={colors.primaryDark} />
-            </TouchableOpacity>
+            <Typography variant="h2" style={{ flex: 1 }}>
+              Personalizar a {CLAUDY_FIXED_NAME}
+            </Typography>
             <TouchableOpacity
               activeOpacity={0.75}
               onPress={handleReset}
@@ -195,84 +211,65 @@ export const ClaudyCustomizerModal: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
-            {/* Escenario de vista previa en vivo */}
-            <View
-              style={[
-                styles.previewBox,
-                {
-                  backgroundColor: isDark ? colors.surface : colors.card,
-                  borderColor: colors.subcardBorder,
-                },
-              ]}
-            >
-              <ClaudySvg
-                weatherMode={activeWeatherMode}
-                config={draft}
-                size={156}
-                forceShowUmbrella={highlightUmbrella}
-              />
+          {/* Vista previa fija (sticky) siempre visible mientras se hace scroll */}
+          <View
+            style={[
+              styles.previewBox,
+              {
+                backgroundColor: isDark ? colors.surface : colors.card,
+                borderColor: colors.subcardBorder,
+              },
+            ]}
+          >
+            <ClaudySvg
+              weatherMode={activeWeatherMode}
+              config={draft}
+              size={146}
+              forceShowUmbrella={highlightUmbrella}
+            />
 
-              {/* Selector rápido de clima de prueba */}
-              <View style={styles.previewWeatherRow}>
-                {previewModes.map((pm) => {
-                  const active = previewWeather === pm.id;
-                  return (
-                    <TouchableOpacity
-                      key={pm.id}
-                      activeOpacity={0.78}
-                      onPress={() => {
-                        setPreviewWeather(pm.id);
-                        setHighlightUmbrella(false);
+            <View style={styles.previewWeatherRow}>
+              {previewModes.map((pm) => {
+                const active = previewWeather === pm.id;
+                return (
+                  <TouchableOpacity
+                    key={pm.id}
+                    activeOpacity={0.78}
+                    onPress={() => {
+                      setPreviewWeather(pm.id);
+                      setHighlightUmbrella(false);
+                    }}
+                    style={[
+                      styles.previewWeatherChip,
+                      {
+                        backgroundColor: active ? colors.accent : colors.inputBg,
+                        borderColor: active ? 'rgba(84,11,14,0.18)' : colors.subcardBorder,
+                      },
+                    ]}
+                  >
+                    {pm.icon}
+                    <Typography
+                      variant="captionMedium"
+                      style={{
+                        fontSize: 11,
+                        color: active ? colors.onAccent : colors.textPrimary,
                       }}
-                      style={[
-                        styles.previewWeatherChip,
-                        {
-                          backgroundColor: active ? colors.accent : colors.inputBg,
-                          borderColor: active ? 'rgba(84,11,14,0.18)' : colors.subcardBorder,
-                        },
-                      ]}
                     >
-                      {pm.icon}
-                      <Typography
-                        variant="captionMedium"
-                        style={{
-                          fontSize: 11,
-                          color: active ? colors.onAccent : colors.textPrimary,
-                        }}
-                      >
-                        {pm.label}
-                      </Typography>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                      {pm.label}
+                    </Typography>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+          </View>
 
-            {/* 1. Nombre visible */}
-            <View style={styles.section}>
-              <Typography variant="captionMedium" color="secondary">
-                NOMBRE DE TU NUBE
-              </Typography>
-              <TextInput
-                style={[
-                  styles.nameInput,
-                  {
-                    backgroundColor: colors.inputBg,
-                    borderColor: colors.border,
-                    color: colors.textPrimary,
-                    fontFamily: FONT_BODY_BOLD,
-                  },
-                ]}
-                placeholder="Claudy"
-                placeholderTextColor={colors.textMuted}
-                value={draft.name}
-                onChangeText={(text) => setDraft((prev) => ({ ...prev, name: text }))}
-                maxLength={24}
-              />
-            </View>
-
-            {/* 2. Expresión facial */}
+          {/* Opciones desplazables debajo de la vista previa fija */}
+          <ScrollView
+            style={styles.optionsScroll}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollBody}
+          >
+            {/* 1. Expresión facial */}
             <View style={styles.section}>
               <Typography variant="captionMedium" color="secondary">
                 EXPRESIÓN FACIAL
@@ -283,7 +280,7 @@ export const ClaudyCustomizerModal: React.FC = () => {
               })}
             </View>
 
-            {/* 3. Gafas */}
+            {/* 2. Gafas */}
             <View style={styles.section}>
               <Typography variant="captionMedium" color="secondary">
                 GAFAS
@@ -294,7 +291,7 @@ export const ClaudyCustomizerModal: React.FC = () => {
               })}
             </View>
 
-            {/* 4. Gorro / Sombrero */}
+            {/* 3. Gorro / Sombrero */}
             <View style={styles.section}>
               <Typography variant="captionMedium" color="secondary">
                 GORRO / SOMBRERO
@@ -305,7 +302,7 @@ export const ClaudyCustomizerModal: React.FC = () => {
               })}
             </View>
 
-            {/* 5. Bufanda */}
+            {/* 4. Bufanda */}
             <View style={styles.section}>
               <Typography variant="captionMedium" color="secondary">
                 BUFANDA
@@ -316,10 +313,10 @@ export const ClaudyCustomizerModal: React.FC = () => {
               })}
             </View>
 
-            {/* 6. Estilo de paraguas */}
+            {/* 5. Estilo de paraguas */}
             <View style={styles.section}>
               <Typography variant="captionMedium" color="secondary">
-                ESTILO DE PARAGUAS (LLUVIA / TORMENTA)
+                ESTILO DE PARAGUAS
               </Typography>
               {renderChipGroup(CLAUDY_UMBRELLA_OPTIONS, draft.umbrellaStyle, (umbrellaStyle) => {
                 setHighlightUmbrella(true);
@@ -327,10 +324,10 @@ export const ClaudyCustomizerModal: React.FC = () => {
               })}
             </View>
 
-            {/* 7. Tono sutil de detalles */}
+            {/* 6. Tono sutil de detalles */}
             <View style={styles.section}>
               <Typography variant="captionMedium" color="secondary">
-                TONO SUTIL DE DETALLES
+                TONO DE DETALLES
               </Typography>
               <View style={styles.tonesRow}>
                 {CLAUDY_DETAIL_TONES.map((tone) => {
@@ -400,6 +397,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
+    height: '90%',
     maxHeight: '92%',
     padding: spacing.xl,
     gap: spacing.md,
@@ -417,17 +415,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollBody: {
-    gap: spacing.base,
-    paddingBottom: spacing.sm,
-  },
   previewBox: {
     alignItems: 'center',
     borderRadius: spacing.borderRadiusLg,
     borderWidth: 1,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.xs + 2,
   },
   previewWeatherRow: {
     flexDirection: 'row',
@@ -444,15 +438,16 @@ const styles = StyleSheet.create({
     borderRadius: spacing.borderRadiusFull,
     borderWidth: 1,
   },
+  optionsScroll: {
+    flex: 1,
+  },
+  scrollBody: {
+    gap: spacing.base,
+    paddingTop: 2,
+    paddingBottom: spacing.md,
+  },
   section: {
     gap: spacing.xs + 2,
-  },
-  nameInput: {
-    height: 46,
-    borderRadius: spacing.borderRadiusMd,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    fontSize: 14,
   },
   chipsWrap: {
     flexDirection: 'row',

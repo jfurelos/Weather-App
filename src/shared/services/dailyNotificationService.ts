@@ -130,8 +130,8 @@ export async function triggerClaudyReminderNotification(
     try {
       const browserNotif = new window.Notification(payload.title, {
         body: payload.body,
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
+        icon: '/hoy_que_logo.png',
+        badge: '/hoy_que_logo.png',
         tag: 'claudy-daily-outfit',
       });
 

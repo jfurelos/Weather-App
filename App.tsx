@@ -10,11 +10,10 @@ import { Montserrat_700Bold } from '@expo-google-fonts/montserrat/700Bold';
 import { AppProvider } from '@/app/providers/AppProvider';
 import { RootNavigator } from '@/app/navigation/RootNavigator';
 import { useThemeStore } from '@/shared/store/useThemeStore';
-import { ClaudyWidgetEmbedScreen } from '@/features/claudy/screens/ClaudyWidgetEmbedScreen';
 
-// Reset de márgenes, fuentes Jost/Montserrat y metadatos PWA para entorno web
+// Reset de márgenes, fuentes Jost/Montserrat, metadatos PWA y control global de caret en web
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
-  document.title = 'Clima & Comunidad España';
+  document.title = 'Hoy qué?';
 
   const ensureHeadTag = (
     selector: string,
@@ -47,9 +46,14 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   });
 
   ensureHeadTag('link[rel="manifest"]', 'link', { rel: 'manifest', href: '/manifest.json' });
+  ensureHeadTag('link[rel="icon"]', 'link', {
+    rel: 'icon',
+    type: 'image/png',
+    href: '/hoy_que_logo.png',
+  });
   ensureHeadTag('link[rel="apple-touch-icon"]', 'link', {
     rel: 'apple-touch-icon',
-    href: '/icon-192.png',
+    href: '/hoy_que_logo.png',
   });
   ensureHeadTag('meta[name="apple-mobile-web-app-capable"]', 'meta', {
     name: 'apple-mobile-web-app-capable',
@@ -61,7 +65,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   });
   ensureHeadTag('meta[name="apple-mobile-web-app-title"]', 'meta', {
     name: 'apple-mobile-web-app-title',
-    content: 'Clima España',
+    content: 'Hoy qué?',
   });
   ensureHeadTag('meta[name="mobile-web-app-capable"]', 'meta', {
     name: 'mobile-web-app-capable',
@@ -82,12 +86,27 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       transition: background-color 0.25s ease, color 0.2s ease;
+      caret-color: transparent !important;
+      user-select: none;
+      -webkit-user-select: none;
     }
     *, *::before, *::after {
       font-synthesis: none;
+      caret-color: transparent !important;
+      user-select: none;
+      -webkit-user-select: none;
     }
-    input, textarea, button {
+    input, textarea, [contenteditable="true"], [role="textbox"] {
       font-family: 'Montserrat_700Bold', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      caret-color: auto !important;
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+    button, [role="button"] {
+      font-family: 'Montserrat_700Bold', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      caret-color: transparent !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
     }
     #root {
       height: 100% !important;
@@ -137,22 +156,6 @@ function App() {
   // En nativo esperamos a la carga de fuentes; en web pintamos al instante con fallback Google Fonts
   if (!fontsLoaded && !fontError && Platform.OS !== 'web') {
     return <View style={[styles.outerShell, { backgroundColor: colors.background }]} />;
-  }
-
-  // Modo Widget Web embebible minimalista (`/widget`) para fijar en escritorio o probar en Vercel
-  const isWidgetEmbedRoute =
-    Platform.OS === 'web' &&
-    typeof window !== 'undefined' &&
-    (window.location.pathname === '/widget' ||
-      window.location.pathname.startsWith('/widget/'));
-
-  if (isWidgetEmbedRoute) {
-    return (
-      <View style={[styles.outerShell, { backgroundColor: colors.background }]}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-        <ClaudyWidgetEmbedScreen />
-      </View>
-    );
   }
 
   const isDesktopWeb = Platform.OS === 'web' && width > 520;

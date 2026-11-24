@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import {
   ArrowLeft,
@@ -20,7 +21,6 @@ import {
   ChevronRight,
 } from 'lucide-react-native';
 import { ScreenBackground } from '@/shared/components/ScreenBackground';
-import { ClaudySvg, useClaudyStore } from '@/features/claudy';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
@@ -36,7 +36,6 @@ type AuthStep = 'welcome' | 'login' | 'register';
 
 export const WelcomeAuthScreen: React.FC = () => {
   const { theme, colors } = useThemeStore();
-  const claudyConfig = useClaudyStore((s) => s.config);
   const {
     profile,
     isLoadingAuth,
@@ -141,17 +140,21 @@ export const WelcomeAuthScreen: React.FC = () => {
                     theme.shadows.window,
                   ]}
                 >
-                  <ClaudySvg weatherMode="sunny" config={claudyConfig} size={102} />
+                  <Image
+                    source={require('../../../../assets/hoy_que_logo.png')}
+                    style={styles.logoImage}
+                    resizeMode="cover"
+                  />
                 </View>
                 <Typography variant="hero" color="onBackground" style={styles.centerText}>
-                  Clima & Comunidad
+                  Hoy qué?
                 </Typography>
                 <Typography
                   variant="body"
                   color="onBackgroundSecondary"
                   style={[styles.centerText, styles.subtitle]}
                 >
-                  Pronósticos precisos, radar en tiempo real y foros locales de España.
+                  El tiempo, qué ponerte hoy y comunidad local en España.
                 </Typography>
               </View>
 
@@ -557,13 +560,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   mascotBox: {
-    width: 118,
-    height: 118,
+    width: 112,
+    height: 112,
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xs,
-    padding: 6,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   centerText: {
     textAlign: 'center',

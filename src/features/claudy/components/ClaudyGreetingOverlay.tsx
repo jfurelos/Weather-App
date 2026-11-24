@@ -6,8 +6,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   SafeAreaView,
+  Image,
 } from 'react-native';
-import { MapPin, Sparkles, ArrowRight, SlidersHorizontal } from 'lucide-react-native';
+import { MapPin, Sparkles, SlidersHorizontal } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
@@ -79,6 +80,16 @@ export const ClaudyGreetingOverlay: React.FC = () => {
         >
           {/* Cabecera editorial 5 Minute Journal */}
           <View style={styles.headerBlock}>
+            <View style={styles.brandBadgeRow}>
+              <Image
+                source={require('../../../../assets/hoy_que_logo.png')}
+                style={styles.brandIcon}
+                resizeMode="cover"
+              />
+              <Typography variant="captionMedium" color="onBackgroundAccent" style={styles.brandName}>
+                Hoy qué?
+              </Typography>
+            </View>
             <Typography variant="captionMedium" color="onBackgroundAccent" style={styles.dateEyebrow}>
               {dateLabel.toUpperCase()}
             </Typography>
@@ -188,16 +199,6 @@ export const ClaudyGreetingOverlay: React.FC = () => {
               style={styles.ctaButton}
               accessibilityLabel="Entrar a la página principal"
             />
-            <TouchableOpacity
-              activeOpacity={0.75}
-              onPress={dismissGreeting}
-              style={styles.skipRow}
-            >
-              <Typography variant="caption" color="onBackgroundSecondary">
-                Puedes volver a ver este saludo cuando quieras desde Inicio o Perfil
-              </Typography>
-              <ArrowRight size={12} color={colors.onBackgroundSecondary} />
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -223,6 +224,21 @@ const styles = StyleSheet.create({
   headerBlock: {
     alignItems: 'center',
     gap: spacing.xs,
+  },
+  brandBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: 4,
+  },
+  brandIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+  },
+  brandName: {
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
   dateEyebrow: {
     letterSpacing: 1.2,

@@ -20,9 +20,7 @@ import {
   LogOut,
   BellRing,
   CloudLightning,
-  Sparkles,
   SlidersHorizontal,
-  LayoutGrid,
 } from 'lucide-react-native';
 import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
@@ -54,8 +52,6 @@ export const ProfileScreen: React.FC = () => {
   const { isDark, theme, colors } = useThemeStore();
   const claudyConfig = useClaudyStore((s) => s.config);
   const openClaudyCustomizer = useClaudyStore((s) => s.openCustomizer);
-  const reopenClaudyGreeting = useClaudyStore((s) => s.reopenGreeting);
-  const openWidgetGallery = useClaudyStore((s) => s.openWidgetGallery);
   const homeWeather = useHomeStore((s) => s.weather);
   const {
     profile,
@@ -209,9 +205,9 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </Card>
 
-        {/* 2. Tu Mascota Claudy: Personalización y Saludo */}
+        {/* 2. Tu Mascota Claudy: Personalización */}
         <Card
-          windowTitle={`Tu Nube · ${claudyConfig.name}`}
+          windowTitle="Claudy"
           windowRight={<Badge label={expressionLabel} tone="warning" />}
           contentStyle={styles.claudyCardBody}
         >
@@ -226,71 +222,29 @@ export const ProfileScreen: React.FC = () => {
                   borderColor: colors.subcardBorder,
                 },
               ]}
-              accessibilityLabel={`Personalizar a ${claudyConfig.name}`}
+              accessibilityLabel="Personalizar a Claudy"
             >
               <ClaudySvg weatherMode={claudyWeatherMode} config={claudyConfig} size={86} />
             </TouchableOpacity>
-            <View style={{ flex: 1, gap: 4 }}>
-              <Typography variant="h3">{claudyConfig.name}</Typography>
+            <View style={{ flex: 1, gap: 6 }}>
               <Typography variant="caption" color="secondary" style={{ lineHeight: 17 }}>
-                Se viste automáticamente según el clima de {fixedLocation.name} y refleja tus accesorios favoritos.
+                Se viste según el tiempo de {fixedLocation.name} y refleja tus accesorios favoritos.
               </Typography>
+              <TouchableOpacity
+                activeOpacity={0.82}
+                onPress={openClaudyCustomizer}
+                style={[
+                  styles.claudyPrimaryBtn,
+                  { backgroundColor: colors.accent, borderColor: 'rgba(84,11,14,0.16)' },
+                ]}
+              >
+                <SlidersHorizontal size={15} color={colors.onAccent} />
+                <Typography variant="captionMedium" style={{ color: colors.onAccent, fontSize: 13 }}>
+                  Personalizar
+                </Typography>
+              </TouchableOpacity>
             </View>
           </View>
-
-          <View style={styles.claudyActionsRow}>
-            <TouchableOpacity
-              activeOpacity={0.82}
-              onPress={openClaudyCustomizer}
-              style={[
-                styles.claudyPrimaryBtn,
-                { backgroundColor: colors.accent, borderColor: 'rgba(84,11,14,0.16)' },
-              ]}
-            >
-              <SlidersHorizontal size={15} color={colors.onAccent} />
-              <Typography variant="captionMedium" style={{ color: colors.onAccent, fontSize: 13 }}>
-                Personalizar
-              </Typography>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.82}
-              onPress={reopenClaudyGreeting}
-              style={[
-                styles.claudySecondaryBtn,
-                { backgroundColor: colors.inputBg, borderColor: colors.borderStrong },
-              ]}
-            >
-              <Sparkles size={15} color={colors.textPrimary} />
-              <Typography variant="captionMedium" style={{ fontSize: 13 }}>
-                Ver saludo
-              </Typography>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            activeOpacity={0.82}
-            onPress={openWidgetGallery}
-            style={[
-              styles.claudyWidgetsBanner,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.subcardBorder,
-              },
-            ]}
-            accessibilityLabel={`Abrir galería de widgets de ${claudyConfig.name}`}
-          >
-            <View style={[styles.widgetIconBox, { backgroundColor: colors.cardHighlight }]}>
-              <LayoutGrid size={17} color={colors.primaryDark} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Typography variant="bodyMedium">Widgets de {claudyConfig.name}</Typography>
-              <Typography variant="caption" color="secondary">
-                Vistas 2×2, 4×2, pantalla de bloqueo y modo web `/widget`
-              </Typography>
-            </View>
-            <ChevronRight size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
         </Card>
 
         {/* 3. Preferencias de Vestimenta (Sensibilidad térmica + Estilo personal) */}
@@ -353,16 +307,9 @@ export const ProfileScreen: React.FC = () => {
           <View style={styles.rowBetween}>
             <View style={styles.tagWrapper}>
               <Bell size={16} color={colors.warning} />
-              <Typography variant="h3">Alertas y Notificaciones</Typography>
+              <Typography variant="h3">Alertas Meteorológicas</Typography>
             </View>
           </View>
-          <Typography
-            variant="caption"
-            color="secondary"
-            style={{ marginTop: spacing.xs, marginBottom: spacing.sm }}
-          >
-            Configura qué tipos de temporal deseas recibir, sus umbrales y tonos asociados.
-          </Typography>
 
           {/* Toggle Lluvia */}
           <View style={styles.alertOptionRow}>
@@ -447,12 +394,9 @@ export const ProfileScreen: React.FC = () => {
           >
             <View style={styles.alertInfo}>
               <Volume2 size={18} color={colors.textSecondary} />
-              <View style={{ flex: 1 }}>
-                <Typography variant="bodyMedium">Umbrales y Tonos de Alerta</Typography>
-                <Typography variant="caption" color="secondary">
-                  Personaliza y prueba el sonido de cada aviso
-                </Typography>
-              </View>
+              <Typography variant="bodyMedium" style={{ flex: 1 }}>
+                Umbrales y tonos de alerta
+              </Typography>
             </View>
             <ChevronRight size={16} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -749,44 +693,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  claudyActionsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
   claudyPrimaryBtn: {
-    flex: 1,
-    height: 44,
+    height: 40,
     borderRadius: spacing.borderRadiusMd,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-  },
-  claudySecondaryBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: spacing.borderRadiusMd,
-    borderWidth: 1.5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  claudyWidgetsBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm + 2,
-    padding: spacing.md,
-    borderRadius: spacing.borderRadiusMd,
-    borderWidth: 1,
-  },
-  widgetIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   tagWrapper: {
     flexDirection: 'row',

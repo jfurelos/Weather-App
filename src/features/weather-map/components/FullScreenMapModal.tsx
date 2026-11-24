@@ -70,7 +70,7 @@ export const FullScreenMapModal: React.FC = () => {
             <View style={styles.headerInfo}>
               <Typography variant="h3">Radar Meteorológico</Typography>
               <Typography variant="caption" color="secondary">
-                Satélite y lluvia en tiempo real
+                Precipitaciones sobre España
               </Typography>
             </View>
 

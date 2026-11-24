@@ -16,6 +16,8 @@ export type ClaudyScarfStyle = 'auto' | 'none' | 'knit_honey' | 'burgundy_wrap' 
 export type ClaudyUmbrellaStyle = 'auto' | 'classic_burgundy' | 'striped_editorial' | 'clear_honey';
 export type ClaudyDetailTone = 'honey' | 'burgundy' | 'slate' | 'vanilla';
 
+export const CLAUDY_FIXED_NAME = 'Claudy' as const;
+
 export interface ClaudyConfig {
   name: string;
   expression: ClaudyExpression;
@@ -27,7 +29,7 @@ export interface ClaudyConfig {
 }
 
 export const DEFAULT_CLAUDY_CONFIG: ClaudyConfig = {
-  name: 'Claudy',
+  name: CLAUDY_FIXED_NAME,
   expression: 'happy',
   glassesStyle: 'auto',
   headwearStyle: 'auto',
@@ -128,8 +130,8 @@ export function sanitizeClaudyConfig(raw: unknown): ClaudyConfig {
   }
   const obj = raw as Record<string, unknown>;
 
-  const rawName = typeof obj.name === 'string' ? obj.name.trim().slice(0, 24) : '';
-  const name = rawName.length > 0 ? rawName : DEFAULT_CLAUDY_CONFIG.name;
+  // El nombre de Claudy es definitivo e inmutable
+  const name = CLAUDY_FIXED_NAME;
 
   const expression = CLAUDY_EXPRESSIONS.some((o) => o.id === obj.expression)
     ? (obj.expression as ClaudyExpression)

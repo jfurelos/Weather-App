@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "Clima & Comunidad",
-    "slug": "clima-comunidad-espana",
+    "name": "Hoy qué?",
+    "slug": "hoy-que",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/hoy_que_logo.png",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/hoy_que_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#335C67"
     },
@@ -16,16 +16,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/hoy_que_logo.png",
         "backgroundColor": "#335C67"
       }
     },
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/favicon.png",
-      "name": "Clima & Comunidad España",
-      "shortName": "Clima España",
+      "favicon": "./assets/hoy_que_logo.png",
+      "name": "Hoy qué?",
+      "shortName": "Hoy qué?",
       "lang": "es",
       "display": "standalone",
       "themeColor": "#335C67",

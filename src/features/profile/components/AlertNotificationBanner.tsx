@@ -149,9 +149,6 @@ export const AlertNotificationBanner: React.FC = () => {
               </Typography>
               <ArrowRight size={11} color={OFFICIAL_PALETTE.burgundyDeep} />
             </View>
-            <Typography variant="caption" color="secondary" style={{ fontSize: 10.5 }}>
-              {banner.toneLabel}
-            </Typography>
           </View>
         ) : (
           isTriggered && (

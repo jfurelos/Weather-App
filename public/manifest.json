@@ -1,7 +1,7 @@
 {
-  "name": "Clima & Comunidad España",
-  "short_name": "Clima España",
-  "description": "Pronóstico meteorológico, radar en tiempo real y foros comunitarios de España.",
+  "name": "Hoy qué?",
+  "short_name": "Hoy qué?",
+  "description": "El tiempo, recomendación de ropa con Claudy y foros comunitarios de España.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -11,14 +11,14 @@
   "lang": "es",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
+      "src": "/hoy_que_logo.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     }

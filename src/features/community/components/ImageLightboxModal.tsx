@@ -7,11 +7,10 @@ import {
   Image,
   SafeAreaView,
 } from 'react-native';
-import { X, Clock, MapPin } from 'lucide-react-native';
+import { X, MapPin } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { spacing } from '@/shared/theme/spacing';
 import { ChatMessage } from '../store/useComarcasForumStore';
-import { formatFileSize } from '../services/imageCompressionService';
 
 interface Props {
   message: ChatMessage | null;
@@ -20,8 +19,6 @@ interface Props {
 
 export const ImageLightboxModal: React.FC<Props> = ({ message, onClose }) => {
   if (!message || !message.imageUrl) return null;
-
-  const meta = message.mediaMetadata;
 
   return (
     <Modal
@@ -43,11 +40,6 @@ export const ImageLightboxModal: React.FC<Props> = ({ message, onClose }) => {
                 <Typography variant="caption" style={{ color: '#FFF3B0', fontSize: 11 }}>
                   {message.userProvince} · {message.createdAt}
                 </Typography>
-                {meta ? (
-                  <Typography variant="caption" style={{ color: 'rgba(255,255,255,0.72)', fontSize: 11 }}>
-                    · {formatFileSize(meta.sizeBytes)} ({meta.width}×{meta.height})
-                  </Typography>
-                ) : null}
               </View>
             </View>
 
@@ -70,20 +62,14 @@ export const ImageLightboxModal: React.FC<Props> = ({ message, onClose }) => {
             />
           </View>
 
-          {/* Pie con texto y aviso efímero */}
-          <View style={styles.footer}>
-            {message.content ? (
+          {/* Pie con texto opcional */}
+          {message.content ? (
+            <View style={styles.footer}>
               <Typography variant="body" style={styles.caption}>
                 {message.content}
               </Typography>
-            ) : null}
-            <View style={styles.ephemeralRow}>
-              <Clock size={12} color="#E09F3E" />
-              <Typography variant="caption" style={{ color: '#FFF3B0', fontSize: 11 }}>
-                Imagen efímera · desaparece automáticamente a las 2 horas
-              </Typography>
             </View>
-          </View>
+          ) : null}
         </SafeAreaView>
       </View>
     </Modal>

@@ -4,7 +4,6 @@ import { WebView } from 'react-native-webview';
 import { Maximize2 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
-import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { getLeafletMapHtml } from '../webview/leafletMapHtml';
@@ -19,13 +18,8 @@ export const RadarMapView: React.FC = () => {
     <Card
       showWindowDots
       windowTitle="Radar de Precipitaciones"
-      windowRight={<Badge label="En vivo" tone="rain" />}
       contentStyle={styles.cardBody}
     >
-      <Typography variant="caption" color="secondary">
-        Satélite y lluvia en tiempo real sobre España
-      </Typography>
-
       <View
         style={[
           styles.mapContainer,

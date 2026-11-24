@@ -25,10 +25,6 @@ export const ThemeSelectorCard: React.FC = () => {
       }
       contentStyle={styles.cardBody}
     >
-      <Typography variant="caption" color="secondary" style={styles.helperText}>
-        Modo Oscuro activado por defecto. Cambia entre temas con persistencia local.
-      </Typography>
-
       <View style={styles.optionsRow}>
         {THEME_LIST.map((item) => {
           const isActive = item.id === mode;

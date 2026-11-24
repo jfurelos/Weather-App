@@ -3,7 +3,6 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Thermometer, Shirt, Check } from 'lucide-react-native';
 import { Card } from '@/shared/components/Card';
 import { Typography } from '@/shared/components/Typography';
-import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import {
@@ -14,31 +13,20 @@ import { useProfileStore } from '../store/useProfileStore';
 
 export const OutfitPreferencesCard: React.FC = () => {
   const { isDark, colors } = useThemeStore();
-  const profile = useProfileStore((s) => s.profile);
   const outfitPreferences = useProfileStore((s) => s.outfitPreferences);
   const updateOutfitPreferences = useProfileStore((s) => s.updateOutfitPreferences);
 
   return (
     <Card
       windowTitle="Preferencias de Vestimenta"
-      windowRight={
-        <Badge
-          label={profile.isAuthenticated ? 'Supabase' : 'Local'}
-          tone="neutral"
-        />
-      }
       contentStyle={styles.cardBody}
     >
-      <Typography variant="caption" color="secondary" style={styles.helperText}>
-        Ajusta cómo el recomendador de Inicio calcula tus prendas y capas cada día.
-      </Typography>
-
-      {/* 1. Sensibilidad térmica (±2.5°C) */}
+      {/* 1. Sensibilidad térmica */}
       <View style={styles.section}>
         <View style={styles.sectionTitleRow}>
           <Thermometer size={14} color={colors.accent} />
           <Typography variant="captionMedium" color="secondary">
-            SENSIBILIDAD TÉRMICA (±2.5°C)
+            SENSIBILIDAD TÉRMICA
           </Typography>
         </View>
 

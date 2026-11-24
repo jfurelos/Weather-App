@@ -103,11 +103,9 @@ export const DailyReminderCard: React.FC = () => {
     const nextPerm = await requestWebNotificationPermission();
     setPermission(nextPerm);
     if (nextPerm === 'granted') {
-      setFeedbackText('¡Permiso concedido! Ahora recibirás notificaciones nativas del navegador.');
+      setFeedbackText('Permiso activado.');
     } else if (nextPerm === 'denied') {
-      setFeedbackText(
-        'Notificaciones bloqueadas en el navegador. Usaremos el banner push in-app de Claudy.'
-      );
+      setFeedbackText('Avisos del navegador bloqueados. Se mostrarán dentro de la app.');
     }
   };
 
@@ -118,28 +116,11 @@ export const DailyReminderCard: React.FC = () => {
         requestPermissionIfDefault: true,
       });
       setPermission(result.permission);
-      if (result.deliveredViaBrowser) {
-        setFeedbackText(
-          '¡Enviada! Toca la notificación del navegador o el banner superior para ir a tu outfit.'
-        );
-      } else {
-        setFeedbackText(
-          'Mostrada como banner push in-app arriba. Tócalo para abrir directamente tu outfit en Inicio.'
-        );
-      }
+      setFeedbackText('Toca el aviso para abrir tu outfit de hoy.');
     } finally {
       setIsTesting(false);
     }
   };
-
-  const permissionBadge =
-    Platform.OS !== 'web'
-      ? { label: 'Nativo', tone: 'neutral' as const }
-      : permission === 'granted'
-        ? { label: 'Navegador activo', tone: 'warning' as const }
-        : permission === 'denied'
-          ? { label: 'Modo In-App', tone: 'neutral' as const }
-          : { label: 'Listo para probar', tone: 'neutral' as const };
 
   return (
     <Card style={styles.card}>
@@ -148,13 +129,8 @@ export const DailyReminderCard: React.FC = () => {
           <BellRing size={17} color={colors.primary} />
           <Typography variant="h3">Recordatorio Diario de {claudyName}</Typography>
         </View>
-        <Badge label={permissionBadge.label} tone={permissionBadge.tone} />
+        {notificationPreferences.enabled && <Badge label="Activo" tone="warning" />}
       </View>
-
-      <Typography variant="caption" color="secondary" style={{ lineHeight: 17 }}>
-        Recibe cada día la temperatura real de {cityName} y la prenda estrella que {claudyName}{' '}
-        elige para ti.
-      </Typography>
 
       {/* 1. Toggle principal de activación */}
       <View
@@ -172,7 +148,7 @@ export const DailyReminderCard: React.FC = () => {
                     ? ` • Tarde ${notificationPreferences.afternoonTime}`
                     : ''
                 }`
-              : 'Desactivado (puedes probarlo igual cuando quieras)'}
+              : 'Desactivado'}
           </Typography>
         </View>
         <Switch
@@ -277,12 +253,9 @@ export const DailyReminderCard: React.FC = () => {
       <View style={styles.optionRow}>
         <View style={styles.optionLeft}>
           <Shirt size={17} color={colors.accent} />
-          <View style={{ flex: 1 }}>
-            <Typography variant="bodyMedium">Temperatura real + prenda clave</Typography>
-            <Typography variant="caption" color="secondary">
-              Incluye los grados actuales y la sugerencia principal de {claudyName}
-            </Typography>
-          </View>
+          <Typography variant="bodyMedium" style={{ flex: 1 }}>
+            Incluir temperatura y prenda clave
+          </Typography>
         </View>
         <Switch
           value={notificationPreferences.includeTempAndOutfit}
@@ -294,7 +267,7 @@ export const DailyReminderCard: React.FC = () => {
         />
       </View>
 
-      {/* 5. Vista previa en vivo del mensaje dinámico */}
+      {/* 5. Vista previa del mensaje */}
       <View
         style={[
           styles.previewBubble,
@@ -310,7 +283,7 @@ export const DailyReminderCard: React.FC = () => {
             variant="captionMedium"
             style={{ color: colors.primaryDark, fontSize: 11.5 }}
           >
-            Vista previa con el clima de hoy ({previewPayload.title})
+            {previewPayload.title}
           </Typography>
         </View>
         <Typography variant="caption" style={{ color: colors.textPrimary, lineHeight: 18 }}>
@@ -330,7 +303,7 @@ export const DailyReminderCard: React.FC = () => {
         >
           <CheckCircle2 size={15} color={colors.textPrimary} />
           <Typography variant="captionMedium" style={{ flex: 1, fontSize: 12 }}>
-            Activar permisos de notificación del navegador (opcional)
+            Permitir notificaciones del navegador
           </Typography>
         </TouchableOpacity>
       )}
@@ -344,7 +317,7 @@ export const DailyReminderCard: React.FC = () => {
         >
           <ShieldAlert size={15} color={colors.textSecondary} />
           <Typography variant="caption" color="secondary" style={{ flex: 1 }}>
-            Permiso del navegador bloqueado: la prueba se mostrará como banner push dentro de la app.
+            Avisos del navegador bloqueados. Se mostrarán dentro de la app.
           </Typography>
         </View>
       )}
