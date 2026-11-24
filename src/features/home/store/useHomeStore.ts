@@ -3,6 +3,10 @@ import { WeatherData, fetchWeatherData } from '../services/weatherApi';
 import { DailyAdvice, evaluateDailyAdvice } from '../services/rulesEngine';
 import { FeaturedNews, fetchFeaturedNews } from '../services/newsService';
 import type { MockStormUser } from '@/shared/data/mockStormUsers';
+import {
+  DEFAULT_OUTFIT_PREFERENCES,
+  OutfitPreferences,
+} from '@/features/profile/data/outfitPreferences';
 
 export interface City {
   name: string;
@@ -35,6 +39,7 @@ interface HomeState {
   selectedCity: City;
   weather: WeatherData | null;
   advice: DailyAdvice | null;
+  outfitPreferences: OutfitPreferences;
   news: FeaturedNews[];
   activeMockScenario: ActiveMockScenario | null;
   isLoading: boolean;
@@ -42,6 +47,7 @@ interface HomeState {
   error: string | null;
 
   setSelectedCity: (city: City) => Promise<void>;
+  recomputeAdvice: (prefs?: OutfitPreferences) => void;
   applyMockStormScenario: (mockUser: MockStormUser) => void;
   clearMockStormScenario: () => Promise<void>;
   loadHomeData: () => Promise<void>;
@@ -52,6 +58,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
   selectedCity: SPANISH_CITIES[0],
   weather: null,
   advice: null,
+  outfitPreferences: DEFAULT_OUTFIT_PREFERENCES,
   news: [],
   activeMockScenario: null,
   isLoading: true,
@@ -63,8 +70,20 @@ export const useHomeStore = create<HomeState>((set, get) => ({
     await get().loadHomeData();
   },
 
+  recomputeAdvice: (prefs?: OutfitPreferences) => {
+    const { weather, outfitPreferences } = get();
+    const nextPrefs = prefs ?? outfitPreferences;
+    if (!weather) {
+      set({ outfitPreferences: nextPrefs });
+      return;
+    }
+    const advice = evaluateDailyAdvice(weather, nextPrefs);
+    set({ outfitPreferences: nextPrefs, advice });
+  },
+
   applyMockStormScenario: (mockUser: MockStormUser) => {
-    const advice = evaluateDailyAdvice(mockUser.weather);
+    const { outfitPreferences } = get();
+    const advice = evaluateDailyAdvice(mockUser.weather, outfitPreferences);
     set({
       selectedCity: {
         name: mockUser.location.name,
@@ -93,7 +112,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
   },
 
   loadHomeData: async () => {
-    const { selectedCity, activeMockScenario } = get();
+    const { selectedCity, activeMockScenario, outfitPreferences } = get();
     if (activeMockScenario) {
       set({ isLoading: false });
       return;
@@ -105,7 +124,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
         fetchFeaturedNews(),
       ]);
 
-      const advice = evaluateDailyAdvice(weatherData);
+      const advice = evaluateDailyAdvice(weatherData, outfitPreferences);
 
       set({
         weather: weatherData,
@@ -123,7 +142,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
   },
 
   refreshHomeData: async () => {
-    const { selectedCity, activeMockScenario } = get();
+    const { selectedCity, activeMockScenario, outfitPreferences } = get();
     if (activeMockScenario) {
       set({ isRefreshing: false });
       return;
@@ -135,7 +154,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
         fetchFeaturedNews(),
       ]);
 
-      const advice = evaluateDailyAdvice(weatherData);
+      const advice = evaluateDailyAdvice(weatherData, outfitPreferences);
 
       set({
         weather: weatherData,

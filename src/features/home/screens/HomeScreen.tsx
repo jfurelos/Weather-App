@@ -19,7 +19,7 @@ import { useClaudyStore } from '@/features/claudy';
 import { useHomeStore } from '../store/useHomeStore';
 import { WeatherHeroCard } from '../components/WeatherHeroCard';
 import { HourlyTimeline } from '../components/HourlyTimeline';
-import { AdviceCard } from '../components/AdviceCard';
+import { OutfitRecommenderCard } from '../components/OutfitRecommenderCard';
 import { FeaturedNewsCard } from '../components/FeaturedNewsCard';
 import { CitySelectorModal } from '../components/CitySelectorModal';
 
@@ -157,18 +157,18 @@ export const HomeScreen: React.FC = () => {
         ) : weather ? (
           /* Contenido Principal */
           <>
-            {/* 1. Tarjeta Clima Actual con Mascota Nube SVG */}
+            {/* 1. Tarjeta Clima Actual con Mascota Claudy */}
             <WeatherHeroCard
               weather={weather}
               city={selectedCity}
               onPressCity={() => setCityModalVisible(true)}
             />
 
-            {/* 2. Timeline de pronóstico por horas */}
-            <HourlyTimeline hourly={weather.hourly} />
+            {/* 2. Recomendador Visual y Personalizado de Ropa ("¿Qué me pongo hoy?") */}
+            {advice && <OutfitRecommenderCard weather={weather} advice={advice} />}
 
-            {/* 3. Consejo del Día (Rules Engine) */}
-            {advice && <AdviceCard advice={advice} />}
+            {/* 3. Timeline de pronóstico por horas */}
+            <HourlyTimeline hourly={weather.hourly} />
 
             {/* 4. Resumen de Noticias y Avisos Oficiales */}
             <FeaturedNewsCard

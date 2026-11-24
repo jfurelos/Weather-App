@@ -14,6 +14,11 @@ import {
   RainThreshold,
   WindThreshold,
 } from '../data/locationsData';
+import {
+  DEFAULT_OUTFIT_PREFERENCES,
+  OutfitPreferences,
+  sanitizeOutfitPreferences,
+} from '../data/outfitPreferences';
 import type { MockAlertScenario, MockStormUser } from '@/shared/data/mockStormUsers';
 import { playAlertTonePreview } from '../services/alertSoundService';
 import { useAlertBannerStore } from './useAlertBannerStore';
@@ -54,6 +59,7 @@ interface PersistedProfilePayload {
   profile: UserProfileData;
   fixedLocation: FixedLocation;
   alerts: AlertsPreferences;
+  outfitPreferences?: OutfitPreferences;
 }
 
 export type AlertCategory = 'rain' | 'wind' | 'heat';
@@ -62,6 +68,7 @@ interface ProfileState {
   profile: UserProfileData;
   fixedLocation: FixedLocation;
   alerts: AlertsPreferences;
+  outfitPreferences: OutfitPreferences;
   hasEnteredApp: boolean;
   isLoadingAuth: boolean;
   authError: string | null;
@@ -78,6 +85,7 @@ interface ProfileState {
     avatarColor: string;
     avatarUrl: string | null;
   }) => Promise<void>;
+  updateOutfitPreferences: (updates: Partial<OutfitPreferences>) => Promise<void>;
   updateFixedLocation: (location: FixedLocation) => Promise<void>;
   toggleAlert: (category: AlertCategory, enabled: boolean) => Promise<void>;
   setRainThreshold: (threshold: RainThreshold) => Promise<void>;
@@ -171,7 +179,12 @@ async function getActiveSessionUserId(expectedId?: string): Promise<string | nul
 
 async function persistLocalState(payload: PersistedProfilePayload): Promise<void> {
   try {
-    await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(payload));
+    const mergedPayload: PersistedProfilePayload = {
+      ...payload,
+      outfitPreferences:
+        payload.outfitPreferences ?? useProfileStore.getState().outfitPreferences,
+    };
+    await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(mergedPayload));
   } catch {
     // Ignorar error de almacenamiento local
   }
@@ -226,6 +239,27 @@ async function fetchClaudyConfigFromSupabase(userId: string): Promise<void> {
     }
   } catch {
     // Mantener configuración local ante error de red
+  }
+}
+
+async function fetchOutfitPreferencesFromSupabase(
+  userId: string,
+  fallback: OutfitPreferences
+): Promise<OutfitPreferences> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('outfit_preferences')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error || !data?.outfit_preferences) {
+      return fallback;
+    }
+
+    return sanitizeOutfitPreferences(data.outfit_preferences);
+  } catch {
+    return fallback;
   }
 }
 
@@ -327,6 +361,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: DEFAULT_PROFILE,
   fixedLocation: DEFAULT_LOCATION,
   alerts: DEFAULT_ALERTS,
+  outfitPreferences: DEFAULT_OUTFIT_PREFERENCES,
   hasEnteredApp: false,
   isLoadingAuth: false,
   authError: null,
@@ -446,6 +481,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       let nextProfile = DEFAULT_PROFILE;
       let nextLocation = DEFAULT_LOCATION;
       let nextAlerts = DEFAULT_ALERTS;
+      let nextOutfitPrefs = DEFAULT_OUTFIT_PREFERENCES;
 
       if (stored) {
         const parsed: Partial<PersistedProfilePayload> = JSON.parse(stored);
@@ -457,6 +493,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             wind: { ...DEFAULT_ALERTS.wind, ...parsed.alerts.wind },
             heat: { ...DEFAULT_ALERTS.heat, ...parsed.alerts.heat },
           };
+        }
+        if (parsed.outfitPreferences) {
+          nextOutfitPrefs = sanitizeOutfitPreferences(parsed.outfitPreferences);
         }
       }
 
@@ -495,6 +534,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           nextAlerts = remoteData.alerts;
 
           await fetchClaudyConfigFromSupabase(user.id);
+          nextOutfitPrefs = await fetchOutfitPreferencesFromSupabase(user.id, nextOutfitPrefs);
         } else {
           nextProfile = {
             ...nextProfile,
@@ -512,12 +552,14 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         profile: nextProfile,
         fixedLocation: nextLocation,
         alerts: nextAlerts,
+        outfitPreferences: nextOutfitPrefs,
         hasEnteredApp: nextProfile.isAuthenticated,
         hasHydrated: true,
       });
 
       syncProfileToForum(nextProfile, true);
       syncLocationToHome(nextLocation);
+      useHomeStore.getState().recomputeAdvice(nextOutfitPrefs);
     } catch {
       set({ hasHydrated: true });
     }
@@ -572,11 +614,52 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
+  updateOutfitPreferences: async (updates: Partial<OutfitPreferences>) => {
+    const { profile, fixedLocation, alerts, outfitPreferences } = get();
+    const nextPrefs = sanitizeOutfitPreferences({
+      ...outfitPreferences,
+      ...updates,
+    });
+
+    set({ outfitPreferences: nextPrefs });
+    useHomeStore.getState().recomputeAdvice(nextPrefs);
+    await persistLocalState({
+      profile,
+      fixedLocation,
+      alerts,
+      outfitPreferences: nextPrefs,
+    });
+
+    if (profile.isAuthenticated) {
+      const sessionUid = await getActiveSessionUserId(profile.id);
+      if (sessionUid) {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              outfit_preferences: nextPrefs,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', sessionUid);
+
+          if (error) {
+            console.warn(
+              '[useProfileStore] No se pudo guardar outfit_preferences en Supabase (¿migración 06 pendiente?):',
+              error.message
+            );
+          }
+        } catch (err) {
+          console.warn('[useProfileStore] Excepción guardando outfit_preferences:', err);
+        }
+      }
+    }
+  },
+
   updateFixedLocation: async (location: FixedLocation) => {
-    const { profile, alerts } = get();
+    const { profile, alerts, outfitPreferences } = get();
     set({ fixedLocation: location });
     syncLocationToHome(location);
-    await persistLocalState({ profile, fixedLocation: location, alerts });
+    await persistLocalState({ profile, fixedLocation: location, alerts, outfitPreferences });
     await syncSingleLocationToSupabase(profile, location, alerts);
   },
 
@@ -657,7 +740,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         return false;
       }
 
-      const { profile, fixedLocation, alerts } = get();
+      const { profile, fixedLocation, alerts, outfitPreferences } = get();
       const { data: dbProfile, error: profileErr } = await supabase
         .from('profiles')
         .select('username, full_name, avatar_url, province')
@@ -686,11 +769,16 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       );
 
       await fetchClaudyConfigFromSupabase(data.user.id);
+      const nextOutfitPrefs = await fetchOutfitPreferencesFromSupabase(
+        data.user.id,
+        outfitPreferences
+      );
 
       set({
         profile: nextProfile,
         fixedLocation: remoteData.location,
         alerts: remoteData.alerts,
+        outfitPreferences: nextOutfitPrefs,
         hasEnteredApp: true,
         isLoadingAuth: false,
         authError: null,
@@ -698,10 +786,12 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
       syncProfileToForum(nextProfile, true);
       syncLocationToHome(remoteData.location);
+      useHomeStore.getState().recomputeAdvice(nextOutfitPrefs);
       await persistLocalState({
         profile: nextProfile,
         fixedLocation: remoteData.location,
         alerts: remoteData.alerts,
+        outfitPreferences: nextOutfitPrefs,
       });
       return true;
     } catch {

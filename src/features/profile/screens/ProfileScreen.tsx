@@ -41,6 +41,7 @@ import { useHomeStore } from '@/features/home/store/useHomeStore';
 import { AlertCategory, useProfileStore } from '../store/useProfileStore';
 import { getRainThresholdLabel, getToneLabel } from '../data/locationsData';
 import { ThemeSelectorCard } from '../components/ThemeSelectorCard';
+import { OutfitPreferencesCard } from '../components/OutfitPreferencesCard';
 import { EditProfileModal } from '../components/EditProfileModal';
 import { EditLocationModal } from '../components/EditLocationModal';
 import { AlertSettingsModal } from '../components/AlertSettingsModal';
@@ -265,7 +266,10 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </Card>
 
-        {/* 3. Selector Modo Oscuro / Modo Claro */}
+        {/* 3. Preferencias de Vestimenta (Sensibilidad térmica + Estilo personal) */}
+        <OutfitPreferencesCard />
+
+        {/* 4. Selector Modo Oscuro / Modo Claro */}
         <ThemeSelectorCard />
 
         {/* 3. Ubicación Fija Única para Alertas */}
