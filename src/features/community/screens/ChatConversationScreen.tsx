@@ -15,6 +15,7 @@ import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
+import { FONT_BODY_BOLD } from '@/shared/theme/typography';
 import { getChatRoomDefinition } from '../data/chatTypes';
 import { useComarcasForumStore } from '../store/useComarcasForumStore';
 import { MessageBubble } from '../components/MessageBubble';
@@ -69,11 +70,11 @@ export const ChatConversationScreen: React.FC = () => {
   const getHeaderIcon = () => {
     switch (chatType) {
       case 'general':
-        return <MessageSquare size={16} color={colors.primary} />;
+        return <MessageSquare size={16} color={colors.headerSubtext} />;
       case 'incidents':
-        return <AlertTriangle size={16} color={colors.warning} />;
+        return <AlertTriangle size={16} color={colors.accent} />;
       case 'landscapes':
-        return <Camera size={16} color={colors.rain} />;
+        return <Camera size={16} color={colors.headerSubtext} />;
     }
   };
 
@@ -89,7 +90,7 @@ export const ChatConversationScreen: React.FC = () => {
             styles.header,
             {
               backgroundColor: colors.headerBg,
-              borderBottomColor: colors.border,
+              borderBottomColor: colors.tabBorder,
               borderBottomWidth: theme.metrics.windowBorderWidth,
             },
             getGlassStyle(theme),
@@ -114,14 +115,14 @@ export const ChatConversationScreen: React.FC = () => {
           <View style={styles.headerInfo}>
             <View style={styles.badgeRow}>
               {getHeaderIcon()}
-              <Typography variant="captionMedium" style={{ fontWeight: '700', color: colors.textPrimary }}>
+              <Typography variant="captionMedium" style={{ color: colors.headerText }}>
                 {chatDef.title}
               </Typography>
-              <Typography variant="caption" color="secondary">
+              <Typography variant="caption" style={{ color: colors.headerSubtext }}>
                 • {comarcaName}
               </Typography>
             </View>
-            <Typography variant="caption" color="secondary">
+            <Typography variant="caption" style={{ color: colors.headerSubtext }}>
               Provincia de {provinceName}
             </Typography>
           </View>
@@ -132,7 +133,7 @@ export const ChatConversationScreen: React.FC = () => {
           style={[
             styles.defaultNoticeBox,
             {
-              backgroundColor: colors.card,
+              backgroundColor: colors.cardHighlight,
               borderBottomColor: colors.divider,
             },
           ]}
@@ -156,7 +157,7 @@ export const ChatConversationScreen: React.FC = () => {
         >
           {messages.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Typography variant="body" color="secondary" style={{ textAlign: 'center' }}>
+              <Typography variant="body" color="onBackgroundSecondary" style={{ textAlign: 'center' }}>
                 No hay observaciones previas. Sé el primero en escribir en este chat de {comarcaName}.
               </Typography>
             </View>
@@ -178,15 +179,15 @@ export const ChatConversationScreen: React.FC = () => {
             styles.inputBar,
             {
               backgroundColor: colors.headerBg,
-              borderTopColor: colors.border,
+              borderTopColor: colors.tabBorder,
               borderTopWidth: theme.metrics.windowBorderWidth,
             },
             getGlassStyle(theme),
           ]}
         >
           <View style={styles.authorBadgeRow}>
-            <MapPin size={11} color={colors.textSecondary} />
-            <Typography variant="caption" color="secondary" style={{ fontSize: 11 }}>
+            <MapPin size={11} color={colors.headerSubtext} />
+            <Typography variant="caption" style={{ fontSize: 11, color: colors.headerSubtext }}>
               Publicando desde {currentUser.province}
             </Typography>
           </View>
@@ -196,14 +197,15 @@ export const ChatConversationScreen: React.FC = () => {
               style={[
                 styles.textInput,
                 {
-                  backgroundColor: colors.card,
+                  backgroundColor: colors.inputBg,
                   borderColor: colors.subcardBorder,
                   borderWidth: theme.metrics.subcardBorderWidth,
                   color: colors.textPrimary,
+                  fontFamily: FONT_BODY_BOLD,
                 },
               ]}
               placeholder={`Escribe en ${chatDef.title.toLowerCase()}...`}
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.textMuted}
               value={inputText}
               onChangeText={setInputText}
               maxLength={500}
@@ -217,8 +219,8 @@ export const ChatConversationScreen: React.FC = () => {
               style={[
                 styles.sendBtn,
                 {
-                  backgroundColor: inputText.trim() ? colors.pillActiveBg : colors.pillBg,
-                  borderColor: inputText.trim() ? colors.border : colors.subcardBorder,
+                  backgroundColor: inputText.trim() ? colors.primary : colors.pillBg,
+                  borderColor: inputText.trim() ? colors.primaryDark : colors.subcardBorder,
                   borderWidth: theme.metrics.subcardBorderWidth,
                 },
                 inputText.trim() ? theme.shadows.pillActive : undefined,
@@ -228,7 +230,7 @@ export const ChatConversationScreen: React.FC = () => {
             >
               <Send
                 size={18}
-                color={inputText.trim() ? colors.pillActiveText : colors.textSecondary}
+                color={inputText.trim() ? colors.onPrimary : colors.textMuted}
               />
             </TouchableOpacity>
           </View>

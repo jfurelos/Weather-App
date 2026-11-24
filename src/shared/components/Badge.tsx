@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ViewProps } from 'react-native';
 import { useThemeStore } from '../store/useThemeStore';
 import { spacing } from '../theme/spacing';
+import { FONT_BODY_BOLD } from '../theme/typography';
 import { Typography } from './Typography';
 
 export type BadgeTone = 'neutral' | 'brand' | 'warning' | 'rain' | 'heat' | 'wind';
@@ -17,44 +18,41 @@ export const Badge: React.FC<BadgeProps> = ({
   style,
   ...rest
 }) => {
-  const { themeId, isDark, colors } = useThemeStore();
+  const { colors } = useThemeStore();
 
   const getColors = () => {
     switch (tone) {
       case 'brand':
-        return isDark
-          ? { bg: colors.sky, text: '#1E2733', border: colors.border }
-          : { bg: colors.sky, text: '#28323E', border: themeId === 'ilustrada' ? '#28323E' : colors.subcardBorder };
-      case 'warning':
         return {
-          bg: colors.gold,
-          text: '#28323E',
-          border: themeId === 'ilustrada' ? '#28323E' : 'transparent',
+          bg: colors.borderStrong, // #335C67
+          text: '#FFF3B0',
+          border: 'transparent',
+        };
+      case 'warning':
+      case 'heat':
+        return {
+          bg: colors.accent, // #E09F3E
+          text: colors.onAccent, // #540B0E (contraste 6.48:1)
+          border: 'rgba(84, 11, 14, 0.14)',
         };
       case 'rain':
         return {
-          bg: colors.turquoise,
-          text: '#FFFFFF',
-          border: themeId === 'ilustrada' ? '#28323E' : 'transparent',
-        };
-      case 'heat':
-        return {
-          bg: colors.plum,
-          text: isDark ? '#1E2733' : '#FFFFFF',
-          border: themeId === 'ilustrada' ? '#28323E' : 'transparent',
+          bg: colors.primary, // #9E2A2B (alertas lluvia/incidencias)
+          text: colors.onPrimary, // #FFFFFF (contraste 7.45:1)
+          border: 'transparent',
         };
       case 'wind':
         return {
-          bg: colors.primaryMuted,
-          text: isDark ? colors.sky : colors.textPrimary,
-          border: themeId === 'ilustrada' ? '#28323E' : colors.subcardBorder,
+          bg: 'rgba(51, 92, 103, 0.12)',
+          text: colors.textPrimary, // #335C67
+          border: 'rgba(51, 92, 103, 0.25)',
         };
       case 'neutral':
       default:
         return {
           bg: colors.pillBg,
-          text: colors.textSecondary,
-          border: themeId === 'ilustrada' ? '#28323E' : colors.subcardBorder,
+          text: colors.textPrimary, // #335C67
+          border: colors.subcardBorder,
         };
     }
   };
@@ -68,7 +66,7 @@ export const Badge: React.FC<BadgeProps> = ({
         {
           backgroundColor: bg,
           borderColor: border,
-          borderWidth: themeId === 'ilustrada' ? 1.5 : 1,
+          borderWidth: 1,
         },
         style,
       ]}
@@ -76,7 +74,13 @@ export const Badge: React.FC<BadgeProps> = ({
     >
       <Typography
         variant="captionMedium"
-        style={{ color: text, fontWeight: '800', fontSize: 11 }}
+        style={{
+          color: text,
+          fontFamily: FONT_BODY_BOLD,
+          fontWeight: '700',
+          fontSize: 11,
+          letterSpacing: 0.2,
+        }}
       >
         {label}
       </Typography>
@@ -86,8 +90,8 @@ export const Badge: React.FC<BadgeProps> = ({
 
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: 3,
+    paddingHorizontal: spacing.sm + 3,
+    paddingVertical: 4,
     borderRadius: spacing.borderRadiusFull,
     alignSelf: 'flex-start',
   },

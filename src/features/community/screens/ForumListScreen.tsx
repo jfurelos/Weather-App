@@ -15,6 +15,7 @@ import { Card } from '@/shared/components/Card';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
+import { FONT_BODY_BOLD } from '@/shared/theme/typography';
 import { getComarcasForProvince, Comarca } from '../data/provincesData';
 import { useComarcasForumStore } from '../store/useComarcasForumStore';
 import { ProvinceSelectorModal } from '../components/ProvinceSelectorModal';
@@ -72,7 +73,7 @@ export const ForumListScreen: React.FC = () => {
       >
         {/* Header principal */}
         <View style={styles.header}>
-          <Typography variant="hero" style={styles.title}>
+          <Typography variant="hero" color="onBackground" style={styles.title}>
             Foro Comunitario
           </Typography>
         </View>
@@ -152,7 +153,7 @@ export const ForumListScreen: React.FC = () => {
             style={[
               styles.searchBar,
               {
-                backgroundColor: colors.card,
+                backgroundColor: colors.inputBg,
                 borderColor: colors.border,
                 borderWidth: theme.metrics.subcardBorderWidth,
               },
@@ -162,9 +163,12 @@ export const ForumListScreen: React.FC = () => {
           >
             <Search size={18} color={colors.textSecondary} />
             <TextInput
-              style={[styles.searchInput, { color: colors.textPrimary }]}
+              style={[
+                styles.searchInput,
+                { color: colors.textPrimary, fontFamily: FONT_BODY_BOLD },
+              ]}
               placeholder={`Buscar comarca en ${selectedProvince}...`}
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -182,12 +186,12 @@ export const ForumListScreen: React.FC = () => {
         <View style={styles.comarcasList}>
           <View style={styles.listHeaderRow}>
             <View style={styles.listHeaderTitle}>
-              <Layers size={16} color={colors.primary} />
-              <Typography variant="h3">
+              <Layers size={16} color={colors.onBackgroundAccent} />
+              <Typography variant="h3" color="onBackground">
                 Comarcas de {selectedProvince}
               </Typography>
             </View>
-            <Typography variant="caption" color="secondary">
+            <Typography variant="caption" color="onBackgroundSecondary">
               {filteredComarcas.length} {filteredComarcas.length === 1 ? 'subforum' : 'subforums'}
             </Typography>
           </View>

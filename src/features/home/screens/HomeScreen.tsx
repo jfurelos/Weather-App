@@ -55,14 +55,14 @@ export const HomeScreen: React.FC = () => {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={refreshHomeData}
-            tintColor={colors.primary}
+            tintColor={colors.onBackgroundAccent}
             colors={[colors.primary]}
           />
         }
       >
         {/* Encabezado Principal */}
         <View style={styles.header}>
-          <Typography variant="hero" style={styles.title}>
+          <Typography variant="hero" color="onBackground" style={styles.title}>
             El Tiempo Hoy
           </Typography>
         </View>
@@ -72,7 +72,7 @@ export const HomeScreen: React.FC = () => {
             style={[
               styles.mockBanner,
               {
-                backgroundColor: colors.card,
+                backgroundColor: colors.cardHighlight,
                 borderColor: colors.border,
                 borderWidth: theme.metrics.subcardBorderWidth,
                 borderRadius: theme.metrics.subcardRadius,
@@ -81,7 +81,7 @@ export const HomeScreen: React.FC = () => {
             ]}
           >
             <View style={{ flex: 1 }}>
-              <Typography variant="captionMedium" color="brand" style={{ fontWeight: '800' }}>
+              <Typography variant="captionMedium" color="emphasis">
                 Temporal demo: {activeMockScenario.stormTitle}
               </Typography>
               <Typography variant="caption" color="secondary">
@@ -94,15 +94,13 @@ export const HomeScreen: React.FC = () => {
               style={[
                 styles.mockResetBtn,
                 {
-                  backgroundColor: colors.pillActiveBg,
-                  borderColor: colors.border,
-                  borderWidth: theme.metrics.subcardBorderWidth,
+                  backgroundColor: colors.primary,
                 },
               ]}
             >
               <Typography
                 variant="captionMedium"
-                style={{ color: colors.pillActiveText, fontWeight: '800' }}
+                style={{ color: colors.onPrimary }}
               >
                 Clima real
               </Typography>
@@ -113,8 +111,8 @@ export const HomeScreen: React.FC = () => {
         {/* Estado de Carga Inicial */}
         {isLoading && !weather ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Typography variant="body" color="secondary" style={{ marginTop: spacing.md }}>
+            <ActivityIndicator size="large" color={colors.onBackgroundAccent} />
+            <Typography variant="body" color="onBackgroundSecondary" style={{ marginTop: spacing.md }}>
               Consultando previsiones para {selectedCity.name}...
             </Typography>
           </View>

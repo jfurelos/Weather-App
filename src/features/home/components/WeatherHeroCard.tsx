@@ -27,7 +27,7 @@ interface Props {
 }
 
 export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity }) => {
-  const { theme, colors } = useThemeStore();
+  const { isDark, theme, colors } = useThemeStore();
   const { current, daily } = weather;
 
   const mascotState = resolveMascotWeatherState({
@@ -47,8 +47,8 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
         styles.cityPill,
         {
           backgroundColor: colors.pillActiveBg,
-          borderColor: colors.border,
-          borderWidth: theme.metrics.subcardBorderWidth,
+          borderColor: 'transparent',
+          borderWidth: 1,
         },
         theme.shadows.pillActive,
       ]}
@@ -62,9 +62,8 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
         numberOfLines={1}
         style={{
           color: colors.pillActiveText,
-          fontWeight: '800',
-          fontSize: 11,
-          maxWidth: 112,
+          fontSize: 11.5,
+          maxWidth: 118,
         }}
       >
         {city.name}
@@ -75,7 +74,6 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
 
   return (
     <Card
-      showWindowDots
       windowTitle={`${city.province} · Ahora`}
       windowRight={citySelectorPill}
       contentStyle={styles.cardBody}
@@ -87,7 +85,7 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
             style={[
               styles.conditionPill,
               {
-                backgroundColor: colors.pillBg,
+                backgroundColor: colors.surface,
                 borderColor: colors.subcardBorder,
                 borderWidth: 1,
               },
@@ -100,9 +98,8 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
               variant="captionMedium"
               numberOfLines={1}
               style={{
-                color: colors.textSecondary,
+                color: colors.textPrimary,
                 textTransform: 'capitalize',
-                fontWeight: '800',
                 fontSize: 11,
                 flexShrink: 1,
               }}
@@ -132,12 +129,12 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
           style={[
             styles.mascotFrame,
             {
-              backgroundColor: colors.surface,
-              borderColor: colors.primary,
+              backgroundColor: isDark ? colors.surface : colors.inputBg,
+              borderColor: colors.subcardBorder,
             },
           ]}
         >
-          <CloudMascotSvg state={mascotState} size={118} />
+          <CloudMascotSvg state={mascotState} size={116} />
         </View>
       </View>
 
@@ -150,21 +147,21 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
       <View style={styles.metricsGrid}>
         <Card variant="subcard" style={styles.metricCard}>
           <View style={styles.metricTop}>
-            <Thermometer size={13} color={colors.warning} />
-            <Typography variant="caption" color="muted" style={styles.metricLabel}>
+            <Thermometer size={13} color={colors.accent} />
+            <Typography variant="caption" color="secondary" style={styles.metricLabel}>
               Sensación
             </Typography>
           </View>
           <Typography variant="h3" style={styles.metricValue}>
             {current.apparentTemperature}°C
           </Typography>
-          <View style={[styles.barTrack, { backgroundColor: colors.pillBg }]}>
+          <View style={[styles.barTrack, { backgroundColor: 'rgba(51, 92, 103, 0.14)' }]}>
             <View
               style={[
                 styles.barFill,
                 {
                   width: `${Math.min(100, Math.max(15, Math.round(((current.apparentTemperature + 5) / 45) * 100)))}%`,
-                  backgroundColor: colors.gold,
+                  backgroundColor: colors.accent,
                 },
               ]}
             />
@@ -173,19 +170,19 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
 
         <Card variant="subcard" style={styles.metricCard}>
           <View style={styles.metricTop}>
-            <Droplets size={13} color={colors.turquoise} />
-            <Typography variant="caption" color="muted" style={styles.metricLabel}>
+            <Droplets size={13} color={colors.primary} />
+            <Typography variant="caption" color="secondary" style={styles.metricLabel}>
               Humedad
             </Typography>
           </View>
           <Typography variant="h3" style={styles.metricValue}>
             {current.humidity}%
           </Typography>
-          <View style={[styles.barTrack, { backgroundColor: colors.pillBg }]}>
+          <View style={[styles.barTrack, { backgroundColor: 'rgba(51, 92, 103, 0.14)' }]}>
             <View
               style={[
                 styles.barFill,
-                { width: `${humidityPct}%`, backgroundColor: colors.turquoise },
+                { width: `${humidityPct}%`, backgroundColor: colors.primary },
               ]}
             />
           </View>
@@ -193,19 +190,19 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
 
         <Card variant="subcard" style={styles.metricCard}>
           <View style={styles.metricTop}>
-            <Wind size={13} color={colors.primary} />
-            <Typography variant="caption" color="muted" style={styles.metricLabel}>
+            <Wind size={13} color={colors.textPrimary} />
+            <Typography variant="caption" color="secondary" style={styles.metricLabel}>
               Viento
             </Typography>
           </View>
           <Typography variant="h3" style={styles.metricValue}>
             {current.windSpeed} km/h
           </Typography>
-          <View style={[styles.barTrack, { backgroundColor: colors.pillBg }]}>
+          <View style={[styles.barTrack, { backgroundColor: 'rgba(51, 92, 103, 0.14)' }]}>
             <View
               style={[
                 styles.barFill,
-                { width: `${windPct}%`, backgroundColor: colors.primary },
+                { width: `${windPct}%`, backgroundColor: colors.textPrimary },
               ]}
             />
           </View>

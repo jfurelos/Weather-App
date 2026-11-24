@@ -17,9 +17,16 @@ export const MessageBubble: React.FC<Props> = ({
   isOwnMessage,
   onReport,
 }) => {
-  const { theme, colors } = useThemeStore();
+  const { isDark, theme, colors } = useThemeStore();
 
   const initial = message.userName ? message.userName.charAt(0).toUpperCase() : 'U';
+
+  // Burbujas con máximo contraste en ambos modos:
+  // Dark: ajenas #FAF6E8 (texto #335C67), propias #FFF3B0 (texto #335C67) sobre fondo #335C67
+  // Light: ajenas #FFF3B0 (texto #335C67), propias #335C67 (texto #FFFFFF) sobre fondo #FFFFFF
+  const ownBubbleBg = isDark ? colors.cardHighlight : colors.borderStrong;
+  const ownBubbleText = isDark ? colors.textPrimary : '#FFFFFF';
+  const ownBubbleBorder = isDark ? colors.accent : colors.borderStrong;
 
   return (
     <View
@@ -41,7 +48,7 @@ export const MessageBubble: React.FC<Props> = ({
         >
           <Typography
             variant="captionMedium"
-            style={{ fontWeight: '700', color: colors.textPrimary }}
+            style={{ color: colors.textPrimary }}
           >
             {initial}
           </Typography>
@@ -52,19 +59,32 @@ export const MessageBubble: React.FC<Props> = ({
         <View style={styles.headerRow}>
           <Typography
             variant="captionMedium"
-            style={{ fontWeight: '700', color: colors.textPrimary }}
+            style={{ color: colors.onBackground }}
           >
             {isOwnMessage ? 'Tú' : message.userName}
           </Typography>
 
-          <View style={[styles.provinceBadge, { backgroundColor: colors.pillBg }]}>
-            <MapPin size={10} color={colors.textSecondary} />
-            <Typography variant="caption" color="secondary" style={{ fontSize: 11 }}>
+          <View
+            style={[
+              styles.provinceBadge,
+              {
+                backgroundColor: isDark ? 'rgba(255, 243, 176, 0.16)' : colors.pillBg,
+              },
+            ]}
+          >
+            <MapPin size={10} color={isDark ? colors.onBackgroundAccent : colors.textSecondary} />
+            <Typography
+              variant="caption"
+              style={{
+                fontSize: 11,
+                color: isDark ? colors.onBackgroundAccent : colors.textSecondary,
+              }}
+            >
               {message.userProvince}
             </Typography>
           </View>
 
-          <Typography variant="caption" color="secondary" style={styles.timestamp}>
+          <Typography variant="caption" color="onBackgroundSecondary" style={styles.timestamp}>
             {message.createdAt}
           </Typography>
 
@@ -75,7 +95,7 @@ export const MessageBubble: React.FC<Props> = ({
               onPress={() => onReport(message)}
               accessibilityLabel="Reportar mensaje"
             >
-              <Flag size={13} color={colors.textSecondary} />
+              <Flag size={13} color={colors.onBackgroundSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -84,15 +104,21 @@ export const MessageBubble: React.FC<Props> = ({
           style={[
             styles.bubble,
             {
-              backgroundColor: isOwnMessage ? colors.primaryMuted : colors.card,
-              borderColor: isOwnMessage ? colors.primary : colors.subcardBorder,
+              backgroundColor: isOwnMessage ? ownBubbleBg : colors.card,
+              borderColor: isOwnMessage ? ownBubbleBorder : colors.subcardBorder,
               borderWidth: theme.metrics.subcardBorderWidth,
               borderRadius: theme.metrics.subcardRadius,
             },
             theme.shadows.subcard,
           ]}
         >
-          <Typography variant="body" style={styles.messageText}>
+          <Typography
+            variant="body"
+            style={[
+              styles.messageText,
+              { color: isOwnMessage ? ownBubbleText : colors.textPrimary },
+            ]}
+          >
             {message.content}
           </Typography>
         </View>

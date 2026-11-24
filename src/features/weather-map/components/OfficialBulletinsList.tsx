@@ -24,7 +24,7 @@ export const OfficialBulletinsList: React.FC<Props> = ({
   const getSeverityBadge = (severity: WeatherBulletin['severity']) => {
     switch (severity) {
       case 'rojo':
-        return { label: 'Aviso Rojo • Extremo', tone: 'heat' as BadgeTone };
+        return { label: 'Aviso Rojo • Extremo', tone: 'rain' as BadgeTone };
       case 'naranja':
         return { label: 'Aviso Naranja • Importante', tone: 'warning' as BadgeTone };
       case 'amarillo':
@@ -38,16 +38,18 @@ export const OfficialBulletinsList: React.FC<Props> = ({
   return (
     <View style={styles.container}>
       <View style={styles.sectionHeader}>
-        <Typography variant="h2">Partes Oficiales</Typography>
-        <Typography variant="caption" color="secondary">
+        <Typography variant="h2" color="onBackground">
+          Partes Oficiales
+        </Typography>
+        <Typography variant="caption" color="onBackgroundSecondary">
           {selectedDayLabel} • AEMET & Meteocat
         </Typography>
       </View>
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={colors.primary} />
-          <Typography variant="callout" color="secondary">
+          <ActivityIndicator size="small" color={colors.onBackgroundAccent} />
+          <Typography variant="callout" color="onBackgroundSecondary">
             Cargando boletines oficiales...
           </Typography>
         </View>

@@ -37,27 +37,27 @@ export const HourlyTimeline: React.FC<Props> = ({ hourly }) => {
     const override = isNow ? colors.pillActiveText : null;
     switch (iconName) {
       case 'Sun':
-        return <Sun size={size} color={override ?? colors.warning} />;
+        return <Sun size={size} color={override ?? colors.accent} />;
       case 'CloudSun':
-        return <CloudSun size={size} color={override ?? colors.gold} />;
+        return <CloudSun size={size} color={override ?? colors.accent} />;
       case 'CloudRain':
       case 'CloudDrizzle':
-        return <CloudRain size={size} color={override ?? colors.rain} />;
+        return <CloudRain size={size} color={override ?? colors.primary} />;
       case 'Snowflake':
-        return <Snowflake size={size} color={override ?? colors.sky} />;
+        return <Snowflake size={size} color={override ?? colors.textPrimary} />;
       case 'CloudLightning':
-        return <CloudLightning size={size} color={override ?? colors.plum} />;
+        return <CloudLightning size={size} color={override ?? colors.primaryDark} />;
       case 'CloudFog':
-        return <CloudFog size={size} color={override ?? colors.textMuted} />;
+        return <CloudFog size={size} color={override ?? colors.textSecondary} />;
       case 'Cloud':
       default:
-        return <Cloud size={size} color={override ?? colors.primary} />;
+        return <Cloud size={size} color={override ?? colors.textPrimary} />;
     }
   };
 
   return (
     <Card
-      windowTitle="☁️ Pronóstico por Horas"
+      windowTitle="Pronóstico por Horas"
       windowRight={<Badge label="Hoy · 24h" tone="neutral" />}
       contentStyle={styles.cardBody}
     >
@@ -75,18 +75,17 @@ export const HourlyTimeline: React.FC<Props> = ({ hourly }) => {
                 styles.hourlyItem,
                 {
                   backgroundColor: isNow ? colors.pillActiveBg : colors.surface,
-                  borderColor: isNow ? colors.border : colors.subcardBorder,
+                  borderColor: isNow ? 'transparent' : colors.subcardBorder,
                   borderWidth: theme.metrics.subcardBorderWidth,
-                  borderRadius: theme.metrics.subcardRadius - 2,
+                  borderRadius: theme.metrics.subcardRadius,
                 },
                 isNow ? theme.shadows.pillActive : theme.shadows.subcard,
               ]}
             >
               <Typography
-                variant="caption"
+                variant="captionMedium"
                 style={{
-                  color: isNow ? colors.pillActiveText : colors.textMuted,
-                  fontWeight: isNow ? '800' : '700',
+                  color: isNow ? colors.pillActiveText : colors.textSecondary,
                 }}
               >
                 {isNow ? 'Ahora' : item.time}
@@ -108,14 +107,13 @@ export const HourlyTimeline: React.FC<Props> = ({ hourly }) => {
                 <View style={styles.rainProbRow}>
                   <Droplets
                     size={10}
-                    color={isNow ? colors.pillActiveText : colors.turquoise}
+                    color={isNow ? colors.pillActiveText : colors.primary}
                   />
                   <Typography
-                    variant="caption"
+                    variant="captionMedium"
                     style={{
-                      color: isNow ? colors.pillActiveText : colors.turquoise,
-                      fontSize: 10,
-                      fontWeight: '800',
+                      color: isNow ? colors.pillActiveText : colors.primary,
+                      fontSize: 10.5,
                     }}
                   >
                     {item.precipitationProbability}%

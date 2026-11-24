@@ -7,10 +7,10 @@ export const spacing = {
   xl: 24,
   xxl: 32,
   xxxl: 48,
-  borderRadiusSm: 8,
-  borderRadiusMd: 12,
-  borderRadiusLg: 16,
-  borderRadiusXl: 24,
+  borderRadiusSm: 10,
+  borderRadiusMd: 14,
+  borderRadiusLg: 18,
+  borderRadiusXl: 22,
   borderRadiusFull: 9999,
 };
 

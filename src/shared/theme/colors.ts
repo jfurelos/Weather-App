@@ -1,6 +1,7 @@
-import { THEMES, ThemeColors } from './themes';
+import { THEMES, ThemeColors, OFFICIAL_PALETTE } from './themes';
 
-export const lightPalette: ThemeColors = THEMES.ilustrada.colors;
-export const darkPalette: ThemeColors = THEMES.tormenta.colors;
+export const darkPalette: ThemeColors = THEMES.dark.colors;
+export const lightPalette: ThemeColors = THEMES.light.colors;
 
+export { OFFICIAL_PALETTE };
 export type { ThemeColors };

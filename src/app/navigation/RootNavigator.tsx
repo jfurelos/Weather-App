@@ -21,7 +21,7 @@ export const RootNavigator: React.FC = () => {
   if (!hasHydrated) {
     return (
       <ScreenBackground style={styles.loader}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={colors.onBackgroundAccent} />
       </ScreenBackground>
     );
   }

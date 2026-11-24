@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F6F1E3"
+      "backgroundColor": "#335C67"
     },
     "ios": {
       "supportsTablet": true
@@ -17,7 +17,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F6F1E3"
+        "backgroundColor": "#335C67"
       }
     },
     "web": {
@@ -28,9 +28,11 @@
       "shortName": "Clima España",
       "lang": "es",
       "display": "standalone",
-      "themeColor": "#F6F1E3",
-      "backgroundColor": "#F6F1E3"
+      "themeColor": "#335C67",
+      "backgroundColor": "#335C67"
     },
-    "plugins": []
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

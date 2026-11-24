@@ -27,6 +27,7 @@ import { Button } from '@/shared/components/Button';
 import { Badge } from '@/shared/components/Badge';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
+import { FONT_BODY_BOLD } from '@/shared/theme/typography';
 import { SPANISH_PROVINCES } from '@/features/community/data/provincesData';
 import { useProfileStore } from '@/features/profile/store/useProfileStore';
 import { MOCK_STORM_USERS } from '@/shared/data/mockStormUsers';
@@ -132,7 +133,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                   style={[
                     styles.mascotBox,
                     {
-                      backgroundColor: colors.card,
+                      backgroundColor: colors.cardHighlight,
                       borderColor: colors.border,
                       borderWidth: theme.metrics.windowBorderWidth,
                     },
@@ -141,19 +142,19 @@ export const WelcomeAuthScreen: React.FC = () => {
                 >
                   <CloudMascotSvg state="soleado" size={96} />
                 </View>
-                <Typography variant="hero" style={styles.centerText}>
+                <Typography variant="hero" color="onBackground" style={styles.centerText}>
                   Clima & Comunidad
                 </Typography>
                 <Typography
                   variant="body"
-                  color="secondary"
+                  color="onBackgroundSecondary"
                   style={[styles.centerText, styles.subtitle]}
                 >
                   Pronósticos precisos, radar en tiempo real y foros locales de España.
                 </Typography>
               </View>
 
-              <Card showWindowDots windowTitle="Acceso a la App" contentStyle={styles.actionsCard}>
+              <Card windowTitle="Acceso a la App" contentStyle={styles.actionsCard}>
                 <Button
                   title="Iniciar sesión"
                   variant="primary"
@@ -162,7 +163,7 @@ export const WelcomeAuthScreen: React.FC = () => {
 
                 <Button
                   title="Registrarse"
-                  variant="outline"
+                  variant="secondary"
                   onPress={() => goToStep('register')}
                 />
 
@@ -276,7 +277,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                 onPress={() => goToStep('welcome')}
                 style={[
                   styles.backButton,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  { backgroundColor: colors.card, borderColor: colors.border },
                 ]}
                 accessibilityLabel="Volver al inicio de acceso"
               >
@@ -285,10 +286,10 @@ export const WelcomeAuthScreen: React.FC = () => {
               </TouchableOpacity>
 
               <View style={styles.formHeader}>
-                <Typography variant="hero">
+                <Typography variant="hero" color="onBackground">
                   {step === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
                 </Typography>
-                <Typography variant="body" color="secondary">
+                <Typography variant="body" color="onBackgroundSecondary">
                   {step === 'login'
                     ? 'Accede con tu cuenta para usar todas las funciones y los foros.'
                     : 'Crea tu perfil para participar en los foros de tu provincia y comarcas.'}
@@ -306,13 +307,14 @@ export const WelcomeAuthScreen: React.FC = () => {
                         style={[
                           styles.input,
                           {
-                            backgroundColor: colors.surface,
+                            backgroundColor: colors.inputBg,
                             borderColor: colors.border,
                             color: colors.textPrimary,
+                            fontFamily: FONT_BODY_BOLD,
                           },
                         ]}
                         placeholder="Ej. Laura García"
-                        placeholderTextColor={colors.textSecondary}
+                        placeholderTextColor={colors.textMuted}
                         value={fullName}
                         onChangeText={setFullName}
                         maxLength={80}
@@ -327,13 +329,14 @@ export const WelcomeAuthScreen: React.FC = () => {
                         style={[
                           styles.input,
                           {
-                            backgroundColor: colors.surface,
+                            backgroundColor: colors.inputBg,
                             borderColor: colors.border,
                             color: colors.textPrimary,
+                            fontFamily: FONT_BODY_BOLD,
                           },
                         ]}
                         placeholder="Ej. laura_meteo"
-                        placeholderTextColor={colors.textSecondary}
+                        placeholderTextColor={colors.textMuted}
                         value={username}
                         onChangeText={setUsername}
                         maxLength={40}
@@ -351,7 +354,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                         onPress={() => setShowProvinces((prev) => !prev)}
                         style={[
                           styles.provinceBtn,
-                          { backgroundColor: colors.surface, borderColor: colors.border },
+                          { backgroundColor: colors.inputBg, borderColor: colors.border },
                         ]}
                       >
                         <View style={styles.provinceLeft}>
@@ -367,20 +370,23 @@ export const WelcomeAuthScreen: React.FC = () => {
                         <View
                           style={[
                             styles.provinceBox,
-                            { backgroundColor: colors.surface, borderColor: colors.border },
+                            { backgroundColor: colors.inputBg, borderColor: colors.border },
                           ]}
                         >
                           <View
                             style={[
                               styles.provinceSearch,
-                              { backgroundColor: colors.card, borderColor: colors.border },
+                              { backgroundColor: colors.surface, borderColor: colors.subcardBorder },
                             ]}
                           >
                             <Search size={14} color={colors.textSecondary} />
                             <TextInput
-                              style={[styles.provinceSearchInput, { color: colors.textPrimary }]}
+                              style={[
+                                styles.provinceSearchInput,
+                                { color: colors.textPrimary, fontFamily: FONT_BODY_BOLD },
+                              ]}
                               placeholder="Buscar provincia..."
-                              placeholderTextColor={colors.textSecondary}
+                              placeholderTextColor={colors.textMuted}
                               value={provinceFilter}
                               onChangeText={setProvinceFilter}
                             />
@@ -399,14 +405,13 @@ export const WelcomeAuthScreen: React.FC = () => {
                                   }}
                                   style={[
                                     styles.provinceItem,
-                                    { borderBottomColor: colors.border },
+                                    { borderBottomColor: colors.divider },
                                   ]}
                                 >
                                   <Typography
                                     variant="body"
                                     style={{
                                       color: selected ? colors.primary : colors.textPrimary,
-                                      fontWeight: selected ? '600' : '400',
                                     }}
                                   >
                                     {p.name}
@@ -430,13 +435,14 @@ export const WelcomeAuthScreen: React.FC = () => {
                     style={[
                       styles.input,
                       {
-                        backgroundColor: colors.surface,
+                        backgroundColor: colors.inputBg,
                         borderColor: colors.border,
                         color: colors.textPrimary,
+                        fontFamily: FONT_BODY_BOLD,
                       },
                     ]}
                     placeholder="correo@ejemplo.com"
-                    placeholderTextColor={colors.textSecondary}
+                    placeholderTextColor={colors.textMuted}
                     value={email}
                     onChangeText={setEmail}
                     maxLength={120}
@@ -453,13 +459,16 @@ export const WelcomeAuthScreen: React.FC = () => {
                   <View
                     style={[
                       styles.passwordWrapper,
-                      { backgroundColor: colors.surface, borderColor: colors.border },
+                      { backgroundColor: colors.inputBg, borderColor: colors.border },
                     ]}
                   >
                     <TextInput
-                      style={[styles.passwordInput, { color: colors.textPrimary }]}
+                      style={[
+                        styles.passwordInput,
+                        { color: colors.textPrimary, fontFamily: FONT_BODY_BOLD },
+                      ]}
                       placeholder="Mínimo 6 caracteres"
-                      placeholderTextColor={colors.textSecondary}
+                      placeholderTextColor={colors.textMuted}
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry={!showPassword}
@@ -488,7 +497,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                       { backgroundColor: colors.primaryMuted, borderColor: colors.primary },
                     ]}
                   >
-                    <Typography variant="captionMedium" color="brand">
+                    <Typography variant="captionMedium" color="emphasis">
                       {activeError}
                     </Typography>
                   </View>
@@ -509,7 +518,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                   activeOpacity={0.7}
                   onPress={() => goToStep(step === 'login' ? 'register' : 'login')}
                 >
-                  <Typography variant="captionMedium" color="brand">
+                  <Typography variant="captionMedium" color="onBackgroundAccent">
                     {step === 'login'
                       ? '¿No tienes cuenta? Regístrate'
                       : '¿Ya tienes cuenta? Inicia sesión'}
@@ -517,7 +526,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                 </TouchableOpacity>
 
                 <TouchableOpacity activeOpacity={0.7} onPress={continueAsGuest}>
-                  <Typography variant="caption" color="secondary">
+                  <Typography variant="caption" color="onBackgroundSecondary">
                     Continuar como invitado (sin foros)
                   </Typography>
                 </TouchableOpacity>

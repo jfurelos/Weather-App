@@ -24,8 +24,8 @@ export const FeaturedNewsCard: React.FC<Props> = ({ news, onPressSeeAll }) => {
     <Card style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.tagWrapper}>
-          <Bell size={14} color={colors.warning} />
-          <Typography variant="captionMedium" color="secondary">
+          <Bell size={14} color={colors.primary} />
+          <Typography variant="captionMedium" color="brand">
             AVISO DESTACADO
           </Typography>
         </View>

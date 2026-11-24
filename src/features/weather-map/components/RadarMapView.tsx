@@ -65,16 +65,16 @@ export const RadarMapView: React.FC = () => {
         style={[
           styles.expandButton,
           {
-            backgroundColor: colors.pillBg,
-            borderColor: colors.subcardBorder,
-            borderWidth: theme.metrics.subcardBorderWidth,
+            backgroundColor: colors.accent,
+            borderColor: 'rgba(84, 11, 14, 0.14)',
+            borderWidth: 1,
           },
           theme.shadows.subcard,
         ]}
         onPress={() => setFullScreenModalVisible(true)}
       >
-        <Maximize2 size={16} color={colors.textPrimary} />
-        <Typography variant="bodyMedium" style={{ fontWeight: '700' }}>
+        <Maximize2 size={16} color={colors.onAccent} />
+        <Typography variant="bodyMedium" style={{ color: colors.onAccent }}>
           Ver radar a pantalla completa
         </Typography>
       </TouchableOpacity>

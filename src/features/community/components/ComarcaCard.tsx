@@ -48,8 +48,8 @@ export const ComarcaCard: React.FC<Props> = ({
             style={[
               styles.starButton,
               {
-                backgroundColor: isFavorite ? colors.gold : colors.pillBg,
-                borderColor: isFavorite ? colors.border : colors.subcardBorder,
+                backgroundColor: isFavorite ? colors.accent : colors.pillBg,
+                borderColor: isFavorite ? 'rgba(84, 11, 14, 0.16)' : colors.subcardBorder,
                 borderWidth: theme.metrics.subcardBorderWidth,
               },
             ]}
@@ -60,8 +60,8 @@ export const ComarcaCard: React.FC<Props> = ({
           >
             <Star
               size={18}
-              color={isFavorite ? '#28323E' : colors.textSecondary}
-              fill={isFavorite ? '#28323E' : 'transparent'}
+              color={isFavorite ? colors.onAccent : colors.textSecondary}
+              fill={isFavorite ? colors.onAccent : 'transparent'}
             />
           </TouchableOpacity>
         </View>

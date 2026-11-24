@@ -98,7 +98,7 @@ export const ProfileScreen: React.FC = () => {
     <ScreenBackground>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Typography variant="hero" style={styles.title}>
+          <Typography variant="hero" color="onBackground" style={styles.title}>
             Perfil
           </Typography>
         </View>
@@ -265,8 +265,8 @@ export const ProfileScreen: React.FC = () => {
             <Switch
               value={alerts.rain.enabled}
               onValueChange={(val) => toggleAlert('rain', val)}
-              trackColor={{ false: colors.pillBg, true: colors.primary }}
-              thumbColor={colors.cardSolid}
+              trackColor={{ false: 'rgba(51, 92, 103, 0.22)', true: colors.primary }}
+              thumbColor="#FFFFFF"
             />
           </View>
 
@@ -290,8 +290,8 @@ export const ProfileScreen: React.FC = () => {
             <Switch
               value={alerts.wind.enabled}
               onValueChange={(val) => toggleAlert('wind', val)}
-              trackColor={{ false: colors.pillBg, true: colors.primary }}
-              thumbColor={colors.cardSolid}
+              trackColor={{ false: 'rgba(51, 92, 103, 0.22)', true: colors.primary }}
+              thumbColor="#FFFFFF"
             />
           </View>
 
@@ -315,8 +315,8 @@ export const ProfileScreen: React.FC = () => {
             <Switch
               value={alerts.heat.enabled}
               onValueChange={(val) => toggleAlert('heat', val)}
-              trackColor={{ false: colors.pillBg, true: colors.primary }}
-              thumbColor={colors.cardSolid}
+              trackColor={{ false: 'rgba(51, 92, 103, 0.22)', true: colors.primary }}
+              thumbColor="#FFFFFF"
             />
           </View>
 
@@ -452,14 +452,14 @@ export const ProfileScreen: React.FC = () => {
               styles.signOutButton,
               {
                 backgroundColor: colors.card,
-                borderColor: colors.plum,
-                borderWidth: theme.metrics.windowBorderWidth,
+                borderColor: colors.primary,
+                borderWidth: 1.5,
               },
               theme.shadows.subcard,
             ]}
           >
-            <LogOut size={18} color={colors.plum} />
-            <Typography variant="bodyMedium" style={{ color: colors.plum, fontWeight: '700' }}>
+            <LogOut size={18} color={colors.primary} />
+            <Typography variant="bodyMedium" style={{ color: colors.primary }}>
               Cerrar sesión
             </Typography>
           </TouchableOpacity>

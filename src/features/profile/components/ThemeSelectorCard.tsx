@@ -1,138 +1,107 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Platform, ViewStyle } from 'react-native';
-import { Check } from 'lucide-react-native';
+import { View, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { Moon, Sun, Check } from 'lucide-react-native';
 import { Card } from '@/shared/components/Card';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
-import { THEME_LIST, AppTheme } from '@/shared/theme/themes';
+import { THEME_LIST } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
-import { DISPLAY_FONT } from '@/shared/theme/typography';
+import { FONT_DISPLAY_SEMIBOLD } from '@/shared/theme/typography';
 
 export const ThemeSelectorCard: React.FC = () => {
-  const { themeId, theme, colors, setTheme } = useThemeStore();
-
-  const getOptionActiveStyle = (item: AppTheme, isActive: boolean): ViewStyle => {
-    if (!isActive) {
-      return {
-        backgroundColor: colors.surface,
-        borderColor: themeId === 'ilustrada' ? 'rgba(40, 50, 62, 0.25)' : colors.subcardBorder,
-        borderWidth: themeId === 'ilustrada' ? 1.5 : 1.5,
-      };
-    }
-
-    const activeShadow =
-      Platform.OS === 'web'
-        ? ({ boxShadow: theme.meta.activeOptionShadowWeb } as unknown as ViewStyle)
-        : theme.shadows.pillActive;
-
-    return {
-      backgroundColor: theme.meta.activeOptionBg,
-      borderColor: theme.meta.activeOptionBorder,
-      borderWidth: 2,
-      ...activeShadow,
-    };
-  };
+  const { mode, isDark, colors, setMode, toggleTheme } = useThemeStore();
 
   return (
     <Card
-      showWindowDots
-      windowTitle="Estilo Visual"
+      windowTitle="Apariencia"
+      windowRight={
+        <Switch
+          value={isDark}
+          onValueChange={toggleTheme}
+          trackColor={{ false: 'rgba(51, 92, 103, 0.25)', true: colors.borderStrong }}
+          thumbColor={isDark ? colors.accent : '#FFFFFF'}
+          accessibilityLabel="Alternar entre modo oscuro y modo claro"
+        />
+      }
       contentStyle={styles.cardBody}
     >
       <Typography variant="caption" color="secondary" style={styles.helperText}>
-        Elige la paleta y estética para toda la aplicación.
+        Modo Oscuro activado por defecto. Cambia entre temas con persistencia local.
       </Typography>
 
-      <View style={styles.optionsList}>
+      <View style={styles.optionsRow}>
         {THEME_LIST.map((item) => {
-          const isActive = item.id === themeId;
-          const swatchWebStyle =
-            Platform.OS === 'web'
-              ? ({
-                  ...(item.meta.swatchGradientWeb
-                    ? { backgroundImage: item.meta.swatchGradientWeb }
-                    : {}),
-                  ...(item.meta.swatchShadowWeb ? { boxShadow: item.meta.swatchShadowWeb } : {}),
-                } as unknown as ViewStyle)
-              : undefined;
-
+          const isActive = item.id === mode;
           return (
             <TouchableOpacity
               key={item.id}
               activeOpacity={0.82}
-              onPress={() => setTheme(item.id)}
+              onPress={() => setMode(item.id)}
               accessibilityRole="radio"
               accessibilityState={{ checked: isActive }}
-              accessibilityLabel={`Estilo ${item.meta.shortName}`}
-              style={[styles.optionBtn, getOptionActiveStyle(item, isActive)]}
+              accessibilityLabel={item.meta.name}
+              style={[
+                styles.optionBtn,
+                {
+                  backgroundColor: isActive ? colors.inputBg : colors.surface,
+                  borderColor: isActive ? colors.primary : colors.subcardBorder,
+                  borderWidth: isActive ? 2 : 1,
+                },
+              ]}
             >
-              {/* Miniatura visual fiel al HTML de referencia */}
+              {/* Vista previa de la paleta oficial */}
               <View
                 style={[
-                  styles.swatchBox,
+                  styles.previewStrip,
                   {
                     backgroundColor: item.meta.swatchBg,
-                    borderColor: item.meta.swatchBorder,
-                    borderWidth: item.id === 'ilustrada' ? 2 : 1.5,
+                    borderColor: colors.subcardBorder,
                   },
-                  swatchWebStyle,
                 ]}
               >
-                <Typography variant="callout" style={styles.swatchEmoji}>
-                  {item.meta.emoji}
-                </Typography>
-                <View style={styles.swatchDotsRow}>
-                  {item.meta.swatchDots.map((dotHex, i) => (
-                    <View
-                      key={i}
-                      style={[
-                        styles.swatchDot,
-                        {
-                          backgroundColor: dotHex,
-                          borderColor: item.meta.swatchDotBorder || 'transparent',
-                          borderWidth: item.meta.swatchDotBorder ? 1 : 0,
-                        },
-                      ]}
-                    />
-                  ))}
+                <View style={[styles.previewCard, { backgroundColor: item.meta.swatchCard }]} />
+                <View style={styles.previewDots}>
+                  <View style={[styles.previewDot, { backgroundColor: item.meta.swatchAccent }]} />
+                  <View style={[styles.previewDot, { backgroundColor: item.meta.swatchPrimary }]} />
                 </View>
               </View>
 
-              {/* Texto del estilo */}
-              <View style={styles.optionInfo}>
-                <Typography
-                  variant="bodyMedium"
-                  style={{
-                    fontFamily: DISPLAY_FONT,
-                    fontWeight: '700',
-                    fontSize: 14,
-                    color: colors.textPrimary,
-                  }}
+              <View style={styles.optionHeader}>
+                <View style={styles.optionLabelRow}>
+                  {item.isDark ? (
+                    <Moon size={15} color={colors.textPrimary} />
+                  ) : (
+                    <Sun size={15} color={colors.accent} />
+                  )}
+                  <Typography
+                    variant="bodyMedium"
+                    style={{
+                      fontFamily: FONT_DISPLAY_SEMIBOLD,
+                      fontWeight: '600',
+                      fontSize: 15,
+                      color: colors.textPrimary,
+                    }}
+                  >
+                    {item.meta.shortName}
+                  </Typography>
+                </View>
+
+                <View
+                  style={[
+                    styles.checkCircle,
+                    {
+                      backgroundColor: isActive ? colors.primary : 'transparent',
+                      borderColor: isActive ? colors.primary : colors.subcardBorder,
+                    },
+                  ]}
                 >
-                  {item.meta.shortName}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="secondary"
-                  numberOfLines={2}
-                  style={styles.optionSubtitle}
-                >
-                  {item.meta.subtitle}
-                </Typography>
+                  {isActive && <Check size={12} color={colors.onPrimary} strokeWidth={3} />}
+                </View>
               </View>
 
-              {/* Indicador activo */}
-              <View
-                style={[
-                  styles.checkCircle,
-                  {
-                    backgroundColor: isActive ? colors.pillActiveBg : 'transparent',
-                    borderColor: isActive ? theme.meta.activeOptionBorder : colors.subcardBorder,
-                  },
-                ]}
-              >
-                {isActive && <Check size={14} color={colors.pillActiveText} strokeWidth={3} />}
-              </View>
+              <Typography variant="caption" color="secondary" numberOfLines={2} style={styles.optionSubtitle}>
+                {item.meta.subtitle}
+              </Typography>
             </TouchableOpacity>
           );
         })}
@@ -143,60 +112,67 @@ export const ThemeSelectorCard: React.FC = () => {
 
 const styles = StyleSheet.create({
   cardBody: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   helperText: {
-    lineHeight: 17,
-  },
-  optionsList: {
-    gap: spacing.sm,
-    marginTop: 2,
-  },
-  optionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.md,
-    borderRadius: 16,
-  },
-  swatchBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  swatchEmoji: {
-    fontSize: 16,
     lineHeight: 18,
   },
-  swatchDotsRow: {
+  optionsRow: {
     flexDirection: 'row',
-    gap: 4,
-    marginTop: 3,
+    gap: spacing.sm + 2,
   },
-  swatchDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  optionInfo: {
+  optionBtn: {
     flex: 1,
-    gap: 2,
+    padding: spacing.md,
+    borderRadius: spacing.borderRadiusMd,
+    gap: spacing.sm,
   },
-  optionSubtitle: {
-    fontSize: 11.5,
-    lineHeight: 15,
+  previewStrip: {
+    height: 44,
+    borderRadius: spacing.borderRadiusSm,
+    borderWidth: 1,
+    padding: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  previewCard: {
+    flex: 1,
+    height: '100%',
+    borderRadius: 6,
+  },
+  previewDots: {
+    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  optionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   checkCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
+  },
+  optionSubtitle: {
+    fontSize: 11,
+    lineHeight: 15,
   },
 });

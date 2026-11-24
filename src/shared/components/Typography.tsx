@@ -14,7 +14,18 @@ export type TypographyVariant =
   | 'caption'
   | 'captionMedium';
 
-export type TypographyColor = 'primary' | 'secondary' | 'muted' | 'brand' | 'onPrimary';
+export type TypographyColor =
+  | 'primary'
+  | 'secondary'
+  | 'muted'
+  | 'brand'
+  | 'accent'
+  | 'emphasis'
+  | 'onPrimary'
+  | 'onAccent'
+  | 'onBackground'
+  | 'onBackgroundAccent'
+  | 'onBackgroundSecondary';
 
 interface Props extends TextProps {
   variant?: TypographyVariant;
@@ -36,7 +47,13 @@ export const Typography: React.FC<Props> = ({
     secondary: colors.textSecondary,
     muted: colors.textMuted,
     brand: colors.primary,
+    accent: colors.accent,
+    emphasis: colors.primaryDark,
     onPrimary: colors.onPrimary,
+    onAccent: colors.onAccent,
+    onBackground: colors.onBackground,
+    onBackgroundAccent: colors.onBackgroundAccent,
+    onBackgroundSecondary: colors.onBackgroundSecondary,
   }[color];
 
   return (

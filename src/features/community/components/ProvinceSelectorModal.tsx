@@ -12,6 +12,7 @@ import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
+import { FONT_BODY_BOLD } from '@/shared/theme/typography';
 import { SPANISH_PROVINCES } from '../data/provincesData';
 
 interface Props {
@@ -86,7 +87,7 @@ export const ProvinceSelectorModal: React.FC<Props> = ({
             style={[
               styles.searchContainer,
               {
-                backgroundColor: colors.surface,
+                backgroundColor: colors.inputBg,
                 borderColor: colors.subcardBorder,
                 borderWidth: theme.metrics.subcardBorderWidth,
               },
@@ -94,9 +95,9 @@ export const ProvinceSelectorModal: React.FC<Props> = ({
           >
             <Search size={16} color={colors.textSecondary} />
             <TextInput
-              style={[styles.searchInput, { color: colors.textPrimary }]}
+              style={[styles.searchInput, { color: colors.textPrimary, fontFamily: FONT_BODY_BOLD }]}
               placeholder="Buscar provincia (ej. Valencia, Barcelona...)"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.textMuted}
               value={filterText}
               onChangeText={setFilterText}
             />

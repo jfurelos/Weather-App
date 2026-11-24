@@ -35,7 +35,7 @@ export function getLeafletMapHtml(theme: AppTheme, apiKey?: string): string {
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body, #map { width: 100%; height: 100%; background: ${bgColor}; font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+    html, body, #map { width: 100%; height: 100%; background: ${bgColor}; font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
     .leaflet-tile-pane .base-tiles { ${tileFilter} }
     .leaflet-control-attribution { font-size: 9px !important; background: ${cardBg} !important; color: ${textColor} !important; }
     .radar-legend {
@@ -51,7 +51,7 @@ export function getLeafletMapHtml(theme: AppTheme, apiKey?: string): string {
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(40,50,62,0.14);
+      box-shadow: 0 4px 12px rgba(51,92,103,0.18);
       font-size: 11px;
       color: ${textColor};
       font-weight: 700;
@@ -61,7 +61,7 @@ export function getLeafletMapHtml(theme: AppTheme, apiKey?: string): string {
       width: 72px;
       height: 8px;
       border-radius: 99px;
-      background: linear-gradient(90deg, #C4D9EC 0%, #67B7B5 32%, #5A9BD5 58%, #FAD165 82%, #58333E 100%);
+      background: linear-gradient(90deg, #FFF3B0 0%, #E09F3E 45%, #9E2A2B 78%, #540B0E 100%);
     }
     .leaflet-bar {
       border: ${borderWidth} solid ${borderColor} !important;

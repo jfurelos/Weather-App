@@ -28,12 +28,12 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
-          <Star size={14} color={colors.gold} fill={colors.gold} />
-          <Typography variant="captionMedium" color="secondary" style={{ fontWeight: '800' }}>
+          <Star size={14} color={colors.accent} fill={colors.accent} />
+          <Typography variant="captionMedium" color="onBackgroundAccent">
             FAVORITAS
           </Typography>
         </View>
-        <Typography variant="caption" color="secondary" style={{ fontWeight: '700' }}>
+        <Typography variant="caption" color="onBackgroundSecondary">
           {favorites.length}/{MAX_FAVORITE_COMARCAS}
         </Typography>
       </View>
@@ -43,22 +43,22 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
           style={[
             styles.limitBanner,
             {
-              backgroundColor: colors.gold,
-              borderColor: colors.border,
+              backgroundColor: colors.accent,
+              borderColor: 'rgba(84, 11, 14, 0.18)',
               borderWidth: theme.metrics.subcardBorderWidth,
             },
           ]}
         >
-          <AlertCircle size={15} color="#28323E" />
+          <AlertCircle size={15} color={colors.onAccent} />
           <Typography
             variant="captionMedium"
-            style={{ flex: 1, color: '#28323E', fontSize: 12, fontWeight: '700' }}
+            style={{ flex: 1, color: colors.onAccent, fontSize: 12 }}
           >
             {limitMessage}
           </Typography>
           {onDismissLimitMessage && (
             <TouchableOpacity onPress={onDismissLimitMessage} style={styles.dismissBtn}>
-              <X size={14} color="#28323E" />
+              <X size={14} color={colors.onAccent} />
             </TouchableOpacity>
           )}
         </View>
@@ -69,7 +69,7 @@ export const FavoriteComarcasBar: React.FC<Props> = ({
           style={[
             styles.emptyHint,
             {
-              backgroundColor: colors.surface,
+              backgroundColor: colors.card,
               borderColor: colors.subcardBorder,
               borderWidth: theme.metrics.subcardBorderWidth,
             },

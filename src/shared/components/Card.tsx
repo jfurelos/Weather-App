@@ -2,13 +2,12 @@ import React from 'react';
 import { View, ViewProps, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useThemeStore } from '../store/useThemeStore';
 import { spacing } from '../theme/spacing';
-import { getGlassStyle } from '../theme/themes';
 import { Typography } from './Typography';
 
 interface CardProps extends ViewProps {
   elevated?: boolean;
   outlined?: boolean;
-  variant?: 'window' | 'subcard';
+  variant?: 'window' | 'subcard' | 'highlight';
   windowTitle?: string;
   windowRight?: React.ReactNode;
   showWindowDots?: boolean;
@@ -22,7 +21,7 @@ export const Card: React.FC<CardProps> = ({
   variant = 'window',
   windowTitle,
   windowRight,
-  showWindowDots = false,
+  showWindowDots: _showWindowDots = false,
   contentStyle,
   style,
   children,
@@ -30,7 +29,14 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   const { theme, colors } = useThemeStore();
   const isSubcard = variant === 'subcard';
-  const hasTitleBar = Boolean(windowTitle || windowRight || showWindowDots);
+  const isHighlight = variant === 'highlight';
+  const hasHeader = Boolean(windowTitle || windowRight);
+
+  const backgroundColor = isSubcard
+    ? colors.surface
+    : isHighlight
+      ? colors.cardHighlight
+      : colors.card;
 
   const borderRadius = isSubcard ? theme.metrics.subcardRadius : theme.metrics.windowRadius;
   const borderWidth = outlined
@@ -50,69 +56,40 @@ export const Card: React.FC<CardProps> = ({
       : theme.shadows.window
     : undefined;
 
-  const glassStyle = !isSubcard ? getGlassStyle(theme) : undefined;
-
-  if (hasTitleBar) {
+  if (hasHeader) {
     return (
       <View
         style={[
-          styles.windowFrame,
+          styles.editorialFrame,
           {
-            backgroundColor: isSubcard ? colors.surface : colors.card,
+            backgroundColor,
             borderColor,
             borderWidth,
             borderRadius,
           },
           shadowStyle,
-          glassStyle,
           style,
         ]}
         {...rest}
       >
         <View
           style={[
-            styles.titleBar,
+            styles.editorialHeader,
             {
-              backgroundColor: colors.headerBg,
-              borderBottomColor: colors.border,
-              borderBottomWidth: theme.metrics.windowBorderWidth,
-              borderTopLeftRadius: Math.max(0, borderRadius - borderWidth),
-              borderTopRightRadius: Math.max(0, borderRadius - borderWidth),
+              borderBottomColor: colors.divider,
             },
           ]}
         >
-          <View style={styles.titleLeft}>
-            {showWindowDots && (
-              <View style={styles.dotsRow}>
-                <View
-                  style={[
-                    styles.dot,
-                    { backgroundColor: colors.gold, borderColor: 'rgba(40,50,62,0.35)' },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.dot,
-                    { backgroundColor: colors.turquoise, borderColor: 'rgba(40,50,62,0.35)' },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.dot,
-                    { backgroundColor: colors.sky, borderColor: 'rgba(40,50,62,0.35)' },
-                  ]}
-                />
-              </View>
-            )}
+          <View style={styles.headerLeft}>
             {windowTitle ? (
-              <Typography variant="h3" numberOfLines={1} style={styles.titleText}>
+              <Typography variant="h3" numberOfLines={1} style={styles.headerTitle}>
                 {windowTitle}
               </Typography>
             ) : null}
           </View>
-          {windowRight ? <View style={styles.titleRight}>{windowRight}</View> : null}
+          {windowRight ? <View style={styles.headerRight}>{windowRight}</View> : null}
         </View>
-        <View style={[styles.windowBody, contentStyle]}>{children}</View>
+        <View style={[styles.editorialBody, contentStyle]}>{children}</View>
       </View>
     );
   }
@@ -122,13 +99,12 @@ export const Card: React.FC<CardProps> = ({
       style={[
         isSubcard ? styles.subcardBase : styles.base,
         {
-          backgroundColor: isSubcard ? colors.surface : colors.card,
+          backgroundColor,
           borderColor,
           borderWidth,
           borderRadius,
         },
         shadowStyle,
-        glassStyle,
         style,
       ]}
       {...rest}
@@ -140,48 +116,39 @@ export const Card: React.FC<CardProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    padding: spacing.base,
+    padding: spacing.lg,
   },
   subcardBase: {
     padding: spacing.md,
   },
-  windowFrame: {
+  editorialFrame: {
     padding: 0,
     overflow: 'hidden',
   },
-  titleBar: {
+  editorialHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.base,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
     gap: spacing.sm,
   },
-  titleLeft: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     flex: 1,
   },
-  titleRight: {
+  headerRight: {
     flexShrink: 0,
   },
-  dotsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  dot: {
-    width: 11,
-    height: 11,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  titleText: {
-    fontSize: 15,
+  headerTitle: {
+    fontSize: 16,
     flexShrink: 1,
   },
-  windowBody: {
-    padding: spacing.base,
+  editorialBody: {
+    padding: spacing.lg,
   },
 });

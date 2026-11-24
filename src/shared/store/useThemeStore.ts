@@ -6,12 +6,14 @@ import {
   DEFAULT_THEME_ID,
   isValidThemeId,
   ThemeColors,
+  ThemeMode,
   THEMES,
 } from '../theme/themes';
 
-const THEME_STORAGE_KEY = '@clima_comunidad_theme_style_v2';
+// Nueva clave v3 para garantizar que usuarios nuevos y existentes inicien en Modo Oscuro predeterminado
+const THEME_STORAGE_KEY = '@clima_comunidad_theme_mode_v3';
 
-export type ThemeMode = 'light' | 'dark';
+export type { ThemeMode };
 
 interface ThemeState {
   themeId: AppThemeId;
@@ -21,16 +23,17 @@ interface ThemeState {
   colors: ThemeColors;
   loadTheme: () => Promise<void>;
   setTheme: (themeId: AppThemeId) => void;
+  setMode: (mode: ThemeMode) => void;
   toggleTheme: () => void;
 }
 
-function buildThemeSlice(themeId: AppThemeId) {
-  const theme = THEMES[themeId];
+function buildThemeSlice(mode: ThemeMode) {
+  const theme = THEMES[mode];
   return {
-    themeId,
+    themeId: mode,
     theme,
     isDark: theme.isDark,
-    mode: (theme.isDark ? 'dark' : 'light') as ThemeMode,
+    mode,
     colors: theme.colors,
   };
 }
@@ -47,7 +50,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
         set(buildThemeSlice(DEFAULT_THEME_ID));
       }
     } catch {
-      // Mantener Nube Ilustrada por defecto ante fallo de lectura
+      set(buildThemeSlice(DEFAULT_THEME_ID));
     }
   },
 
@@ -57,10 +60,16 @@ export const useThemeStore = create<ThemeState>((set) => ({
     set(buildThemeSlice(themeId));
   },
 
+  setMode: (mode: ThemeMode) => {
+    if (!isValidThemeId(mode)) return;
+    AsyncStorage.setItem(THEME_STORAGE_KEY, mode).catch(() => {});
+    set(buildThemeSlice(mode));
+  },
+
   toggleTheme: () =>
     set((state) => {
-      const nextId: AppThemeId = state.isDark ? 'ilustrada' : 'tormenta';
-      AsyncStorage.setItem(THEME_STORAGE_KEY, nextId).catch(() => {});
-      return buildThemeSlice(nextId);
+      const nextMode: ThemeMode = state.isDark ? 'light' : 'dark';
+      AsyncStorage.setItem(THEME_STORAGE_KEY, nextMode).catch(() => {});
+      return buildThemeSlice(nextMode);
     }),
 }));

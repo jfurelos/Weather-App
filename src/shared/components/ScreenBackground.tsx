@@ -1,5 +1,5 @@
 import React from 'react';
-import { SafeAreaView, ViewStyle, StyleProp, StyleSheet, Platform } from 'react-native';
+import { SafeAreaView, ViewStyle, StyleProp, StyleSheet } from 'react-native';
 import { useThemeStore } from '../store/useThemeStore';
 
 interface ScreenBackgroundProps {
@@ -8,22 +8,13 @@ interface ScreenBackgroundProps {
 }
 
 export const ScreenBackground: React.FC<ScreenBackgroundProps> = ({ children, style }) => {
-  const { theme, colors } = useThemeStore();
-
-  const webPatternStyle =
-    Platform.OS === 'web'
-      ? ({
-          backgroundImage: theme.webPattern.backgroundImage,
-          backgroundSize: theme.webPattern.backgroundSize,
-        } as unknown as ViewStyle)
-      : undefined;
+  const { colors } = useThemeStore();
 
   return (
     <SafeAreaView
       style={[
         styles.container,
         { backgroundColor: colors.background },
-        webPatternStyle,
         style,
       ]}
     >

@@ -20,7 +20,7 @@ export const AdviceCard: React.FC<Props> = ({ advice }) => {
       {/* Header con badge y título */}
       <View style={styles.headerRow}>
         <View style={styles.tagWrapper}>
-          <Sparkles size={14} color={colors.primary} />
+          <Sparkles size={14} color={colors.accent} />
           <Typography variant="captionMedium" color="brand">
             CONSEJO DEL DÍA
           </Typography>

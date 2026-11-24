@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Typography } from '@/shared/components/Typography';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
-import { DISPLAY_FONT } from '@/shared/theme/typography';
+import { FONT_DISPLAY_SEMIBOLD } from '@/shared/theme/typography';
 import { DayOption } from '../services/bulletinsApi';
 
 interface Props {
@@ -17,7 +17,7 @@ export const WeekDaySelector: React.FC<Props> = ({
   selectedIndex,
   onSelectDay,
 }) => {
-  const { themeId, theme, colors } = useThemeStore();
+  const { isDark, theme, colors } = useThemeStore();
 
   return (
     <View style={styles.container}>
@@ -28,6 +28,7 @@ export const WeekDaySelector: React.FC<Props> = ({
       >
         {days.map((day) => {
           const isSelected = day.index === selectedIndex;
+          const inactiveBg = isDark ? colors.card : colors.surface;
           return (
             <TouchableOpacity
               key={day.index}
@@ -35,26 +36,21 @@ export const WeekDaySelector: React.FC<Props> = ({
               style={[
                 styles.chip,
                 {
-                  backgroundColor: isSelected ? colors.pillActiveBg : colors.pillBg,
-                  borderColor:
-                    themeId === 'ilustrada'
-                      ? '#28323E'
-                      : isSelected
-                        ? colors.border
-                        : colors.subcardBorder,
-                  borderWidth: themeId === 'ilustrada' ? 1.5 : 1,
+                  backgroundColor: isSelected ? colors.pillActiveBg : inactiveBg,
+                  borderColor: isSelected ? 'transparent' : colors.subcardBorder,
+                  borderWidth: 1,
                 },
-                isSelected && theme.shadows.pillActive,
+                isSelected ? theme.shadows.pillActive : theme.shadows.subcard,
               ]}
               onPress={() => onSelectDay(day.index)}
             >
               <Typography
                 variant="bodyMedium"
                 style={{
-                  fontFamily: DISPLAY_FONT,
+                  fontFamily: FONT_DISPLAY_SEMIBOLD,
                   color: isSelected ? colors.pillActiveText : colors.textPrimary,
-                  fontWeight: isSelected ? '700' : '600',
-                  fontSize: 13.5,
+                  fontWeight: '600',
+                  fontSize: 14,
                 }}
               >
                 {day.label}
@@ -64,7 +60,7 @@ export const WeekDaySelector: React.FC<Props> = ({
                 style={{
                   color: isSelected ? colors.pillActiveText : colors.textSecondary,
                   fontSize: 10.5,
-                  opacity: isSelected ? 0.9 : 0.85,
+                  opacity: isSelected ? 0.92 : 0.88,
                 }}
               >
                 {day.dateFormatted}
@@ -89,10 +85,10 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: spacing.md + 2,
     paddingVertical: spacing.sm,
-    borderRadius: spacing.borderRadiusFull,
+    borderRadius: spacing.borderRadiusMd,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 74,
-    gap: 1,
+    minWidth: 76,
+    gap: 2,
   },
 });

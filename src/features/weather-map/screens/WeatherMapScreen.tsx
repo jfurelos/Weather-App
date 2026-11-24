@@ -39,13 +39,13 @@ export const WeatherMapScreen: React.FC = () => {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={loadInitialData}
-            tintColor={colors.primary}
+            tintColor={colors.onBackgroundAccent}
           />
         }
       >
         {/* Header */}
         <View style={styles.header}>
-          <Typography variant="hero" style={styles.title}>
+          <Typography variant="hero" color="onBackground" style={styles.title}>
             Noticias & Mapa
           </Typography>
         </View>

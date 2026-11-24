@@ -14,6 +14,7 @@ import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
+import { FONT_BODY_BOLD } from '@/shared/theme/typography';
 import { SPANISH_PROVINCES } from '@/features/community/data/provincesData';
 import { AVATAR_COLORS } from '../data/locationsData';
 import { UserProfileData } from '../store/useProfileStore';
@@ -244,14 +245,15 @@ export const EditProfileModal: React.FC<Props> = ({
                 style={[
                   styles.input,
                   {
-                    backgroundColor: colors.surface,
+                    backgroundColor: colors.inputBg,
                     borderColor: colors.border,
                     color: profile.isAuthenticated ? colors.textSecondary : colors.textPrimary,
                     opacity: profile.isAuthenticated ? 0.7 : 1,
+                    fontFamily: FONT_BODY_BOLD,
                   },
                 ]}
                 placeholder="Tu nombre en comunidad"
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={colors.textMuted}
                 value={fullName}
                 onChangeText={setFullName}
                 maxLength={80}

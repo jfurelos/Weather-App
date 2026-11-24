@@ -106,10 +106,10 @@ export const ComarcaDetailScreen: React.FC = () => {
         </TouchableOpacity>
 
         <View style={styles.headerTitleContainer}>
-          <Typography variant="caption" color="secondary">
+          <Typography variant="caption" style={{ color: colors.headerSubtext }}>
             PROVINCIA DE {provinceName.toUpperCase()}
           </Typography>
-          <Typography variant="h3" numberOfLines={1}>
+          <Typography variant="h3" numberOfLines={1} style={{ color: colors.headerText }}>
             {comarcaName}
           </Typography>
         </View>
@@ -119,8 +119,8 @@ export const ComarcaDetailScreen: React.FC = () => {
           style={[
             styles.roundBtn,
             {
-              backgroundColor: favorite ? colors.gold : colors.card,
-              borderColor: favorite ? colors.border : colors.subcardBorder,
+              backgroundColor: favorite ? colors.accent : colors.card,
+              borderColor: favorite ? 'transparent' : colors.subcardBorder,
               borderWidth: theme.metrics.subcardBorderWidth,
             },
           ]}
@@ -138,8 +138,8 @@ export const ComarcaDetailScreen: React.FC = () => {
         >
           <Star
             size={18}
-            color={favorite ? '#28323E' : colors.textSecondary}
-            fill={favorite ? '#28323E' : 'transparent'}
+            color={favorite ? colors.onAccent : colors.textSecondary}
+            fill={favorite ? colors.onAccent : 'transparent'}
           />
         </TouchableOpacity>
       </View>
@@ -150,24 +150,24 @@ export const ComarcaDetailScreen: React.FC = () => {
             activeOpacity={0.8}
             onPress={clearFavoriteLimitMessage}
             style={{
-              backgroundColor: colors.gold,
-              borderColor: colors.border,
-              borderWidth: theme.metrics.subcardBorderWidth,
+              backgroundColor: colors.accent,
+              borderColor: 'rgba(84, 11, 14, 0.16)',
+              borderWidth: 1,
               borderRadius: spacing.borderRadiusMd,
               padding: spacing.md,
             }}
           >
-            <Typography variant="captionMedium" style={{ color: '#28323E', fontWeight: '700' }}>
+            <Typography variant="captionMedium" style={{ color: colors.onAccent }}>
               {favoriteLimitMessage} (Pulsa para cerrar)
             </Typography>
           </TouchableOpacity>
         )}
 
         <View style={styles.intro}>
-          <Typography variant="hero" style={styles.introTitle}>
+          <Typography variant="hero" color="onBackground" style={styles.introTitle}>
             Chats de {comarcaName}
           </Typography>
-          <Typography variant="body" color="secondary">
+          <Typography variant="body" color="onBackgroundSecondary">
             Todas las comarcas disponen de exactamente tres canales de debate especializados. Selecciona en cuál deseas participar:
           </Typography>
         </View>

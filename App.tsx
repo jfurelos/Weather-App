@@ -1,12 +1,17 @@
 import React, { useEffect } from 'react';
-import { Platform, View, StyleSheet, useWindowDimensions, ViewStyle } from 'react-native';
+import { Platform, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { registerRootComponent } from 'expo';
+import { useFonts } from 'expo-font';
+import { Jost_600SemiBold } from '@expo-google-fonts/jost/600SemiBold';
+import { Jost_700Bold } from '@expo-google-fonts/jost/700Bold';
+import { Montserrat_600SemiBold } from '@expo-google-fonts/montserrat/600SemiBold';
+import { Montserrat_700Bold } from '@expo-google-fonts/montserrat/700Bold';
 import { AppProvider } from '@/app/providers/AppProvider';
 import { RootNavigator } from '@/app/navigation/RootNavigator';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 
-// Reset de márgenes, fuentes Fredoka/Nunito y metadatos PWA para entorno web
+// Reset de márgenes, fuentes Jost/Montserrat y metadatos PWA para entorno web
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   document.title = 'Clima & Comunidad España';
 
@@ -34,10 +39,10 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     crossorigin: 'anonymous',
     'data-font-preconnect': 'gstatic',
   });
-  ensureHeadTag('link[data-google-fonts="nube"]', 'link', {
+  ensureHeadTag('link[data-google-fonts="editorial"]', 'link', {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap',
-    'data-google-fonts': 'nube',
+    href: 'https://fonts.googleapis.com/css2?family=Jost:wght@600;700&family=Montserrat:wght@600;700&display=swap',
+    'data-google-fonts': 'editorial',
   });
 
   ensureHeadTag('link[rel="manifest"]', 'link', { rel: 'manifest', href: '/manifest.json' });
@@ -51,7 +56,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   });
   ensureHeadTag('meta[name="apple-mobile-web-app-status-bar-style"]', 'meta', {
     name: 'apple-mobile-web-app-status-bar-style',
-    content: 'default',
+    content: 'black-translucent',
   });
   ensureHeadTag('meta[name="apple-mobile-web-app-title"]', 'meta', {
     name: 'apple-mobile-web-app-title',
@@ -71,16 +76,25 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
       width: 100% !important;
       overflow: hidden !important;
       overscroll-behavior: none;
-      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
-      transition: background-color 0.35s ease, color 0.3s ease;
+      font-family: 'Montserrat_700Bold', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-synthesis: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.25s ease, color 0.2s ease;
+    }
+    *, *::before, *::after {
+      font-synthesis: none;
+    }
+    input, textarea, button {
+      font-family: 'Montserrat_700Bold', 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
     #root {
       height: 100% !important;
       width: 100% !important;
     }
     ::selection {
-      background: #FAD165;
-      color: #28323E;
+      background: #E09F3E;
+      color: #540B0E;
     }
   `;
   document.head.appendChild(style);
@@ -88,7 +102,7 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   // Registrar Service Worker para permitir "Instalar app" (PWA) en móviles
   if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.register('/sw.js').catch(() => { });
     });
   }
 }
@@ -96,6 +110,13 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 function App() {
   const { themeId, theme, isDark, colors } = useThemeStore();
   const { width } = useWindowDimensions();
+
+  const [fontsLoaded, fontError] = useFonts({
+    Jost_600SemiBold,
+    Jost_700Bold,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+  });
 
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -108,19 +129,16 @@ function App() {
       }
       themeMeta.setAttribute('content', colors.background);
       document.body.style.backgroundColor = colors.outerShellBg;
-      document.body.style.backgroundImage = theme.webPattern.backgroundImage;
-      document.body.style.backgroundSize = theme.webPattern.backgroundSize;
+      document.body.style.backgroundImage = 'none';
     }
-  }, [themeId, theme, colors.background, colors.outerShellBg]);
+  }, [themeId, colors.background, colors.outerShellBg]);
+
+  // En nativo esperamos a la carga de fuentes; en web pintamos al instante con fallback Google Fonts
+  if (!fontsLoaded && !fontError && Platform.OS !== 'web') {
+    return <View style={[styles.outerShell, { backgroundColor: colors.background }]} />;
+  }
 
   const isDesktopWeb = Platform.OS === 'web' && width > 520;
-  const webOuterPattern =
-    Platform.OS === 'web'
-      ? ({
-          backgroundImage: theme.webPattern.backgroundImage,
-          backgroundSize: theme.webPattern.backgroundSize,
-        } as unknown as ViewStyle)
-      : undefined;
 
   return (
     <View
@@ -129,7 +147,6 @@ function App() {
         {
           backgroundColor: isDesktopWeb ? colors.outerShellBg : colors.background,
         },
-        webOuterPattern,
       ]}
     >
       <View
@@ -139,9 +156,9 @@ function App() {
           isDesktopWeb && [
             styles.desktopFrame,
             {
-              borderColor: colors.border,
-              borderWidth: theme.metrics.windowBorderWidth,
-              borderRadius: theme.metrics.windowRadius + 4,
+              borderColor: isDark ? 'rgba(255, 243, 176, 0.16)' : colors.border,
+              borderWidth: 1,
+              borderRadius: 28,
             },
             theme.shadows.window,
           ],
@@ -171,9 +188,9 @@ const styles = StyleSheet.create({
   desktopFrame: {
     maxWidth: 430,
     maxHeight: 900,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.16,
-    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.22,
+    shadowRadius: 32,
     elevation: 10,
   },
 });

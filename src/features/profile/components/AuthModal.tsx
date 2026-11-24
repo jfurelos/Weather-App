@@ -13,6 +13,7 @@ import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { getGlassStyle } from '@/shared/theme/themes';
 import { spacing } from '@/shared/theme/spacing';
+import { FONT_BODY_BOLD } from '@/shared/theme/typography';
 import { SPANISH_PROVINCES } from '@/features/community/data/provincesData';
 
 interface Props {
@@ -206,9 +207,10 @@ export const AuthModal: React.FC<Props> = ({
                     style={[
                       styles.input,
                       {
-                        backgroundColor: colors.surface,
+                        backgroundColor: colors.inputBg,
                         borderColor: colors.border,
                         color: colors.textPrimary,
+                        fontFamily: FONT_BODY_BOLD,
                       },
                     ]}
                     placeholder="Ej. Laura García"
@@ -227,9 +229,10 @@ export const AuthModal: React.FC<Props> = ({
                     style={[
                       styles.input,
                       {
-                        backgroundColor: colors.surface,
+                        backgroundColor: colors.inputBg,
                         borderColor: colors.border,
                         color: colors.textPrimary,
+                        fontFamily: FONT_BODY_BOLD,
                       },
                     ]}
                     placeholder="Ej. laura_meteo"
@@ -313,9 +316,10 @@ export const AuthModal: React.FC<Props> = ({
                 style={[
                   styles.input,
                   {
-                    backgroundColor: colors.surface,
+                    backgroundColor: colors.inputBg,
                     borderColor: colors.border,
                     color: colors.textPrimary,
+                    fontFamily: FONT_BODY_BOLD,
                   },
                 ]}
                 placeholder="correo@ejemplo.com"
@@ -336,13 +340,13 @@ export const AuthModal: React.FC<Props> = ({
               <View
                 style={[
                   styles.passwordWrapper,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  { backgroundColor: colors.inputBg, borderColor: colors.border },
                 ]}
               >
                 <TextInput
-                  style={[styles.passwordInput, { color: colors.textPrimary }]}
+                  style={[styles.passwordInput, { color: colors.textPrimary, fontFamily: FONT_BODY_BOLD }]}
                   placeholder="Mínimo 6 caracteres"
-                  placeholderTextColor={colors.textSecondary}
+                  placeholderTextColor={colors.textMuted}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
