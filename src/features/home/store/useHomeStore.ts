@@ -42,12 +42,14 @@ interface HomeState {
   outfitPreferences: OutfitPreferences;
   news: FeaturedNews[];
   activeMockScenario: ActiveMockScenario | null;
+  scrollToOutfitRequestId: number;
   isLoading: boolean;
   isRefreshing: boolean;
   error: string | null;
 
   setSelectedCity: (city: City) => Promise<void>;
   recomputeAdvice: (prefs?: OutfitPreferences) => void;
+  requestScrollToOutfit: () => void;
   applyMockStormScenario: (mockUser: MockStormUser) => void;
   clearMockStormScenario: () => Promise<void>;
   loadHomeData: () => Promise<void>;
@@ -61,6 +63,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
   outfitPreferences: DEFAULT_OUTFIT_PREFERENCES,
   news: [],
   activeMockScenario: null,
+  scrollToOutfitRequestId: 0,
   isLoading: true,
   isRefreshing: false,
   error: null,
@@ -79,6 +82,10 @@ export const useHomeStore = create<HomeState>((set, get) => ({
     }
     const advice = evaluateDailyAdvice(weather, nextPrefs);
     set({ outfitPreferences: nextPrefs, advice });
+  },
+
+  requestScrollToOutfit: () => {
+    set((state) => ({ scrollToOutfitRequestId: state.scrollToOutfitRequestId + 1 }));
   },
 
   applyMockStormScenario: (mockUser: MockStormUser) => {

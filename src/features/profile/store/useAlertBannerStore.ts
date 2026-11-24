@@ -1,15 +1,21 @@
 import { create } from 'zustand';
-import { AlertCategory } from './useProfileStore';
+import type { AlertCategory } from './useProfileStore';
+import type { ClaudyWeatherMode } from '@/features/claudy/types';
+
+export type BannerCategory = AlertCategory | 'claudy_outfit';
 
 export interface ActiveAlertBanner {
   id: string;
   status: 'triggered' | 'filtered';
-  category: AlertCategory;
+  category: BannerCategory;
   title: string;
   locationName: string;
   body: string;
   toneLabel: string;
   soundPlayed: boolean;
+  claudyWeatherMode?: ClaudyWeatherMode;
+  ctaLabel?: string;
+  onPress?: () => void;
 }
 
 interface AlertBannerState {
@@ -29,7 +35,7 @@ export const useAlertBannerStore = create<AlertBannerState>((set) => ({
     set({ banner });
     autoDismissTimer = setTimeout(() => {
       set((state) => (state.banner?.id === banner.id ? { banner: null } : state));
-    }, 6000);
+    }, banner.category === 'claudy_outfit' ? 8500 : 6000);
   },
   dismissBanner: () => {
     if (autoDismissTimer) {

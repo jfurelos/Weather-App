@@ -61,6 +61,7 @@ interface ClaudyState {
   isSaving: boolean;
   isGreetingVisible: boolean;
   isCustomizerVisible: boolean;
+  isWidgetGalleryVisible: boolean;
 
   loadClaudyConfig: () => Promise<void>;
   hydrateFromRemoteConfig: (remoteRaw: unknown) => Promise<void>;
@@ -76,6 +77,9 @@ interface ClaudyState {
 
   openCustomizer: () => void;
   closeCustomizer: () => void;
+
+  openWidgetGallery: () => void;
+  closeWidgetGallery: () => void;
 }
 
 export const useClaudyStore = create<ClaudyState>((set, get) => ({
@@ -84,6 +88,7 @@ export const useClaudyStore = create<ClaudyState>((set, get) => ({
   isSaving: false,
   isGreetingVisible: false,
   isCustomizerVisible: false,
+  isWidgetGalleryVisible: false,
 
   loadClaudyConfig: async () => {
     const localConfig = await readClaudyLocal();
@@ -161,4 +166,7 @@ export const useClaudyStore = create<ClaudyState>((set, get) => ({
 
   openCustomizer: () => set({ isCustomizerVisible: true }),
   closeCustomizer: () => set({ isCustomizerVisible: false }),
+
+  openWidgetGallery: () => set({ isWidgetGalleryVisible: true }),
+  closeWidgetGallery: () => set({ isWidgetGalleryVisible: false }),
 }));

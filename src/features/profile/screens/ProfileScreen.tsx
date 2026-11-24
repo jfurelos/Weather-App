@@ -22,6 +22,7 @@ import {
   CloudLightning,
   Sparkles,
   SlidersHorizontal,
+  LayoutGrid,
 } from 'lucide-react-native';
 import { ScreenBackground } from '@/shared/components/ScreenBackground';
 import { Typography } from '@/shared/components/Typography';
@@ -42,6 +43,7 @@ import { AlertCategory, useProfileStore } from '../store/useProfileStore';
 import { getRainThresholdLabel, getToneLabel } from '../data/locationsData';
 import { ThemeSelectorCard } from '../components/ThemeSelectorCard';
 import { OutfitPreferencesCard } from '../components/OutfitPreferencesCard';
+import { DailyReminderCard } from '../components/DailyReminderCard';
 import { EditProfileModal } from '../components/EditProfileModal';
 import { EditLocationModal } from '../components/EditLocationModal';
 import { AlertSettingsModal } from '../components/AlertSettingsModal';
@@ -53,6 +55,7 @@ export const ProfileScreen: React.FC = () => {
   const claudyConfig = useClaudyStore((s) => s.config);
   const openClaudyCustomizer = useClaudyStore((s) => s.openCustomizer);
   const reopenClaudyGreeting = useClaudyStore((s) => s.reopenGreeting);
+  const openWidgetGallery = useClaudyStore((s) => s.openWidgetGallery);
   const homeWeather = useHomeStore((s) => s.weather);
   const {
     profile,
@@ -264,6 +267,30 @@ export const ProfileScreen: React.FC = () => {
               </Typography>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            activeOpacity={0.82}
+            onPress={openWidgetGallery}
+            style={[
+              styles.claudyWidgetsBanner,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.subcardBorder,
+              },
+            ]}
+            accessibilityLabel={`Abrir galería de widgets de ${claudyConfig.name}`}
+          >
+            <View style={[styles.widgetIconBox, { backgroundColor: colors.cardHighlight }]}>
+              <LayoutGrid size={17} color={colors.primaryDark} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Typography variant="bodyMedium">Widgets de {claudyConfig.name}</Typography>
+              <Typography variant="caption" color="secondary">
+                Vistas 2×2, 4×2, pantalla de bloqueo y modo web `/widget`
+              </Typography>
+            </View>
+            <ChevronRight size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
         </Card>
 
         {/* 3. Preferencias de Vestimenta (Sensibilidad térmica + Estilo personal) */}
@@ -318,7 +345,10 @@ export const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </Card>
 
-        {/* 4. Configuración de Alertas y Sonidos */}
+        {/* 4. Recordatorio Diario de Claudy (Notificaciones de temperatura y ropa) */}
+        <DailyReminderCard />
+
+        {/* 5. Configuración de Alertas y Sonidos */}
         <Card style={styles.settingCard}>
           <View style={styles.rowBetween}>
             <View style={styles.tagWrapper}>
@@ -742,6 +772,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+  },
+  claudyWidgetsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm + 2,
+    padding: spacing.md,
+    borderRadius: spacing.borderRadiusMd,
+    borderWidth: 1,
+  },
+  widgetIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tagWrapper: {
     flexDirection: 'row',

@@ -7,7 +7,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
-import { X, RotateCcw, Check, CloudSun, Sun, CloudRain, Snowflake } from 'lucide-react-native';
+import { X, RotateCcw, Check, CloudSun, Sun, CloudRain, Snowflake, LayoutGrid } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Button } from '@/shared/components/Button';
 import { useThemeStore } from '@/shared/store/useThemeStore';
@@ -43,6 +43,7 @@ export const ClaudyCustomizerModal: React.FC = () => {
     isSaving,
     saveClaudyConfig,
     closeCustomizer,
+    openWidgetGallery,
   } = useClaudyStore();
 
   const [draft, setDraft] = useState<ClaudyConfig>(config);
@@ -156,6 +157,20 @@ export const ClaudyCustomizerModal: React.FC = () => {
                   : 'Se guarda localmente en tu navegador'}
               </Typography>
             </View>
+            <TouchableOpacity
+              activeOpacity={0.75}
+              onPress={() => {
+                closeCustomizer();
+                openWidgetGallery();
+              }}
+              style={[
+                styles.iconBtn,
+                { backgroundColor: colors.cardHighlight, borderColor: 'rgba(224,159,62,0.5)' },
+              ]}
+              accessibilityLabel="Abrir galería de widgets de Claudy"
+            >
+              <LayoutGrid size={16} color={colors.primaryDark} />
+            </TouchableOpacity>
             <TouchableOpacity
               activeOpacity={0.75}
               onPress={handleReset}

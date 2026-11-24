@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -35,6 +35,7 @@ export const HomeScreen: React.FC = () => {
     advice,
     news,
     activeMockScenario,
+    scrollToOutfitRequestId,
     isLoading,
     isRefreshing,
     error,
@@ -45,14 +46,38 @@ export const HomeScreen: React.FC = () => {
   } = useHomeStore();
 
   const [isCityModalVisible, setCityModalVisible] = useState(false);
+  const [highlightOutfit, setHighlightOutfit] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const outfitSectionYRef = useRef<number>(0);
 
   useEffect(() => {
     loadHomeData();
   }, []);
 
+  useEffect(() => {
+    if (scrollToOutfitRequestId === 0 || !weather || !advice) return;
+    const timer = setTimeout(() => {
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(0, outfitSectionYRef.current - 12),
+        animated: true,
+      });
+      setHighlightOutfit(true);
+    }, 180);
+
+    const clearHighlight = setTimeout(() => {
+      setHighlightOutfit(false);
+    }, 2400);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(clearHighlight);
+    };
+  }, [scrollToOutfitRequestId, weather, advice]);
+
   return (
     <ScreenBackground>
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -165,7 +190,23 @@ export const HomeScreen: React.FC = () => {
             />
 
             {/* 2. Recomendador Visual y Personalizado de Ropa ("¿Qué me pongo hoy?") */}
-            {advice && <OutfitRecommenderCard weather={weather} advice={advice} />}
+            {advice && (
+              <View
+                onLayout={(e) => {
+                  outfitSectionYRef.current = e.nativeEvent.layout.y;
+                }}
+                style={
+                  highlightOutfit
+                    ? [
+                        styles.outfitHighlightFrame,
+                        { borderColor: colors.accent },
+                      ]
+                    : undefined
+                }
+              >
+                <OutfitRecommenderCard weather={weather} advice={advice} />
+              </View>
+            )}
 
             {/* 3. Timeline de pronóstico por horas */}
             <HourlyTimeline hourly={weather.hourly} />
@@ -237,5 +278,10 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     marginTop: spacing.base,
+  },
+  outfitHighlightFrame: {
+    borderWidth: 2.5,
+    borderRadius: 24,
+    padding: 3,
   },
 });

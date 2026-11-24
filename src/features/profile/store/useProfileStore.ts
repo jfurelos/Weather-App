@@ -19,6 +19,11 @@ import {
   OutfitPreferences,
   sanitizeOutfitPreferences,
 } from '../data/outfitPreferences';
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  NotificationPreferences,
+  sanitizeNotificationPreferences,
+} from '../data/notificationPreferences';
 import type { MockAlertScenario, MockStormUser } from '@/shared/data/mockStormUsers';
 import { playAlertTonePreview } from '../services/alertSoundService';
 import { useAlertBannerStore } from './useAlertBannerStore';
@@ -60,6 +65,7 @@ interface PersistedProfilePayload {
   fixedLocation: FixedLocation;
   alerts: AlertsPreferences;
   outfitPreferences?: OutfitPreferences;
+  notificationPreferences?: NotificationPreferences;
 }
 
 export type AlertCategory = 'rain' | 'wind' | 'heat';
@@ -69,6 +75,7 @@ interface ProfileState {
   fixedLocation: FixedLocation;
   alerts: AlertsPreferences;
   outfitPreferences: OutfitPreferences;
+  notificationPreferences: NotificationPreferences;
   hasEnteredApp: boolean;
   isLoadingAuth: boolean;
   authError: string | null;
@@ -86,6 +93,7 @@ interface ProfileState {
     avatarUrl: string | null;
   }) => Promise<void>;
   updateOutfitPreferences: (updates: Partial<OutfitPreferences>) => Promise<void>;
+  updateNotificationPreferences: (updates: Partial<NotificationPreferences>) => Promise<void>;
   updateFixedLocation: (location: FixedLocation) => Promise<void>;
   toggleAlert: (category: AlertCategory, enabled: boolean) => Promise<void>;
   setRainThreshold: (threshold: RainThreshold) => Promise<void>;
@@ -179,10 +187,12 @@ async function getActiveSessionUserId(expectedId?: string): Promise<string | nul
 
 async function persistLocalState(payload: PersistedProfilePayload): Promise<void> {
   try {
+    const state = useProfileStore.getState();
     const mergedPayload: PersistedProfilePayload = {
       ...payload,
-      outfitPreferences:
-        payload.outfitPreferences ?? useProfileStore.getState().outfitPreferences,
+      outfitPreferences: payload.outfitPreferences ?? state.outfitPreferences,
+      notificationPreferences:
+        payload.notificationPreferences ?? state.notificationPreferences,
     };
     await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(mergedPayload));
   } catch {
@@ -258,6 +268,27 @@ async function fetchOutfitPreferencesFromSupabase(
     }
 
     return sanitizeOutfitPreferences(data.outfit_preferences);
+  } catch {
+    return fallback;
+  }
+}
+
+async function fetchNotificationPreferencesFromSupabase(
+  userId: string,
+  fallback: NotificationPreferences
+): Promise<NotificationPreferences> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('notification_preferences')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error || !data?.notification_preferences) {
+      return fallback;
+    }
+
+    return sanitizeNotificationPreferences(data.notification_preferences);
   } catch {
     return fallback;
   }
@@ -362,6 +393,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   fixedLocation: DEFAULT_LOCATION,
   alerts: DEFAULT_ALERTS,
   outfitPreferences: DEFAULT_OUTFIT_PREFERENCES,
+  notificationPreferences: DEFAULT_NOTIFICATION_PREFERENCES,
   hasEnteredApp: false,
   isLoadingAuth: false,
   authError: null,
@@ -482,6 +514,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       let nextLocation = DEFAULT_LOCATION;
       let nextAlerts = DEFAULT_ALERTS;
       let nextOutfitPrefs = DEFAULT_OUTFIT_PREFERENCES;
+      let nextNotificationPrefs = DEFAULT_NOTIFICATION_PREFERENCES;
 
       if (stored) {
         const parsed: Partial<PersistedProfilePayload> = JSON.parse(stored);
@@ -496,6 +529,9 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         }
         if (parsed.outfitPreferences) {
           nextOutfitPrefs = sanitizeOutfitPreferences(parsed.outfitPreferences);
+        }
+        if (parsed.notificationPreferences) {
+          nextNotificationPrefs = sanitizeNotificationPreferences(parsed.notificationPreferences);
         }
       }
 
@@ -535,6 +571,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
           await fetchClaudyConfigFromSupabase(user.id);
           nextOutfitPrefs = await fetchOutfitPreferencesFromSupabase(user.id, nextOutfitPrefs);
+          nextNotificationPrefs = await fetchNotificationPreferencesFromSupabase(
+            user.id,
+            nextNotificationPrefs
+          );
         } else {
           nextProfile = {
             ...nextProfile,
@@ -553,6 +593,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         fixedLocation: nextLocation,
         alerts: nextAlerts,
         outfitPreferences: nextOutfitPrefs,
+        notificationPreferences: nextNotificationPrefs,
         hasEnteredApp: nextProfile.isAuthenticated,
         hasHydrated: true,
       });
@@ -655,6 +696,47 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
+  updateNotificationPreferences: async (updates: Partial<NotificationPreferences>) => {
+    const { profile, fixedLocation, alerts, outfitPreferences, notificationPreferences } = get();
+    const nextPrefs = sanitizeNotificationPreferences({
+      ...notificationPreferences,
+      ...updates,
+    });
+
+    set({ notificationPreferences: nextPrefs });
+    await persistLocalState({
+      profile,
+      fixedLocation,
+      alerts,
+      outfitPreferences,
+      notificationPreferences: nextPrefs,
+    });
+
+    if (profile.isAuthenticated) {
+      const sessionUid = await getActiveSessionUserId(profile.id);
+      if (sessionUid) {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              notification_preferences: nextPrefs,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', sessionUid);
+
+          if (error) {
+            console.warn(
+              '[useProfileStore] No se pudo guardar notification_preferences en Supabase (¿migración 08 pendiente?):',
+              error.message
+            );
+          }
+        } catch (err) {
+          console.warn('[useProfileStore] Excepción guardando notification_preferences:', err);
+        }
+      }
+    }
+  },
+
   updateFixedLocation: async (location: FixedLocation) => {
     const { profile, alerts, outfitPreferences } = get();
     set({ fixedLocation: location });
@@ -740,7 +822,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         return false;
       }
 
-      const { profile, fixedLocation, alerts, outfitPreferences } = get();
+      const { profile, fixedLocation, alerts, outfitPreferences, notificationPreferences } = get();
       const { data: dbProfile, error: profileErr } = await supabase
         .from('profiles')
         .select('username, full_name, avatar_url, province')
@@ -773,12 +855,17 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         data.user.id,
         outfitPreferences
       );
+      const nextNotificationPrefs = await fetchNotificationPreferencesFromSupabase(
+        data.user.id,
+        notificationPreferences
+      );
 
       set({
         profile: nextProfile,
         fixedLocation: remoteData.location,
         alerts: remoteData.alerts,
         outfitPreferences: nextOutfitPrefs,
+        notificationPreferences: nextNotificationPrefs,
         hasEnteredApp: true,
         isLoadingAuth: false,
         authError: null,
@@ -792,6 +879,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         fixedLocation: remoteData.location,
         alerts: remoteData.alerts,
         outfitPreferences: nextOutfitPrefs,
+        notificationPreferences: nextNotificationPrefs,
       });
       return true;
     } catch {

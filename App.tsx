@@ -10,6 +10,7 @@ import { Montserrat_700Bold } from '@expo-google-fonts/montserrat/700Bold';
 import { AppProvider } from '@/app/providers/AppProvider';
 import { RootNavigator } from '@/app/navigation/RootNavigator';
 import { useThemeStore } from '@/shared/store/useThemeStore';
+import { ClaudyWidgetEmbedScreen } from '@/features/claudy/screens/ClaudyWidgetEmbedScreen';
 
 // Reset de márgenes, fuentes Jost/Montserrat y metadatos PWA para entorno web
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -136,6 +137,22 @@ function App() {
   // En nativo esperamos a la carga de fuentes; en web pintamos al instante con fallback Google Fonts
   if (!fontsLoaded && !fontError && Platform.OS !== 'web') {
     return <View style={[styles.outerShell, { backgroundColor: colors.background }]} />;
+  }
+
+  // Modo Widget Web embebible minimalista (`/widget`) para fijar en escritorio o probar en Vercel
+  const isWidgetEmbedRoute =
+    Platform.OS === 'web' &&
+    typeof window !== 'undefined' &&
+    (window.location.pathname === '/widget' ||
+      window.location.pathname.startsWith('/widget/'));
+
+  if (isWidgetEmbedRoute) {
+    return (
+      <View style={[styles.outerShell, { backgroundColor: colors.background }]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <ClaudyWidgetEmbedScreen />
+      </View>
+    );
   }
 
   const isDesktopWeb = Platform.OS === 'web' && width > 520;
