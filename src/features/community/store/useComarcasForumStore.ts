@@ -3,260 +3,304 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/shared/api/supabaseClient';
 import { Comarca } from '../data/provincesData';
 import { ChatType } from '../data/chatTypes';
+import { CompressedChatImage } from '../services/imageCompressionService';
+import {
+  buildComarcaRoomId,
+  ChatMediaMetadata,
+  fetchActiveRoomMessages,
+  formatMessageHour,
+  getActiveChatSessionUserId,
+  insertRoomMessage,
+  isMessageWithinTwoHours,
+  RoomMessageRecord,
+  subscribeToRoomMessages,
+  uploadChatMediaImage,
+} from '../services/chatRoomService';
 
 const FAVORITES_STORAGE_KEY = '@clima_comunidad_favorite_comarcas_v2';
 const REPORTED_STORAGE_KEY = '@clima_comunidad_reported_messages_v2';
 export const MAX_FAVORITE_COMARCAS = 3;
 export const MAX_CHAT_MESSAGE_LENGTH = 500;
-const SEND_COOLDOWN_MS = 1200;
+const SEND_COOLDOWN_MS = 1000;
 let lastSentAtMs = 0;
 
-export interface ChatMessage {
-  id: string;
-  comarcaId: string;
-  chatType: ChatType;
-  userId: string;
-  userName: string;
-  userProvince: string;
-  content: string;
-  createdAt: string;
+export type ChatMessage = RoomMessageRecord;
+export type { ChatMediaMetadata };
+
+function makeSampleMessage(
+  id: string,
+  comarcaId: string,
+  chatType: ChatType,
+  userId: string,
+  userName: string,
+  userProvince: string,
+  content: string,
+  minutesAgo: number
+): ChatMessage {
+  const createdAtIso = new Date(Date.now() - minutesAgo * 60 * 1000).toISOString();
+  return {
+    id,
+    roomId: buildComarcaRoomId(comarcaId, chatType),
+    comarcaId,
+    chatType,
+    userId,
+    userName,
+    userProvince,
+    content,
+    createdAt: formatMessageHour(createdAtIso),
+    createdAtIso,
+  };
 }
 
-const SAMPLE_CHAT_MESSAGES: Record<string, ChatMessage[]> = {
-  'mad-sierra-guadarrama_general': [
-    {
-      id: 'msg-sg-1',
-      comarcaId: 'mad-sierra-guadarrama',
-      chatType: 'general',
-      userId: 'mock-user-snow',
-      userName: 'Javier Montes',
-      userProvince: 'Madrid',
-      content: 'Temporal de nieve activo en Collado Villalba y Navacerrada: -2°C, nevando con fuerza y acumulando ya 15 cm.',
-      createdAt: '18:12',
-    },
-    {
-      id: 'msg-sg-2',
-      comarcaId: 'mad-sierra-guadarrama',
-      chatType: 'general',
-      userId: 'u-102',
-      userName: 'Alberto M.',
-      userProvince: 'Madrid',
-      content: 'En Cercedilla la cota ha bajado de los 900m y el viento del norte deja sensación de -7°C.',
-      createdAt: '18:24',
-    },
-  ],
-  'mad-sierra-guadarrama_incidents': [
-    {
-      id: 'msg-sgi-1',
-      comarcaId: 'mad-sierra-guadarrama',
-      chatType: 'incidents',
-      userId: 'u-103',
-      userName: 'Sergio R.',
-      userProvince: 'Madrid',
-      content: 'Uso obligatorio de cadenas en el Puerto de Navacerrada (M-601) y niebla heladora con visibilidad menor a 40m.',
-      createdAt: '17:55',
-    },
-  ],
-  'mad-sierra-guadarrama_landscapes': [
-    {
-      id: 'msg-sgl-1',
-      comarcaId: 'mad-sierra-guadarrama',
-      chatType: 'landscapes',
-      userId: 'u-104',
-      userName: 'Paula Sierra',
-      userProvince: 'Madrid',
-      content: 'Estampa invernal increíble en La Pedriza con los pinares completamente cubiertos de nieve virgen.',
-      createdAt: '18:05',
-    },
-  ],
-  'val-valencia_general': [
-    {
-      id: 'msg-val-1',
-      comarcaId: 'val-valencia',
-      chatType: 'general',
-      userId: 'mock-user-dana',
-      userName: 'Marta Soler',
-      userProvince: 'Valencia',
-      content: 'Episodio de DANA entrando con mucha fuerza: 48 mm/h ahora mismo en Valencia centro y rachas de levante de 58 km/h.',
-      createdAt: '18:15',
-    },
-    {
-      id: 'msg-val-2',
-      comarcaId: 'val-valencia',
-      chatType: 'general',
-      userId: 'u-205',
-      userName: 'Pau Llopis',
-      userProvince: 'Valencia',
-      content: 'Tormenta estacionaria frente a la costa, truenos constantes y lluvia torrencial en los últimos 25 minutos.',
-      createdAt: '18:22',
-    },
-  ],
-  'val-valencia_incidents': [
-    {
-      id: 'msg-vali-1',
-      comarcaId: 'val-valencia',
-      chatType: 'incidents',
-      userId: 'mock-user-dana',
-      userName: 'Marta Soler',
-      userProvince: 'Valencia',
-      content: 'Paso inferior de Grandes Vías anegado por el agua. Mejor evitar zonas bajas y esperar a que amaine.',
-      createdAt: '18:28',
-    },
-  ],
-  'val-valencia_landscapes': [
-    {
-      id: 'msg-vall-1',
-      comarcaId: 'val-valencia',
-      chatType: 'landscapes',
-      userId: 'u-206',
-      userName: 'Nuria V.',
-      userProvince: 'Valencia',
-      content: 'Cortina de precipitación espectacular sobre la Albufera con rayos nube-mar cada pocos segundos.',
-      createdAt: '18:18',
-    },
-  ],
-  'val-horta-sud_general': [
-    {
-      id: 'msg-hs-1',
-      comarcaId: 'val-horta-sud',
-      chatType: 'general',
-      userId: 'u-201',
-      userName: 'Carlos M.',
-      userProvince: 'Valencia',
-      content: 'En Torrent cielo muy cerrado, lluvia fuerte persistente y viento de levante aumentando de intensidad. 16°C.',
-      createdAt: '18:10',
-    },
-  ],
-  'val-horta-sud_incidents': [
-    {
-      id: 'msg-hsi-1',
-      comarcaId: 'val-horta-sud',
-      chatType: 'incidents',
-      userId: 'u-202',
-      userName: 'Vicente B.',
-      userProvince: 'Valencia',
-      content: 'Balsas de agua en el paso subterráneo de Catarroja. Mejor evitar esa vía y tomar desvío por pista de Silla.',
-      createdAt: '18:30',
-    },
-  ],
-  'cor-coruna_general': [
-    {
-      id: 'msg-cor-1',
-      comarcaId: 'cor-coruna',
-      chatType: 'general',
-      userId: 'mock-user-wind',
-      userName: 'Iago Fernández',
-      userProvince: 'A Coruña',
-      content: 'Temporal atlántico muy duro en Riazor: rachas medidas de 86 km/h y chubascos horizontales con 13°C.',
-      createdAt: '18:08',
-    },
-    {
-      id: 'msg-cor-2',
-      comarcaId: 'cor-coruna',
-      chatType: 'general',
-      userId: 'u-402',
-      userName: 'Uxía P.',
-      userProvince: 'A Coruña',
-      content: 'Por Oleiros las ráfagas del oeste silban fortísimo y la mar de fondo supera los 6 metros.',
-      createdAt: '18:21',
-    },
-  ],
-  'cor-coruna_incidents': [
-    {
-      id: 'msg-cori-1',
-      comarcaId: 'cor-coruna',
-      chatType: 'incidents',
-      userId: 'mock-user-wind',
-      userName: 'Iago Fernández',
-      userProvince: 'A Coruña',
-      content: 'Paseo Marítimo cortado preventivamente por salto de olas y contenedores desplazados en la ronda.',
-      createdAt: '18:25',
-    },
-  ],
-  'sev-metropolitana_general': [
-    {
-      id: 'msg-sev-1',
-      comarcaId: 'sev-metropolitana',
-      chatType: 'general',
-      userId: 'mock-user-heat',
-      userName: 'Rocío Delgado',
-      userProvince: 'Sevilla',
-      content: 'Ola de calor extrema en Triana: 42°C a la sombra, humedad al 18% y aire muy seco del sur.',
-      createdAt: '17:50',
-    },
-    {
-      id: 'msg-sev-2',
-      comarcaId: 'sev-metropolitana',
-      chatType: 'general',
-      userId: 'u-502',
-      userName: 'Manolo R.',
-      userProvince: 'Sevilla',
-      content: 'En Dos Hermanas los termómetros siguen en 41°C y no se espera bajar de 26°C en toda la madrugada.',
-      createdAt: '18:14',
-    },
-  ],
-  'sev-metropolitana_incidents': [
-    {
-      id: 'msg-sevi-1',
-      comarcaId: 'sev-metropolitana',
-      chatType: 'incidents',
-      userId: 'mock-user-heat',
-      userName: 'Rocío Delgado',
-      userProvince: 'Sevilla',
-      content: 'Evitad deporte al aire libre y parques sin sombra hasta pasadas las 21:00; índice UV extremo.',
-      createdAt: '18:02',
-    },
-  ],
-  'bcn-barcelones_general': [
-    {
-      id: 'msg-bcn-1',
-      comarcaId: 'bcn-barcelones',
-      chatType: 'general',
-      userId: 'mock-user-hail',
-      userName: 'Laia Puig',
-      userProvince: 'Barcelona',
-      content: 'Tormenta eléctrica con granizo cayendo ahora mismo en Eixample y rachas convectivas de 65 km/h.',
-      createdAt: '18:20',
-    },
-    {
-      id: 'msg-bcn-2',
-      comarcaId: 'bcn-barcelones',
-      chatType: 'general',
-      userId: 'u-301',
-      userName: 'Marc V.',
-      userProvince: 'Barcelona',
-      content: 'En Badalona acaba de descargar piedra del tamaño de garbanzos durante 5 minutos, mucha actividad eléctrica.',
-      createdAt: '18:26',
-    },
-  ],
-  'bcn-barcelones_incidents': [
-    {
-      id: 'msg-bcni-1',
-      comarcaId: 'bcn-barcelones',
-      chatType: 'incidents',
-      userId: 'mock-user-hail',
-      userName: 'Laia Puig',
-      userProvince: 'Barcelona',
-      content: 'Retenciones en la Ronda Litoral por granizo acumulado y baja visibilidad. Precaución al conducir.',
-      createdAt: '18:29',
-    },
-  ],
-};
+function createInitialSampleMessages(): Record<string, ChatMessage[]> {
+  return {
+    [buildComarcaRoomId('mad-sierra-guadarrama', 'general')]: [
+      makeSampleMessage(
+        'sample-sg-1',
+        'mad-sierra-guadarrama',
+        'general',
+        'mock-user-snow',
+        'Javier Montes',
+        'Madrid',
+        'Temporal de nieve activo en Collado Villalba y Navacerrada: -2°C, nevando con fuerza y acumulando ya 15 cm.',
+        42
+      ),
+      makeSampleMessage(
+        'sample-sg-2',
+        'mad-sierra-guadarrama',
+        'general',
+        'u-102',
+        'Alberto M.',
+        'Madrid',
+        'En Cercedilla la cota ha bajado de los 900m y el viento del norte deja sensación de -7°C.',
+        19
+      ),
+    ],
+    [buildComarcaRoomId('mad-sierra-guadarrama', 'incidents')]: [
+      makeSampleMessage(
+        'sample-sgi-1',
+        'mad-sierra-guadarrama',
+        'incidents',
+        'u-103',
+        'Sergio R.',
+        'Madrid',
+        'Uso obligatorio de cadenas en el Puerto de Navacerrada (M-601) y niebla heladora con visibilidad menor a 40m.',
+        28
+      ),
+    ],
+    [buildComarcaRoomId('mad-sierra-guadarrama', 'landscapes')]: [
+      makeSampleMessage(
+        'sample-sgl-1',
+        'mad-sierra-guadarrama',
+        'landscapes',
+        'u-104',
+        'Paula Sierra',
+        'Madrid',
+        'Estampa invernal increíble en La Pedriza con los pinares completamente cubiertos de nieve virgen.',
+        34
+      ),
+    ],
+    [buildComarcaRoomId('val-valencia', 'general')]: [
+      makeSampleMessage(
+        'sample-val-1',
+        'val-valencia',
+        'general',
+        'mock-user-dana',
+        'Marta Soler',
+        'Valencia',
+        'Episodio de DANA entrando con mucha fuerza: 48 mm/h ahora mismo en Valencia centro y rachas de levante de 58 km/h.',
+        38
+      ),
+      makeSampleMessage(
+        'sample-val-2',
+        'val-valencia',
+        'general',
+        'u-205',
+        'Pau Llopis',
+        'Valencia',
+        'Tormenta estacionaria frente a la costa, truenos constantes y lluvia torrencial en los últimos 25 minutos.',
+        16
+      ),
+    ],
+    [buildComarcaRoomId('val-valencia', 'incidents')]: [
+      makeSampleMessage(
+        'sample-vali-1',
+        'val-valencia',
+        'incidents',
+        'mock-user-dana',
+        'Marta Soler',
+        'Valencia',
+        'Paso inferior de Grandes Vías anegado por el agua. Mejor evitar zonas bajas y esperar a que amaine.',
+        22
+      ),
+    ],
+    [buildComarcaRoomId('val-valencia', 'landscapes')]: [
+      makeSampleMessage(
+        'sample-vall-1',
+        'val-valencia',
+        'landscapes',
+        'u-206',
+        'Nuria V.',
+        'Valencia',
+        'Cortina de precipitación espectacular sobre la Albufera con rayos nube-mar cada pocos segundos.',
+        31
+      ),
+    ],
+    [buildComarcaRoomId('val-horta-sud', 'general')]: [
+      makeSampleMessage(
+        'sample-hs-1',
+        'val-horta-sud',
+        'general',
+        'u-201',
+        'Carlos M.',
+        'Valencia',
+        'En Torrent cielo muy cerrado, lluvia fuerte persistente y viento de levante aumentando de intensidad. 16°C.',
+        25
+      ),
+    ],
+    [buildComarcaRoomId('val-horta-sud', 'incidents')]: [
+      makeSampleMessage(
+        'sample-hsi-1',
+        'val-horta-sud',
+        'incidents',
+        'u-202',
+        'Vicente B.',
+        'Valencia',
+        'Balsas de agua en el paso subterráneo de Catarroja. Mejor evitar esa vía y tomar desvío por pista de Silla.',
+        14
+      ),
+    ],
+    [buildComarcaRoomId('cor-coruna', 'general')]: [
+      makeSampleMessage(
+        'sample-cor-1',
+        'cor-coruna',
+        'general',
+        'mock-user-wind',
+        'Iago Fernández',
+        'A Coruña',
+        'Temporal atlántico muy duro en Riazor: rachas medidas de 86 km/h y chubascos horizontales con 13°C.',
+        36
+      ),
+      makeSampleMessage(
+        'sample-cor-2',
+        'cor-coruna',
+        'general',
+        'u-402',
+        'Uxía P.',
+        'A Coruña',
+        'Por Oleiros las ráfagas del oeste silban fortísimo y la mar de fondo supera los 6 metros.',
+        18
+      ),
+    ],
+    [buildComarcaRoomId('cor-coruna', 'incidents')]: [
+      makeSampleMessage(
+        'sample-cori-1',
+        'cor-coruna',
+        'incidents',
+        'mock-user-wind',
+        'Iago Fernández',
+        'A Coruña',
+        'Paseo Marítimo cortado preventivamente por salto de olas y contenedores desplazados en la ronda.',
+        12
+      ),
+    ],
+    [buildComarcaRoomId('sev-metropolitana', 'general')]: [
+      makeSampleMessage(
+        'sample-sev-1',
+        'sev-metropolitana',
+        'general',
+        'mock-user-heat',
+        'Rocío Delgado',
+        'Sevilla',
+        'Ola de calor extrema en Triana: 42°C a la sombra, humedad al 18% y aire muy seco del sur.',
+        45
+      ),
+      makeSampleMessage(
+        'sample-sev-2',
+        'sev-metropolitana',
+        'general',
+        'u-502',
+        'Manolo R.',
+        'Sevilla',
+        'En Dos Hermanas los termómetros siguen en 41°C y no se espera bajar de 26°C en toda la madrugada.',
+        20
+      ),
+    ],
+    [buildComarcaRoomId('sev-metropolitana', 'incidents')]: [
+      makeSampleMessage(
+        'sample-sevi-1',
+        'sev-metropolitana',
+        'incidents',
+        'mock-user-heat',
+        'Rocío Delgado',
+        'Sevilla',
+        'Evitad deporte al aire libre y parques sin sombra hasta pasadas las 21:00; índice UV extremo.',
+        27
+      ),
+    ],
+    [buildComarcaRoomId('bcn-barcelones', 'general')]: [
+      makeSampleMessage(
+        'sample-bcn-1',
+        'bcn-barcelones',
+        'general',
+        'mock-user-hail',
+        'Laia Puig',
+        'Barcelona',
+        'Tormenta eléctrica con granizo cayendo ahora mismo en Eixample y rachas convectivas de 65 km/h.',
+        24
+      ),
+      makeSampleMessage(
+        'sample-bcn-2',
+        'bcn-barcelones',
+        'general',
+        'u-301',
+        'Marc V.',
+        'Barcelona',
+        'En Badalona acaba de descargar piedra del tamaño de garbanzos durante 5 minutos, mucha actividad eléctrica.',
+        11
+      ),
+    ],
+    [buildComarcaRoomId('bcn-barcelones', 'incidents')]: [
+      makeSampleMessage(
+        'sample-bcni-1',
+        'bcn-barcelones',
+        'incidents',
+        'mock-user-hail',
+        'Laia Puig',
+        'Barcelona',
+        'Retenciones en la Ronda Litoral por granizo acumulado y baja visibilidad. Precaución al conducir.',
+        9
+      ),
+    ],
+  };
+}
 
-async function getSupabaseSessionUserId(): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.auth.getSession();
-    if (error || !data.session?.user) return null;
-    return data.session.user.id;
-  } catch {
-    return null;
+function mergeIncomingMessage(list: ChatMessage[], incoming: ChatMessage): ChatMessage[] {
+  // 1. Si ya existe por UUID exacto, actualizar sin duplicar
+  if (list.some((m) => m.id === incoming.id)) {
+    return list.map((m) => (m.id === incoming.id ? incoming : m));
   }
-}
 
-function formatHour(isoOrText: string): string {
-  const parsed = new Date(isoOrText);
-  if (Number.isNaN(parsed.getTime())) return isoOrText;
-  return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // 2. Si coincide con un mensaje optimista reciente del mismo autor, sustituir en sitio
+  const incomingTime = new Date(incoming.createdAtIso).getTime();
+  const optimisticIndex = list.findIndex((m) => {
+    if (!m.id.startsWith('temp-')) return false;
+    const sameContent = m.content === incoming.content;
+    const sameMedia =
+      (m.mediaPath && incoming.mediaPath && m.mediaPath === incoming.mediaPath) ||
+      (!m.imageUrl && !incoming.imageUrl) ||
+      Boolean(m.imageUrl && incoming.imageUrl);
+    const closeInTime = Math.abs(new Date(m.createdAtIso).getTime() - incomingTime) < 25_000;
+    return sameContent && sameMedia && closeInTime;
+  });
+
+  if (optimisticIndex !== -1) {
+    const next = [...list];
+    next[optimisticIndex] = incoming;
+    return next;
+  }
+
+  return [...list, incoming].filter((m) => isMessageWithinTwoHours(m.createdAtIso));
 }
 
 interface ComarcasForumState {
@@ -265,7 +309,8 @@ interface ComarcasForumState {
   favoriteComarcas: Comarca[];
   favoriteLimitMessage: string | null;
   reportedMessageIds: string[];
-  messagesByChatKey: Record<string, ChatMessage[]>;
+  messagesByRoomId: Record<string, ChatMessage[]>;
+  isUploadingMedia: boolean;
   reportingMessage: ChatMessage | null;
   currentUser: {
     id: string;
@@ -281,12 +326,16 @@ interface ComarcasForumState {
   clearFavoriteLimitMessage: () => void;
   isFavorite: (comarcaId: string) => boolean;
   loadMessagesForChat: (comarcaId: string, chatType: ChatType) => Promise<void>;
+  subscribeToChat: (comarcaId: string, chatType: ChatType) => () => void;
+  pruneExpiredMessages: () => void;
   getMessagesForChat: (comarcaId: string, chatType: ChatType) => ChatMessage[];
+  getMediaMessagesForChat: (comarcaId: string, chatType: ChatType) => ChatMessage[];
   sendMessage: (
     comarcaId: string,
     provinceName: string,
     chatType: ChatType,
-    content: string
+    content: string,
+    compressedImage?: CompressedChatImage | null
   ) => Promise<void>;
   openReportModal: (message: ChatMessage) => void;
   closeReportModal: () => void;
@@ -308,7 +357,8 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
   ],
   favoriteLimitMessage: null,
   reportedMessageIds: [],
-  messagesByChatKey: SAMPLE_CHAT_MESSAGES,
+  messagesByRoomId: createInitialSampleMessages(),
+  isUploadingMedia: false,
   reportingMessage: null,
   currentUser: {
     id: 'usr-current',
@@ -332,8 +382,7 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
         updates.reportedMessageIds = JSON.parse(repStored);
       }
 
-      // Sincronizar favoritas y reportes desde Supabase si hay sesión real activa
-      const sessionUid = await getSupabaseSessionUserId();
+      const sessionUid = await getActiveChatSessionUserId();
       if (sessionUid) {
         const [{ data: dbFavs, error: favErr }, { data: dbReps, error: repErr }] = await Promise.all([
           supabase
@@ -425,8 +474,7 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
       // Ignorar error de guardado local
     }
 
-    // Persistir cambio en Supabase si hay sesión real activa
-    const sessionUid = await getSupabaseSessionUserId();
+    const sessionUid = await getActiveChatSessionUserId();
     if (sessionUid) {
       if (exists) {
         const { error } = await supabase
@@ -461,127 +509,203 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
   },
 
   loadMessagesForChat: async (comarcaId: string, chatType: ChatType) => {
-    const key = `${comarcaId}_${chatType}`;
+    const roomId = buildComarcaRoomId(comarcaId, chatType);
     try {
-      const { data, error } = await supabase
-        .from('comarca_messages')
-        .select('id, comarca_id, chat_type, user_id, user_name, user_province, content, created_at')
-        .eq('comarca_id', comarcaId)
-        .eq('chat_type', chatType)
-        .order('created_at', { ascending: true })
-        .limit(100);
+      const remoteMessages = await fetchActiveRoomMessages({ roomId, comarcaId, chatType });
+      const existing = (get().messagesByRoomId[roomId] || []).filter((m) =>
+        isMessageWithinTwoHours(m.createdAtIso)
+      );
 
-      if (error) {
-        console.warn('[useComarcasForumStore] Error leyendo comarca_messages:', error.message);
+      if (remoteMessages.length === 0) {
+        set((state) => ({
+          messagesByRoomId: {
+            ...state.messagesByRoomId,
+            [roomId]: existing,
+          },
+        }));
         return;
       }
 
-      if (!data || data.length === 0) return;
-
-      const remoteMessages: ChatMessage[] = data.map((row) => ({
-        id: row.id,
-        comarcaId: row.comarca_id,
-        chatType: row.chat_type as ChatType,
-        userId: row.user_id,
-        userName: row.user_name,
-        userProvince: row.user_province,
-        content: row.content,
-        createdAt: formatHour(row.created_at),
-      }));
-
-      const sampleBase = SAMPLE_CHAT_MESSAGES[key] || [];
-      const existing = get().messagesByChatKey[key] || sampleBase;
       const seenIds = new Set(remoteMessages.map((m) => m.id));
-      // Mantener mensajes de ejemplo + locales que no estén ya en remotos
-      const localOnly = existing.filter((m) => !seenIds.has(m.id) && m.id.startsWith('msg-'));
+      const localSamples = existing.filter(
+        (m) => !seenIds.has(m.id) && (m.id.startsWith('sample-') || m.id.startsWith('temp-'))
+      );
+
+      const merged = [...localSamples, ...remoteMessages]
+        .filter((m) => isMessageWithinTwoHours(m.createdAtIso))
+        .sort(
+          (a, b) => new Date(a.createdAtIso).getTime() - new Date(b.createdAtIso).getTime()
+        );
 
       set((state) => ({
-        messagesByChatKey: {
-          ...state.messagesByChatKey,
-          [key]: [...localOnly, ...remoteMessages],
+        messagesByRoomId: {
+          ...state.messagesByRoomId,
+          [roomId]: merged,
         },
       }));
     } catch (err) {
-      console.warn('[useComarcasForumStore] Excepción cargando comarca_messages:', err);
+      console.warn('[useComarcasForumStore] Excepción cargando mensajes de sala:', err);
     }
   },
 
+  subscribeToChat: (comarcaId: string, chatType: ChatType) => {
+    const roomId = buildComarcaRoomId(comarcaId, chatType);
+    return subscribeToRoomMessages({
+      roomId,
+      comarcaId,
+      chatType,
+      onInsert: (incoming) => {
+        set((state) => {
+          const current = state.messagesByRoomId[roomId] || [];
+          return {
+            messagesByRoomId: {
+              ...state.messagesByRoomId,
+              [roomId]: mergeIncomingMessage(current, incoming),
+            },
+          };
+        });
+      },
+      onDelete: (deletedId) => {
+        set((state) => {
+          const current = state.messagesByRoomId[roomId] || [];
+          return {
+            messagesByRoomId: {
+              ...state.messagesByRoomId,
+              [roomId]: current.filter((m) => m.id !== deletedId),
+            },
+          };
+        });
+      },
+    });
+  },
+
+  pruneExpiredMessages: () => {
+    set((state) => {
+      const next: Record<string, ChatMessage[]> = {};
+      let changed = false;
+      Object.entries(state.messagesByRoomId).forEach(([roomId, list]) => {
+        const active = list.filter((m) => isMessageWithinTwoHours(m.createdAtIso));
+        if (active.length !== list.length) {
+          changed = true;
+        }
+        next[roomId] = active;
+      });
+      return changed ? { messagesByRoomId: next } : state;
+    });
+  },
+
   getMessagesForChat: (comarcaId: string, chatType: ChatType) => {
-    const key = `${comarcaId}_${chatType}`;
-    const raw = get().messagesByChatKey[key] || [];
+    const roomId = buildComarcaRoomId(comarcaId, chatType);
+    const raw = get().messagesByRoomId[roomId] || [];
     const reported = get().reportedMessageIds;
-    return raw.filter((m) => !reported.includes(m.id));
+    return raw.filter(
+      (m) => !reported.includes(m.id) && isMessageWithinTwoHours(m.createdAtIso)
+    );
+  },
+
+  getMediaMessagesForChat: (comarcaId: string, chatType: ChatType) => {
+    const active = get().getMessagesForChat(comarcaId, chatType);
+    return active
+      .filter((m) => Boolean(m.imageUrl))
+      .slice()
+      .reverse();
   },
 
   sendMessage: async (
     comarcaId: string,
     provinceName: string,
     chatType: ChatType,
-    content: string
+    content: string,
+    compressedImage?: CompressedChatImage | null
   ) => {
     const trimmed = content.trim().slice(0, MAX_CHAT_MESSAGE_LENGTH);
-    if (!trimmed) return;
+    if (!trimmed && !compressedImage) return;
 
     const nowMs = Date.now();
     if (nowMs - lastSentAtMs < SEND_COOLDOWN_MS) return;
     lastSentAtMs = nowMs;
 
-    const { currentUser, messagesByChatKey } = get();
-    const key = `${comarcaId}_${chatType}`;
-    const now = new Date();
-    const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const tempId = `msg-${Date.now()}`;
+    const { currentUser } = get();
+    const roomId = buildComarcaRoomId(comarcaId, chatType);
+
+    let uploadedUrl: string | null = null;
+    let uploadedPath: string | null = null;
+    let mediaMetadata: ChatMediaMetadata | null = null;
+
+    if (compressedImage) {
+      set({ isUploadingMedia: true });
+      try {
+        const uploadResult = await uploadChatMediaImage({
+          roomId,
+          compressed: compressedImage,
+        });
+        uploadedUrl = uploadResult.imageUrl;
+        uploadedPath = uploadResult.mediaPath;
+        mediaMetadata = uploadResult.mediaMetadata;
+      } finally {
+        set({ isUploadingMedia: false });
+      }
+    }
+
+    const createdAtIso = new Date().toISOString();
+    const tempId = `temp-${Date.now()}`;
 
     const optimisticMsg: ChatMessage = {
       id: tempId,
+      roomId,
       comarcaId,
       chatType,
       userId: currentUser.id,
       userName: currentUser.name,
       userProvince: currentUser.province,
       content: trimmed,
-      createdAt: timeFormatted,
+      createdAt: formatMessageHour(createdAtIso),
+      createdAtIso,
+      imageUrl: uploadedUrl,
+      mediaPath: uploadedPath,
+      mediaMetadata,
     };
 
-    const existing = messagesByChatKey[key] || [];
-    set({
-      messagesByChatKey: {
-        ...messagesByChatKey,
-        [key]: [...existing, optimisticMsg],
+    set((state) => ({
+      messagesByRoomId: {
+        ...state.messagesByRoomId,
+        [roomId]: [
+          ...(state.messagesByRoomId[roomId] || []).filter((m) =>
+            isMessageWithinTwoHours(m.createdAtIso)
+          ),
+          optimisticMsg,
+        ],
       },
-    });
+    }));
 
-    // Persistir en Supabase `comarca_messages` si el usuario tiene sesión real activa
-    const sessionUid = await getSupabaseSessionUserId();
+    const sessionUid = await getActiveChatSessionUserId();
     if (sessionUid) {
-      const { data, error } = await supabase
-        .from('comarca_messages')
-        .insert({
-          comarca_id: comarcaId,
-          province_name: provinceName,
-          chat_type: chatType,
-          user_id: sessionUid,
-          user_name: currentUser.name,
-          user_province: currentUser.province,
-          content: trimmed,
-        })
-        .select('id, created_at')
-        .single();
+      const persisted = await insertRoomMessage({
+        roomId,
+        comarcaId,
+        provinceName,
+        chatType,
+        userId: sessionUid,
+        userName: currentUser.name,
+        userProvince: currentUser.province,
+        content: trimmed,
+        imageUrl: uploadedUrl,
+        mediaPath: uploadedPath,
+        mediaMetadata,
+      });
 
-      if (error) {
-        console.error('[useComarcasForumStore] Error insertando en comarca_messages:', error.message);
-      } else if (data) {
-        // Reemplazar ID temporal por el UUID real de BBDD
-        set((state) => ({
-          messagesByChatKey: {
-            ...state.messagesByChatKey,
-            [key]: (state.messagesByChatKey[key] || []).map((m) =>
-              m.id === tempId
-                ? { ...m, id: data.id, userId: sessionUid, createdAt: formatHour(data.created_at) }
-                : m
-            ),
-          },
-        }));
+      if (persisted) {
+        set((state) => {
+          const list = state.messagesByRoomId[roomId] || [];
+          // Evitar duplicado si Realtime entregó ya el registro antes de que resolviera el insert
+          const withoutTemp = list.filter((m) => m.id !== tempId);
+          return {
+            messagesByRoomId: {
+              ...state.messagesByRoomId,
+              [roomId]: mergeIncomingMessage(withoutTemp, persisted),
+            },
+          };
+        });
       }
     }
   },
@@ -600,8 +724,7 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
 
     const messageId = reportingMessage.id;
 
-    // Registrar reporte en Supabase `comarca_reports` cumpliendo RLS (auth.uid() = reporter_id)
-    const sessionUid = await getSupabaseSessionUserId();
+    const sessionUid = await getActiveChatSessionUserId();
     if (sessionUid) {
       const { error } = await supabase.from('comarca_reports').upsert(
         {
@@ -609,7 +732,7 @@ export const useComarcasForumStore = create<ComarcasForumState>((set, get) => ({
           message_ref: messageId.slice(0, 120),
           comarca_id: reportingMessage.comarcaId.slice(0, 80),
           chat_type: reportingMessage.chatType,
-          message_excerpt: reportingMessage.content.slice(0, 200),
+          message_excerpt: (reportingMessage.content || '[Imagen compartida]').slice(0, 200),
           reason: reason.trim().slice(0, 200) || 'Otro',
           status: 'pending',
         },
