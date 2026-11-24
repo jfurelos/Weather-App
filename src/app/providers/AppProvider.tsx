@@ -5,6 +5,11 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { useProfileStore } from '@/features/profile/store/useProfileStore';
 import { AlertNotificationBanner } from '@/features/profile/components/AlertNotificationBanner';
+import {
+  ClaudyCustomizerModal,
+  ClaudyGreetingOverlay,
+  useClaudyStore,
+} from '@/features/claudy';
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -13,11 +18,23 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const { isDark, colors, loadTheme } = useThemeStore();
   const loadProfileState = useProfileStore((state) => state.loadProfileState);
+  const hasHydrated = useProfileStore((state) => state.hasHydrated);
+  const hasEnteredApp = useProfileStore((state) => state.hasEnteredApp);
+
+  const loadClaudyConfig = useClaudyStore((state) => state.loadClaudyConfig);
+  const initGreetingForSession = useClaudyStore((state) => state.initGreetingForSession);
 
   useEffect(() => {
     loadTheme();
+    loadClaudyConfig();
     loadProfileState();
-  }, [loadTheme, loadProfileState]);
+  }, [loadTheme, loadClaudyConfig, loadProfileState]);
+
+  useEffect(() => {
+    if (hasHydrated && hasEnteredApp) {
+      initGreetingForSession();
+    }
+  }, [hasHydrated, hasEnteredApp, initGreetingForSession]);
 
   const navigationTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
@@ -38,6 +55,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         <NavigationContainer theme={navigationTheme}>
           {children}
         </NavigationContainer>
+        <ClaudyGreetingOverlay />
+        <ClaudyCustomizerModal />
         <AlertNotificationBanner />
       </View>
     </SafeAreaProvider>

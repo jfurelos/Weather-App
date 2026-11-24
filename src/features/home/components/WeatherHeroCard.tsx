@@ -6,14 +6,16 @@ import {
   Wind,
   Droplets,
   Thermometer,
+  SlidersHorizontal,
 } from 'lucide-react-native';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import {
-  CloudMascotSvg,
-  MASCOT_STATE_META,
-  resolveMascotWeatherState,
-} from '@/shared/components/CloudMascotSvg';
+  ClaudySvg,
+  getClaudyWeatherCopy,
+  resolveClaudyWeatherMode,
+  useClaudyStore,
+} from '@/features/claudy';
 import { useThemeStore } from '@/shared/store/useThemeStore';
 import { spacing } from '@/shared/theme/spacing';
 import { DISPLAY_FONT } from '@/shared/theme/typography';
@@ -28,15 +30,17 @@ interface Props {
 
 export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity }) => {
   const { isDark, theme, colors } = useThemeStore();
+  const claudyConfig = useClaudyStore((s) => s.config);
+  const openCustomizer = useClaudyStore((s) => s.openCustomizer);
   const { current, daily } = weather;
 
-  const mascotState = resolveMascotWeatherState({
+  const weatherMode = resolveClaudyWeatherMode({
     weatherCode: current.weatherCode,
     temperature: current.temperature,
     windSpeed: current.windSpeed,
     precipitation: current.precipitation,
   });
-  const mascotMeta = MASCOT_STATE_META[mascotState];
+  const claudyCopy = getClaudyWeatherCopy(weatherMode, claudyConfig.name);
 
   const windPct = Math.min(100, Math.max(12, Math.round((current.windSpeed / 60) * 100)));
   const humidityPct = Math.min(100, Math.max(8, current.humidity));
@@ -78,7 +82,7 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
       windowRight={citySelectorPill}
       contentStyle={styles.cardBody}
     >
-      {/* Bloque Superior: Datos del clima + Ilustración SVG Mascota Nube */}
+      {/* Bloque Superior: Datos del clima + Mascota Claudy interactiva */}
       <View style={styles.heroRow}>
         <View style={styles.tempColumn}>
           <View
@@ -91,9 +95,6 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
               },
             ]}
           >
-            <Typography variant="captionMedium" style={{ fontSize: 12 }}>
-              {mascotMeta.emoji}
-            </Typography>
             <Typography
               variant="captionMedium"
               numberOfLines={1}
@@ -125,7 +126,11 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
           </Typography>
         </View>
 
-        <View
+        <TouchableOpacity
+          activeOpacity={0.82}
+          onPress={openCustomizer}
+          accessibilityRole="button"
+          accessibilityLabel={`Personalizar a ${claudyConfig.name}`}
           style={[
             styles.mascotFrame,
             {
@@ -134,13 +139,24 @@ export const WeatherHeroCard: React.FC<Props> = ({ weather, city, onPressCity })
             },
           ]}
         >
-          <CloudMascotSvg state={mascotState} size={116} />
-        </View>
+          <ClaudySvg weatherMode={weatherMode} config={claudyConfig} size={112} />
+          <View
+            style={[
+              styles.claudyNameTag,
+              { backgroundColor: colors.card, borderColor: colors.subcardBorder },
+            ]}
+          >
+            <Typography variant="captionMedium" numberOfLines={1} style={{ fontSize: 10.5 }}>
+              {claudyConfig.name}
+            </Typography>
+            <SlidersHorizontal size={10} color={colors.primary} />
+          </View>
+        </TouchableOpacity>
       </View>
 
-      {/* Frase simpática de la Mascota Nube */}
+      {/* Frase cálida de Claudy */}
       <Typography variant="caption" color="secondary" style={styles.mascotQuote}>
-        {mascotMeta.quote}
+        {claudyCopy.quote}
       </Typography>
 
       {/* Subtarjetas de métricas atmosféricas */}
@@ -263,14 +279,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   mascotFrame: {
-    width: 132,
-    height: 136,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
+    width: 136,
+    minHeight: 142,
+    borderRadius: 20,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    gap: 2,
+  },
+  claudyNameTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: spacing.borderRadiusFull,
+    borderWidth: 1,
+    maxWidth: 122,
   },
   mascotQuote: {
     fontStyle: 'italic',

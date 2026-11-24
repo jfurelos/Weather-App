@@ -20,7 +20,7 @@ import {
   ChevronRight,
 } from 'lucide-react-native';
 import { ScreenBackground } from '@/shared/components/ScreenBackground';
-import { CloudMascotSvg } from '@/shared/components/CloudMascotSvg';
+import { ClaudySvg, useClaudyStore } from '@/features/claudy';
 import { Typography } from '@/shared/components/Typography';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
@@ -36,6 +36,7 @@ type AuthStep = 'welcome' | 'login' | 'register';
 
 export const WelcomeAuthScreen: React.FC = () => {
   const { theme, colors } = useThemeStore();
+  const claudyConfig = useClaudyStore((s) => s.config);
   const {
     profile,
     isLoadingAuth,
@@ -140,7 +141,7 @@ export const WelcomeAuthScreen: React.FC = () => {
                     theme.shadows.window,
                   ]}
                 >
-                  <CloudMascotSvg state="soleado" size={96} />
+                  <ClaudySvg weatherMode="sunny" config={claudyConfig} size={102} />
                 </View>
                 <Typography variant="hero" color="onBackground" style={styles.centerText}>
                   Clima & Comunidad

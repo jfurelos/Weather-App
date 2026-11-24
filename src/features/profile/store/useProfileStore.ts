@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/shared/api/supabaseClient';
 import { useComarcasForumStore } from '@/features/community/store/useComarcasForumStore';
 import { useHomeStore } from '@/features/home/store/useHomeStore';
+import { useClaudyStore } from '@/features/claudy/store/useClaudyStore';
 import {
   ALERT_TONES,
   AlertToneId,
@@ -204,6 +205,27 @@ function syncLocationToHome(location: FixedLocation): void {
       latitude: location.latitude,
       longitude: location.longitude,
     });
+  }
+}
+
+async function fetchClaudyConfigFromSupabase(userId: string): Promise<void> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('claudy_config')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (error) {
+      // Si aún no se ejecutó la migración 05 en Supabase, mantenemos la configuración local sin romper la sesión
+      return;
+    }
+
+    if (data && data.claudy_config) {
+      await useClaudyStore.getState().hydrateFromRemoteConfig(data.claudy_config);
+    }
+  } catch {
+    // Mantener configuración local ante error de red
   }
 }
 
@@ -471,6 +493,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           );
           nextLocation = remoteData.location;
           nextAlerts = remoteData.alerts;
+
+          await fetchClaudyConfigFromSupabase(user.id);
         } else {
           nextProfile = {
             ...nextProfile,
@@ -661,6 +685,8 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         alerts
       );
 
+      await fetchClaudyConfigFromSupabase(data.user.id);
+
       set({
         profile: nextProfile,
         fixedLocation: remoteData.location,
@@ -785,6 +811,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     set({ profile: guestProfile, hasEnteredApp: false, authError: null });
     syncProfileToForum(guestProfile);
     useHomeStore.getState().clearMockStormScenario();
+    await useClaudyStore.getState().loadClaudyConfig();
     await persistLocalState({ profile: guestProfile, fixedLocation, alerts });
   },
 
